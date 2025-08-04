@@ -1,0 +1,11 @@
+/dev/bork/nixos
+/dev/bork/nix-config
+/dev/system/home
+/dev/bork/home
+/dev/bork/bulk
+/dev/bork/projects
+/dev/bork/git
+/dev/bork/shared
+/dev/bork/backup
+/dev/bork/docker
+
