@@ -42,7 +42,7 @@ std::vector<float> get_cpu_usages() {
   return usages;
 }
 
-std::string format_cpu_times(const CpuTimes& core, size_t index) {
+std::string format_cpu_times(const CPUCore& core, size_t index) {
   double idlePercent = 100.0 * core.idle_time / core.total_time;
   double usagePercent = 100.0 - idlePercent;
   return "Core " + std::to_string(index) +

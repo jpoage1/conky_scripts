@@ -16,10 +16,10 @@ int main() {
 
   std::cout << "CPU Usage: " << std::endl;
 
-  auto cores = read_cpu_times();
-  for (size_t i = 0; i < cores.size(); ++i) {
-    std::cout << format_cpu_times(cores[i], i) << std::endl;
-  }
+  // auto cores = read_cpu_times();
+  // for (size_t i = 0; i < cores.size(); ++i) {
+  //   std::cout << format_cpu_times(cores[i], i) << std::endl;
+  // }
 
   std::cout << "Uptime: " << get_uptime() << std::endl;
 

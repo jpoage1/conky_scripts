@@ -1,6 +1,7 @@
 // corestat.h
 #pragma once
 
+#include <string>
 #include <vector>
 
 struct CPUCore {
@@ -10,4 +11,4 @@ struct CPUCore {
 
 std::vector<CPUCore> read_cpu_times();
 std::vector<float> get_cpu_usages();
-std::string format_cpu_times(const CpuTimes&, size_t);
+std::string format_cpu_times(const CPUCore&, size_t);
