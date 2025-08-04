@@ -6,52 +6,83 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O2 \
   -Isrc/meminfo \
   -Isrc/swapinfo \
   -Isrc/uptime
-LDFLAGS =
 
-# Diskstat static library build
-DISKSTAT_DIR = conkyd/src/diskstat
-DISKSTAT_SRC = $(wildcard $(DISKSTAT_DIR)/src/*.cpp)
-DISKSTAT_OBJ = $(patsubst $(DISKSTAT_DIR)/src/%.cpp,$(DISKSTAT_DIR)/obj/%.o,$(DISKSTAT_SRC))
+# Directories
+OBJ_DIR = obj
+INSTALL_DIR = $(HOME)/.config/conky/bin
+DISKSTAT_DIR = src/diskstat
+DISKSTAT_SRC_DIR = $(DISKSTAT_DIR)/src
+DISKSTAT_OBJ_DIR = $(DISKSTAT_DIR)/obj
 DISKSTAT_LIB = $(DISKSTAT_DIR)/libdiskstat.a
 
-# Other modules with subdirs under src/
+# Source files
 SRC_CORESTAT = src/corestat/corestat.cpp
 SRC_CPUINFO = src/cpuinfo/cpuinfo.cpp
 SRC_MEMINFO = src/meminfo/meminfo.cpp
 SRC_SWAPINFO = src/swapinfo/swapinfo.cpp
 SRC_UPTIME = src/uptime/uptime.cpp
-SRC_CONKYD = src/main.cpp
+SRC_MAIN = src/main.cpp
 
+# Object files
+OBJ_CORESTAT = $(OBJ_DIR)/corestat/corestat.o
+OBJ_CPUINFO = $(OBJ_DIR)/cpuinfo/cpuinfo.o
+OBJ_MEMINFO = $(OBJ_DIR)/meminfo/meminfo.o
+OBJ_SWAPINFO = $(OBJ_DIR)/swapinfo/swapinfo.o
+OBJ_UPTIME = $(OBJ_DIR)/uptime/uptime.o
+OBJ_MAIN = $(OBJ_DIR)/main.o
 
-SRC_OTHER = $(SRC_CORESTAT) $(SRC_CPUINFO) $(SRC_MEMINFO) $(SRC_SWAPINFO) $(SRC_UPTIME) $(SRC_CONKYD)
-OBJ_DIR = obj
-OBJ_OTHER = $(patsubst src/%.cpp,$(OBJ_DIR)/%.o,$(SRC_OTHER))
+# Diskstat sources/objects
+DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
+DISKSTAT_OBJ = $(patsubst $(DISKSTAT_SRC_DIR)/%.cpp,$(DISKSTAT_OBJ_DIR)/%.o,$(DISKSTAT_SRC))
 
+# Final binary
 BIN = conkyd.bin
 
 .PHONY: all clean
 
 all: $(DISKSTAT_LIB) $(BIN)
 
-# Link main executable with diskstat static lib
-$(BIN): $(OBJ_OTHER) $(DISKSTAT_LIB)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+$(BIN): $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_MAIN) $(DISKSTAT_LIB)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# Build diskstat static library
+# Build static lib
 $(DISKSTAT_LIB): $(DISKSTAT_OBJ)
 	mkdir -p $(dir $@)
 	ar rcs $@ $^
 
-# Compile diskstat objects
-$(DISKSTAT_DIR)/obj/%.o: $(DISKSTAT_DIR)/src/%.cpp
+# Build diskstat object files
+$(DISKSTAT_OBJ_DIR)/%.o: $(DISKSTAT_SRC_DIR)/%.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Compile other object files preserving directory structure inside obj/
-$(OBJ_DIR)/%.o: src/%.cpp
+# Build other object files
+$(OBJ_CORESTAT): src/corestat/corestat.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_CPUINFO): src/cpuinfo/cpuinfo.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_MEMINFO): src/meminfo/meminfo.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_SWAPINFO): src/swapinfo/swapinfo.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_UPTIME): src/uptime/uptime.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_MAIN): src/main.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(DISKSTAT_DIR)/obj/*.o $(DISKSTAT_LIB)
-	rm -rf $(OBJ_DIR) $(BIN)
+	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(BIN)
+
+install: $(BIN)
+	mkdir -p $(INSTALL_DIR)
+	cp $(BIN) $(INSTALL_DIR)/conkyd
