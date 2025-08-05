@@ -16,8 +16,9 @@ std::tuple<std::string, std::function<FuncType>> columns[] = {
     {"Mount Point",
      [](const DeviceInfo &d) { return conky_color(d.mount_point, lightgrey); }},
     {"Used", [](const DeviceInfo &d) { return format_size(d.used_bytes); }},
+    {"Free", [](const DeviceInfo &d) { return format_size(d.size_bytes - d.used_bytes); }},
     {"Size", [](const DeviceInfo &d) { return format_size(d.size_bytes); }},
-    {"Use%",
+    {"Used%",
      [](const DeviceInfo &d) {
        if (d.size_bytes == 0) return conky_color("N/A", gray);
        uint64_t percent = (d.used_bytes * 100) / d.size_bytes;

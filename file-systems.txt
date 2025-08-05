@@ -1,0 +1,17 @@
+/dev/bork/nixos
+/dev/bork/nix-home
+/dev/bork/nix-config
+/dev/system/home
+/dev/bork/home
+/dev/bork/projects
+/dev/bork/git
+/dev/bork/shared
+/dev/bork/backup
+/dev/bork/docker
+/dev/bork/slackware
+/dev/bork/debian
+/dev/bork/debian-var-lib
+/dev/system/ubuntu
+/dev/bork/ubuntu-lv
+
+
