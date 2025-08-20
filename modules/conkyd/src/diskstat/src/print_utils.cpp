@@ -1,35 +1,42 @@
-#include "conky_format.h"
-#include "constants.h"
 #include "print_utils.h"
+
 #include <iomanip>
 #include <iostream>
 
-void pad_str(const std::string &str, int width) {
-  std::cout << std::left << std::setw(width) << str;
-}
+#include "conky_format.h"
+#include "constants.h"
 
-void pad_str(const ColoredString &cstr, int width) {
-  std::ostringstream ss;
-  ss << std::left << std::setw(width) << cstr.text;
-  std::cout << "${color " << cstr.color << "}" << ss.str() << "${color}";
-}
+void pad_str(const std::string &str) { std::cout << str; }
 
+void pad_str(const ColoredString &cstr) {
+  std::cout << "${color " << cstr.color << "}" << cstr.text << "${color}";
+}
 void print_column_headers(
     std::tuple<std::string, std::function<FuncType>> columns[], size_t count) {
   std::cout << "${color " << paleblue << "}";
+
+  int xpos = 0;
   for (size_t i = 0; i < count; ++i) {
-    int width = i == 0 ? COL_WIDTH_1 : COL_WIDTH;
-    pad_str(std::get<0>(columns[i]), width);
+    std::cout << "${goto " << xpos << "}";
+    pad_str(std::get<0>(columns[i]));
+
+    // advance xpos by the width of this column
+    xpos += (i == 0 ? COL_WIDTH_1 : COL_WIDTH);
   }
+
   std::cout << "${color}" << std::endl;
 }
 
 void print_rows(std::vector<DeviceInfo> &devices, size_t column_count) {
   extern std::tuple<std::string, std::function<FuncType>> columns[];
+
   for (const auto &device : devices) {
+    int xpos = 0;
     for (size_t i = 0; i < column_count; ++i) {
-      int width = i == 0 ? COL_WIDTH_1 : COL_WIDTH;
-      pad_str(std::get<1>(columns[i])(device), width);
+      std::cout << "${goto " << xpos << "}";
+      pad_str(std::get<1>(columns[i])(device));
+
+      xpos += (i == 0 ? COL_WIDTH_1 : COL_WIDTH);
     }
     std::cout << std::endl;
   }

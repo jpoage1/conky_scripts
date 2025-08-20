@@ -141,15 +141,17 @@ ColoredString col_used_space_percent(const DeviceInfo &d) {
 }
 
 ColoredString col_read_bytes_per_sec(const DeviceInfo &d) {
-  const std::string rate =
-      d.read_bytes_per_sec.empty() ? "N/A" : d.read_bytes_per_sec;
+  const std::string rate = d.read_bytes_per_sec.empty()
+                               ? "${diskio_read(" + d.device_path + ")}"
+                               : d.read_bytes_per_sec;
   const std::string color = rate == "N/A" ? gray : blue;
   return conky_color(rate, color);
 }
 
 ColoredString col_write_bytes_per_sec(const DeviceInfo &d) {
-  const std::string rate =
-      d.write_bytes_per_sec.empty() ? "N/A" : d.write_bytes_per_sec;
+  const std::string rate = d.write_bytes_per_sec.empty()
+                               ? "${diskio_write(" + d.device_path + ")}"
+                               : d.write_bytes_per_sec;
   const std::string color = rate == "N/A" ? gray : blue;
   return conky_color(rate, color);
 }

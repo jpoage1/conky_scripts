@@ -1,5 +1,8 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -Iinclude
+
+BASEFLAGS = -std=c++17 -Wall -Wextra -Iinclude
+OPTFLAGS  = -O2
+DBGFLAGS  = -g -O0
 
 SRC_DIR = src
 OBJ_DIR = obj
@@ -8,6 +11,14 @@ INSTALL_DIR = $(HOME)/.config/conky/bin
 
 SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
+
+.PHONY: all debug clean install
+
+all: CXXFLAGS = $(BASEFLAGS) $(OPTFLAGS)
+all: $(BIN)
+
+debug: CXXFLAGS = $(BASEFLAGS) $(DBGFLAGS)
+debug: $(BIN)
 
 $(BIN): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
@@ -22,3 +33,4 @@ clean:
 install: $(BIN)
 	@mkdir -p $(INSTALL_DIR)
 	cp $(BIN) $(INSTALL_DIR)/
+
