@@ -13,5 +13,4 @@
 /dev/bork/debian-var-lib
 /dev/system/ubuntu
 /dev/bork/ubuntu-lv
-
-
+/dev/bork/vm_store
