@@ -14,14 +14,16 @@ void pad_str(const ColoredString &cstr) {
 void print_column_headers(
     std::tuple<std::string, std::function<FuncType>> columns[], size_t count) {
   std::cout << "${color " << paleblue << "}";
-
   int xpos = 0;
+
   for (size_t i = 0; i < count; ++i) {
     std::cout << "${goto " << xpos << "}";
     pad_str(std::get<0>(columns[i]));
 
-    // advance xpos by the width of this column
-    xpos += (i == 0 ? COL_WIDTH_1 : COL_WIDTH);
+    int width = DEFAULT_COL_WIDTH;
+    if (column_widths.count(i)) width = column_widths[i];
+
+    xpos += width * CHAR_WIDTH_PX;
   }
 
   std::cout << "${color}" << std::endl;
@@ -36,7 +38,10 @@ void print_rows(std::vector<DeviceInfo> &devices, size_t column_count) {
       std::cout << "${goto " << xpos << "}";
       pad_str(std::get<1>(columns[i])(device));
 
-      xpos += (i == 0 ? COL_WIDTH_1 : COL_WIDTH);
+      int width = DEFAULT_COL_WIDTH;
+      if (column_widths.count(i)) width = column_widths[i];
+
+      xpos += width * CHAR_WIDTH_PX;
     }
     std::cout << std::endl;
   }
