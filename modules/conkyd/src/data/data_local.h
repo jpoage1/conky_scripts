@@ -12,13 +12,4 @@ struct LocalDataStreams : public DataStreamProvider {
   std::istream &get_stat_stream() override { return stat; }
 };
 
-// struct LocalDataStreams {
-//   std::ifstream cpuinfo;
-//   std::ifstream meminfo;
-//   std::ifstream uptime;
-//   std::ifstream stat;
-// };
-
-SystemMetrics read_data(LocalDataStreams &);
-
 LocalDataStreams get_local_file_streams();

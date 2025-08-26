@@ -34,7 +34,4 @@ class DataStreamProvider {
 };
 SystemMetrics read_data(DataStreamProvider &);
 
-// SystemMetrics read_data(std::ifstream &, std::ifstream &, std::ifstream &,
-//                         std::ifstream &);
-
 void print_metrics(SystemMetrics);

@@ -1,37 +1,15 @@
-#include <istream>
 
-// #include "data.h"
 #include "data_local.h"
 #include "data_ssh.h"
-void get_metrics(LocalDataStreams &);
-void get_metrics(ProcDataStreams &);
 SystemMetrics get_metrics(const bool);
-SystemMetrics get_ssh_metrics();
-SystemMetrics get_local_metrics();
+// SystemMetrics get_ssh_metrics();
+// SystemMetrics get_local_metrics();
 
 int main() {
-  print_metrics(get_local_metrics());
-  std::cout << "-------------" << std::endl;  // Works
-  print_metrics(get_ssh_metrics());
-
-  std::cout << "-------------" << std::endl;  // Works
-  std::cout << "-------------" << std::endl;  // Doesn't Work
   print_metrics(get_metrics(false));
-  std::cout << "-------------" << std::endl;  // Works
+  std::cout << "-------------" << std::endl;
   print_metrics(get_metrics(true));
   return 0;
-}
-
-void get_metrics(LocalDataStreams &streams) {
-  SystemMetrics metrics = read_data(streams);
-  print_metrics(metrics);
-}
-
-SystemMetrics get_local_metrics() {
-  LocalDataStreams streams = get_local_file_streams();
-
-  SystemMetrics metrics = read_data(streams);
-  return metrics;
 }
 
 SystemMetrics get_metrics(const bool use_ssh) {
@@ -64,16 +42,23 @@ SystemMetrics get_metrics(const bool use_ssh) {
   return metrics;
 }
 
-SystemMetrics get_ssh_metrics() {
-  SystemMetrics metrics;
+// SystemMetrics get_local_metrics() {
+//   LocalDataStreams streams = get_local_file_streams();
 
-  if (setup_ssh_session() != 0) {
-    std::cerr << "Failed to set up SSH session." << std::endl;
-    return metrics;
-  }
-  ProcDataStreams streams = get_ssh_streams();
+//   SystemMetrics metrics = read_data(streams);
+//   return metrics;
+// }
 
-  metrics = read_data(streams);
-  cleanup_ssh_session();
-  return metrics;
-}
+// SystemMetrics get_ssh_metrics() {
+//   SystemMetrics metrics;
+
+//   if (setup_ssh_session() != 0) {
+//     std::cerr << "Failed to set up SSH session." << std::endl;
+//     return metrics;
+//   }
+//   ProcDataStreams streams = get_ssh_streams();
+
+//   metrics = read_data(streams);
+//   cleanup_ssh_session();
+//   return metrics;
+// }
