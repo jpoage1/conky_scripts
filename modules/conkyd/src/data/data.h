@@ -32,6 +32,7 @@ class DataStreamProvider {
   virtual std::istream &get_uptime_stream() = 0;
   virtual std::istream &get_stat_stream() = 0;
 };
+SystemMetrics read_data(DataStreamProvider &);
 
 // SystemMetrics read_data(std::ifstream &, std::ifstream &, std::ifstream &,
 //                         std::ifstream &);
