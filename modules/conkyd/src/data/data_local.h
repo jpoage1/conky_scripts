@@ -18,11 +18,11 @@ struct LocalDataStreams {
   std::ifstream uptime;
   std::ifstream stat;
 };
-// Works
-SystemMetrics read_data(std::ifstream &cpu_file_stream,
-                        std::ifstream &meminfo_file_stream,
-                        std::ifstream &uptime_file_stream,
-                        std::ifstream &stat_file_stream);
+// // Works
+// SystemMetrics read_data(std::ifstream &cpu_file_stream,
+//                         std::ifstream &meminfo_file_stream,
+//                         std::ifstream &uptime_file_stream,
+//                         std::ifstream &stat_file_stream);
 // Doesn't work
 SystemMetrics read_data(LocalDataStreams &);
 

@@ -19,8 +19,8 @@ DISKSTAT_LIB = $(DISKSTAT_DIR)/libdiskstat.a
 
 # Source files
 SRC_DATA = src/data/data.cpp
-SRC_DATA_LOCAL = src/data/local.cpp
-SRC_DATA_SSH = src/data/ssh.cpp
+SRC_DATA_LOCAL = src/data/data_local.cpp
+SRC_DATA_SSH = src/data/data_ssh.cpp
 SRC_SSH = src/ssh/ssh.cpp
 SRC_CORESTAT = src/corestat/corestat.cpp
 SRC_CPUINFO = src/cpuinfo/cpuinfo.cpp
@@ -31,8 +31,8 @@ SRC_MAIN = src/main.cpp
 
 # Object files
 OBJ_DATA = $(OBJ_DIR)/data/data.o
-OBJ_DATA_LOCAL = $(OBJ_DIR)/data/local.o
-OBJ_DATA_SSH = $(OBJ_DIR)/data/ssh.o
+OBJ_DATA_LOCAL = $(OBJ_DIR)/data/data_local.o
+OBJ_DATA_SSH = $(OBJ_DIR)/data/data_ssh.o
 OBJ_SSH = $(OBJ_DIR)/ssh/ssh.o
 OBJ_CORESTAT = $(OBJ_DIR)/corestat/corestat.o
 OBJ_CPUINFO = $(OBJ_DIR)/cpuinfo/cpuinfo.o
@@ -77,12 +77,12 @@ $(OBJ_DATA): src/data/data.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Build other object files
-$(OBJ_DATA_LOCAL): src/data/local.cpp
+$(OBJ_DATA_LOCAL): src/data/data_local.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Build other object files
-$(OBJ_DATA_SSH): src/data/ssh.cpp
+$(OBJ_DATA_SSH): src/data/data_ssh.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

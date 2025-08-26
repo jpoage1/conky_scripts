@@ -19,4 +19,7 @@ struct ProcDataStreams : public DataStreamProvider {
   std::istream &get_uptime_stream() override { return uptime; }
   std::istream &get_stat_stream() override { return stat; }
 };
+
+SystemMetrics read_data(ProcDataStreams &);
+
 ProcDataStreams get_ssh_streams();

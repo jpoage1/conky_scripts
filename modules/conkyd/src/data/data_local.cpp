@@ -1,4 +1,4 @@
-#include "local.h"
+#include "data_local.h"
 
 #include <istream>
 
@@ -8,26 +8,6 @@
 #include "meminfo.h"
 #include "swapinfo.h"
 #include "uptime.h"
-
-SystemMetrics read_data(std::ifstream &cpu_file_stream,
-                        std::ifstream &meminfo_file_stream,
-                        std::ifstream &uptime_file_stream,
-                        std::ifstream &stat_file_stream) {
-  SystemMetrics metrics;
-  auto cores = read_cpu_times(stat_file_stream);
-  for (size_t i = 0; i < cores.size(); ++i) {
-    metrics.cores.push_back({i, cores[i].idle_time, cores[i].total_time});
-  }
-
-  get_mem_usage(meminfo_file_stream, metrics.mem_used_kb, metrics.mem_total_kb,
-                metrics.mem_percent);
-  get_swap_usage(meminfo_file_stream, metrics.swap_used_kb,
-                 metrics.swap_total_kb, metrics.swap_percent);
-
-  metrics.uptime = get_uptime(uptime_file_stream);
-  metrics.cpu_frequency_ghz = get_cpu_freq_ghz(cpu_file_stream);
-  return metrics;
-}
 
 SystemMetrics read_data(LocalDataStreams &streams) {
   SystemMetrics metrics;
