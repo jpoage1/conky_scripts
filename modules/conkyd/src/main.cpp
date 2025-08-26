@@ -3,48 +3,34 @@
 // #include "data.h"
 #include "data_local.h"
 #include "data_ssh.h"
-void get_metrics(LocalDataStreams &streams);
-void get_metrics(ProcDataStreams &streams);
-int get_ssh_metrics();
+
+SystemMetrics get_ssh_metrics();
+SystemMetrics get_local_metrics();
 
 int main() {
-  LocalDataStreams local_streams = get_local_file_streams();
-  get_metrics(local_streams);
-
+  print_metrics(get_local_metrics());
   std::cout << "-------------" << std::endl;
-
-  //   ProcDataStreams ssh_streams = get_ssh_streams();
-  //   get_metrics(ssh_streams);
-  get_ssh_metrics();
+  print_metrics(get_ssh_metrics());
   return 0;
 }
 
-void get_metrics(LocalDataStreams &streams) {
+SystemMetrics get_local_metrics() {
+  LocalDataStreams streams = get_local_file_streams();
+
   SystemMetrics metrics = read_data(streams);
-  print_metrics(metrics);
+  return metrics;
 }
 
-void get_metrics(ProcDataStreams &streams) {
-  SystemMetrics metrics = read_data(streams);
-  print_metrics(metrics);
-}
-int get_ssh_metrics() {
-  DataStreamProvider *provider = nullptr;
+SystemMetrics get_ssh_metrics() {
+  SystemMetrics metrics;
 
   if (setup_ssh_session() != 0) {
-    std::cerr << "Failed to set up SSH session. Exiting." << std::endl;
-    return 1;
+    std::cerr << "Failed to set up SSH session." << std::endl;
+    return metrics;
   }
-  ProcDataStreams ssh_streams = get_ssh_streams();
-  provider = &ssh_streams;
+  ProcDataStreams streams = get_ssh_streams();
 
-  if (provider) {
-    SystemMetrics metrics = read_data(*provider);
-    print_metrics(metrics);
-  } else {
-    std::cerr << "Error: No data provider could be initialized." << std::endl;
-    return 1;
-  }
+  metrics = read_data(streams);
   cleanup_ssh_session();
-  return 0;
+  return metrics;
 }
