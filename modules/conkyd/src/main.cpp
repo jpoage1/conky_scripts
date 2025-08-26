@@ -1,16 +1,12 @@
 #include <istream>
 
-#include "data.h"
-#include "ssh.h"
+// #include "data.h"
+#include "local.h"
+// #include "ssh.h"
 
 int main() {
-  std::ifstream cpu_file_stream("/proc/cpuinfo");
-  std::ifstream meminfo_file_stream("/proc/meminfo");
-  std::ifstream uptime_file_stream("/proc/uptime");
-  std::ifstream stat_file_stream("/proc/stat");
-
-  SystemMetrics metrics = read_data(cpu_file_stream, meminfo_file_stream,
-                                    uptime_file_stream, stat_file_stream);
+  LocalDataStreams streams = get_local_file_streams();
+  SystemMetrics metrics = read_data(streams);
   print_metrics(metrics);
   return 0;
 }

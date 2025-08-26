@@ -19,6 +19,8 @@ DISKSTAT_LIB = $(DISKSTAT_DIR)/libdiskstat.a
 
 # Source files
 SRC_DATA = src/data/data.cpp
+SRC_DATA_LOCAL = src/data/local.cpp
+SRC_DATA_SSH = src/data/ssh.cpp
 SRC_SSH = src/ssh/ssh.cpp
 SRC_CORESTAT = src/corestat/corestat.cpp
 SRC_CPUINFO = src/cpuinfo/cpuinfo.cpp
@@ -29,6 +31,8 @@ SRC_MAIN = src/main.cpp
 
 # Object files
 OBJ_DATA = $(OBJ_DIR)/data/data.o
+OBJ_DATA_LOCAL = $(OBJ_DIR)/data/local.o
+OBJ_DATA_SSH = $(OBJ_DIR)/data/ssh.o
 OBJ_SSH = $(OBJ_DIR)/ssh/ssh.o
 OBJ_CORESTAT = $(OBJ_DIR)/corestat/corestat.o
 OBJ_CPUINFO = $(OBJ_DIR)/cpuinfo/cpuinfo.o
@@ -48,7 +52,7 @@ BIN = conkyd.bin
 
 all: $(DISKSTAT_LIB) $(BIN)
 
-$(BIN): $(OBJ_DATA) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_MAIN) $(DISKSTAT_LIB)
+$(BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_MAIN) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh
 
 # Build static lib
@@ -69,6 +73,16 @@ $(OBJ_CORESTAT): src/corestat/corestat.cpp
 
 # Build other object files
 $(OBJ_DATA): src/data/data.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Build other object files
+$(OBJ_DATA_LOCAL): src/data/local.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Build other object files
+$(OBJ_DATA_SSH): src/data/ssh.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
