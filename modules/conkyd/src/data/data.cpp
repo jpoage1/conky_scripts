@@ -6,7 +6,6 @@
 #include "cpuinfo.h"
 #include "diskstat.h"
 #include "meminfo.h"
-#include "ssh.h"
 #include "swapinfo.h"
 #include "uptime.h"
 

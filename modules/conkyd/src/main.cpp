@@ -1,6 +1,7 @@
 #include <istream>
 
 #include "data.h"
+#include "ssh.h"
 
 int main() {
   std::ifstream cpu_file_stream("/proc/cpuinfo");
