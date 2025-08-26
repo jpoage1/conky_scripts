@@ -5,21 +5,21 @@
 #include <limits>
 #include <string>
 
-void get_mem_usage(long &used, long &total, int &percent) {
-  std::ifstream file("/proc/meminfo");
+void get_mem_usage(std::istream &input_stream, long &used, long &total,
+                   int &percent) {
   std::string label;
   long mem_total = 0, mem_free = 0, buffers = 0, cached = 0;
-  while (file >> label) {
+  while (input_stream >> label) {
     if (label == "MemTotal:")
-      file >> mem_total;
+      input_stream >> mem_total;
     else if (label == "MemFree:")
-      file >> mem_free;
+      input_stream >> mem_free;
     else if (label == "Buffers:")
-      file >> buffers;
+      input_stream >> buffers;
     else if (label == "Cached:")
-      file >> cached;
+      input_stream >> cached;
     if (mem_total && mem_free && buffers && cached) break;
-    file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    input_stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
   total = mem_total;
   used = mem_total - (mem_free + buffers + cached);

@@ -64,6 +64,8 @@ int diskstat(const std::string &config_file) {
   auto device_paths = read_device_paths(config_file);
   auto devices = collect_device_info(device_paths);
   size_t column_count = sizeof(columns) / sizeof(columns[0]);
+  std::cout.setf(std::ios::unitbuf);
+
   print_column_headers(columns, column_count);
   print_rows(devices, column_count);
   return 0;

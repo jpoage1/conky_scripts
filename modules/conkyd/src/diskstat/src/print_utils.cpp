@@ -29,7 +29,7 @@ void print_column_headers(
   std::cout << "${color}" << std::endl;
 }
 
-void print_rows(std::vector<DeviceInfo> &devices, size_t column_count) {
+void print_rows(std::vector<DeviceInfo> &devices, const size_t column_count) {
   extern std::tuple<std::string, std::function<FuncType>> columns[];
 
   for (const auto &device : devices) {
