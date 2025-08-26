@@ -51,3 +51,21 @@ void print_metrics(SystemMetrics metrics) {
 //   metrics.cpu_frequency_ghz = get_cpu_freq_ghz(streams.cpuinfo);
 //   return metrics;
 // }
+
+SystemMetrics read_data(DataStreamProvider &provider) {
+  SystemMetrics metrics;
+
+  auto cores = read_cpu_times(provider.get_stat_stream());
+  for (size_t i = 0; i < cores.size(); ++i) {
+    metrics.cores.push_back({i, cores[i].idle_time, cores[i].total_time});
+  }
+
+  get_mem_usage(provider.get_meminfo_stream(), metrics.mem_used_kb,
+                metrics.mem_total_kb, metrics.mem_percent);
+  get_swap_usage(provider.get_meminfo_stream(), metrics.swap_used_kb,
+                 metrics.swap_total_kb, metrics.swap_percent);
+
+  metrics.uptime = get_uptime(provider.get_uptime_stream());
+  metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
+  return metrics;
+}

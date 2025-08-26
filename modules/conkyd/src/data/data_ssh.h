@@ -21,6 +21,5 @@ struct ProcDataStreams : public DataStreamProvider {
 };
 
 SystemMetrics read_data(ProcDataStreams &);
-SystemMetrics read_data(DataStreamProvider &);
 
 ProcDataStreams get_ssh_streams();
