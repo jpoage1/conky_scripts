@@ -1,5 +1,3 @@
-#include "main.h"
-
 #include <istream>
 
 #include "corestat.h"
@@ -10,92 +8,62 @@
 #include "swapinfo.h"
 #include "uptime.h"
 
-int main(int argc, char *argv[]) {
-  bool use_ssh = false;
+struct SystemMetrics {
+  struct CoreStats {
+    size_t core_id;
+    long unsigned idle_time;
+    long unsigned total_time;
+  };
 
-  for (int i = 1; i < argc; ++i) {
-    if (std::string(argv[i]) == "--ssh" || std::string(argv[i]) == "-s") {
-      use_ssh = true;
-      break;
-    }
-  }
+  std::vector<CoreStats> cores;
+  double cpu_frequency_ghz;
+  long mem_used_kb;
+  long mem_total_kb;
+  int mem_percent;
+  long swap_used_kb;
+  long swap_total_kb;
+  int swap_percent;
+  std::string uptime;
+};
+SystemMetrics read_data(std::ifstream &, std::ifstream &, std::ifstream &,
+                        std::ifstream &);
+void print_data(SystemMetrics);
 
-  DataStreamProvider *provider = nullptr;
+int main() {
+  ssh_connection();
 
-  if (use_ssh) {
-    if (setup_ssh_session() != 0) {
-      std::cerr << "Failed to set up SSH session. Exiting." << std::endl;
-      return 1;
-    }
-    ProcDataStreams ssh_streams = get_ssh_streams();
-    provider = &ssh_streams;
-  } else {
-    LocalDataStreams local_streams = get_local_file_streams();
-    provider = &local_streams;
-  }
+  std::ifstream cpu_file_stream("/proc/cpuinfo");
+  std::ifstream meminfo_file_stream("/proc/meminfo");
+  std::ifstream uptime_file_stream("/proc/uptime");
+  std::ifstream stat_file_stream("/proc/stat");
 
-  if (provider) {
-    SystemMetrics metrics = read_data(*provider);
-    print_metrics(metrics);
-  } else {
-    std::cerr << "Error: No data provider could be initialized." << std::endl;
-    return 1;
-  }
-  if (use_ssh) {
-    cleanup_ssh_session();
-  }
-
+  SystemMetrics metrics = read_data(cpu_file_stream, meminfo_file_stream,
+                                    uptime_file_stream, stat_file_stream);
+  print_data(metrics);
   return 0;
 }
-SystemMetrics read_data(DataStreamProvider &provider) {
-  SystemMetrics metrics;
 
-  auto cores = read_cpu_times(provider.get_stat_stream());
+SystemMetrics read_data(std::ifstream &cpu_file_stream,
+                        std::ifstream &meminfo_file_stream,
+                        std::ifstream &uptime_file_stream,
+                        std::ifstream &stat_file_stream) {
+  SystemMetrics metrics;
+  auto cores = read_cpu_times(stat_file_stream);
   for (size_t i = 0; i < cores.size(); ++i) {
     metrics.cores.push_back({i, cores[i].idle_time, cores[i].total_time});
   }
 
-  get_mem_usage(provider.get_meminfo_stream(), metrics.mem_used_kb,
-                metrics.mem_total_kb, metrics.mem_percent);
-  get_swap_usage(provider.get_meminfo_stream(), metrics.swap_used_kb,
+  get_mem_usage(meminfo_file_stream, metrics.mem_used_kb, metrics.mem_total_kb,
+                metrics.mem_percent);
+  get_swap_usage(meminfo_file_stream, metrics.swap_used_kb,
                  metrics.swap_total_kb, metrics.swap_percent);
 
-  metrics.uptime = get_uptime(provider.get_uptime_stream());
-  metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
+  metrics.uptime = get_uptime(uptime_file_stream);
+  metrics.cpu_frequency_ghz = get_cpu_freq_ghz(cpu_file_stream);
   return metrics;
 }
 
-ProcDataStreams get_ssh_streams() {
-  // Get the remote data
-  std::string cpu_data = execute_ssh_command("cat /proc/cpuinfo");
-  std::string meminfo_data = execute_ssh_command("cat /proc/meminfo");
-  std::string uptime_data = execute_ssh_command("cat /proc/uptime");
-  std::string stat_data = execute_ssh_command("cat /proc/stat");
-
-  // Create string streams from the retrieved data
-  std::stringstream cpu_file_stream(cpu_data);
-  std::stringstream meminfo_file_stream(meminfo_data);
-  std::stringstream uptime_file_stream(uptime_data);
-  std::stringstream stat_file_stream(stat_data);
-
-  ProcDataStreams streams;
-  streams.cpuinfo << cpu_data;
-  streams.meminfo << meminfo_data;
-  streams.uptime << uptime_data;
-  streams.stat << stat_data;
-
-  return streams;
-}
-LocalDataStreams get_local_file_streams() {
-  LocalDataStreams streams;
-  streams.cpuinfo.open("/proc/cpuinfo");
-  streams.meminfo.open("/proc/meminfo");
-  streams.uptime.open("/proc/uptime");
-  streams.stat.open("/proc/stat");
-  return streams;
-}
-
-void print_metrics(SystemMetrics metrics) {
+void print_data(SystemMetrics metrics) {
   std::cout << "CPU Frequency Ghz " << metrics.cpu_frequency_ghz << std::endl;
 
   for (const auto &core : metrics.cores) {
