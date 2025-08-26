@@ -4,10 +4,9 @@
 #include <iomanip>
 #include <iostream>
 
-std::string get_uptime() {
-  std::ifstream file("/proc/uptime");
+std::string get_uptime(std::istream &input_stream) {
   double uptime_seconds;
-  file >> uptime_seconds;
+  input_stream >> uptime_seconds;
   int days = uptime_seconds / 86400;
   int hours = ((int)uptime_seconds % 86400) / 3600;
   int minutes = ((int)uptime_seconds % 3600) / 60;

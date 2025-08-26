@@ -1,9 +1,10 @@
 #pragma once
 
-#include "types.h"
-#include <vector>
 #include <tuple>
+#include <vector>
 
-void print_rows(std::vector<DeviceInfo>&, size_t column_count);
-void print_column_headers(std::tuple<std::string, std::function<FuncType>>[], size_t);
+#include "types.h"
 
+void print_rows(std::vector<DeviceInfo>&, const size_t column_count);
+void print_column_headers(std::tuple<std::string, std::function<FuncType>>[],
+                          size_t);
