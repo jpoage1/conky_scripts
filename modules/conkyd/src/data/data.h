@@ -31,6 +31,8 @@ class DataStreamProvider {
   virtual std::istream &get_meminfo_stream() = 0;
   virtual std::istream &get_uptime_stream() = 0;
   virtual std::istream &get_stat_stream() = 0;
+  virtual std::istream &get_mounts_stream() = 0;
+  virtual std::istream &get_diskstats_stream() = 0;
 };
 SystemMetrics read_data(DataStreamProvider &);
 

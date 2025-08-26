@@ -1,6 +1,4 @@
-#include <fstream>
-#include <iostream>
-#include <tuple>
+
 #include <vector>
 
 #include "colors.h"
@@ -10,4 +8,6 @@
 #include "size_format.h"
 #include "types.h"
 
-int diskstat(const std::string &);
+static std::vector<std::string> read_device_paths(const std::string &path);
+
+int diskstat(const std::string &config_file);

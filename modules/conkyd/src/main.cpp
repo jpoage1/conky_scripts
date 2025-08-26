@@ -1,15 +1,23 @@
 
+#include <iostream>
+
 #include "data_local.h"
 #include "data_ssh.h"
+#include "diskstat.h"
 SystemMetrics get_metrics(const bool);
 // SystemMetrics get_ssh_metrics();
 // SystemMetrics get_local_metrics();
 
-int main() {
-  print_metrics(get_metrics(false));
-  std::cout << "-------------" << std::endl;
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    std::cerr << "Usage: " << argv[0] << " <device_list_file>\n";
+    return 1;
+  }
+  //   print_metrics(get_metrics(false));
+  //   std::cout << "-------------" << std::endl;
   print_metrics(get_metrics(true));
-  return 0;
+
+  return diskstat(argv[1]);
 }
 
 SystemMetrics get_metrics(const bool use_ssh) {

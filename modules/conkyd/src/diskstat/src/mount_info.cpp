@@ -1,8 +1,10 @@
 #include "mount_info.h"
-#include <fstream>
+
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <fstream>
 
 std::string get_mount_point(const std::string &device_path) {
   std::ifstream mounts("/proc/mounts");
@@ -13,8 +15,7 @@ std::string get_mount_point(const std::string &device_path) {
     char dev_real[PATH_MAX], path_real[PATH_MAX];
     if (realpath(device.c_str(), dev_real) &&
         realpath(device_path.c_str(), path_real)) {
-      if (strcmp(dev_real, path_real) == 0)
-        return mount_point;
+      if (strcmp(dev_real, path_real) == 0) return mount_point;
     }
   }
   return "";

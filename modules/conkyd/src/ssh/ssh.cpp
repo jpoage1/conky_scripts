@@ -38,7 +38,6 @@ int setup_ssh_session() {
     session = NULL;
     return 1;
   }
-  std::cout << "Authentication successful!" << std::endl;
   return 0;
 }
 
