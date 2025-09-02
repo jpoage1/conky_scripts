@@ -1,5 +1,6 @@
 #include "diskstat.h"
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -36,19 +37,49 @@ std::tuple<std::string, std::function<FuncType>> columns[] = {
      }},
 };
 
-static std::vector<std::string> read_device_paths(const std::string &path) {
-  std::ifstream file(path);
-  std::vector<std::string> lines;
+int read_device_paths(const std::string &file_path,
+                      std::vector<std::string> &lines) {
+  std::ifstream file(file_path);
   std::string line;
+
+  namespace fs = std::filesystem;
+
+  // Check if the file exists, is a regular file, and is readable
+  if (!fs::exists(file_path) || !fs::is_regular_file(file_path)) {
+    std::cerr << "Unable to load file: " + file_path << std::endl;
+    return 1;
+  }
+
   while (std::getline(file, line)) {
     if (!line.empty()) lines.push_back(line);
   }
-  return lines;
+  return 0;
 }
 
 int diskstat(const std::string &config_file) {
-  auto device_paths = read_device_paths(config_file);
+  std::vector<std::string> device_paths;
+  if (read_device_paths(config_file, device_paths) == 1) {
+    std::cout << "${color red}Unable to load file: " + config_file + "${color}"
+              << std::endl;
+    return 1;
+  }
   auto devices = collect_device_info(device_paths);
+  size_t column_count = sizeof(columns) / sizeof(columns[0]);
+  std::cout.setf(std::ios::unitbuf);
+
+  print_column_headers(columns, column_count);
+  print_rows(devices, column_count);
+  return 0;
+}
+
+int diskstat(DataStreamProvider &provider, const std::string &config_file) {
+  std::vector<std::string> device_paths;
+  if (read_device_paths(config_file, device_paths) == 1) {
+    std::cout << "${color red}Unable to load file: " + config_file + "${color}"
+              << std::endl;
+    return 1;
+  }
+  auto devices = collect_device_info(provider, device_paths);
   size_t column_count = sizeof(columns) / sizeof(columns[0]);
   std::cout.setf(std::ios::unitbuf);
 

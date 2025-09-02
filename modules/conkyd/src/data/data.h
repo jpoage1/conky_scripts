@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <istream>
@@ -33,6 +34,8 @@ class DataStreamProvider {
   virtual std::istream &get_stat_stream() = 0;
   virtual std::istream &get_mounts_stream() = 0;
   virtual std::istream &get_diskstats_stream() = 0;
+  virtual uint64_t get_used_space_bytes(const std::string &mount_point) = 0;
+  virtual uint64_t get_disk_size_bytes(const std::string &mount_point) = 0;
 };
 SystemMetrics read_data(DataStreamProvider &);
 

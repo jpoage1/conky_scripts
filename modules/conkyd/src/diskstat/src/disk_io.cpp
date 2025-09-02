@@ -19,8 +19,12 @@ static uint64_t current_time_in_ms() {
   return duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
       .count();
 }
-
 std::string get_read_bytes_per_sec(const std::string &device_path) {
+  std::ifstream diskstats_stream("/proc/diskstats");
+  return get_read_bytes_per_sec(diskstats_stream, device_path);
+}
+std::string get_read_bytes_per_sec(std::istream &diskstats_stream,
+                                   const std::string &device_path) {
   if (device_path.empty()) {
     return "";
   }
@@ -32,9 +36,13 @@ std::string get_read_bytes_per_sec(const std::string &device_path) {
   }
 
   uint64_t current_bytes_read = 0;
-  std::ifstream diskstats("/proc/diskstats");
+
   std::string line;
-  while (std::getline(diskstats, line)) {
+
+  diskstats_stream.seekg(0);
+  diskstats_stream.clear();
+
+  while (std::getline(diskstats_stream, line)) {
     std::istringstream iss(line);
     std::string dev;
     uint64_t sectors = 0;
@@ -67,6 +75,11 @@ std::string get_read_bytes_per_sec(const std::string &device_path) {
 }
 
 std::string get_write_bytes_per_sec(const std::string &device_path) {
+  std::ifstream diskstats_stream("/proc/diskstats");
+  return get_write_bytes_per_sec(diskstats_stream, device_path);
+}
+std::string get_write_bytes_per_sec(std::istream &diskstats_stream,
+                                    const std::string &device_path) {
   if (device_path.empty()) {
     return "";
   }
@@ -78,9 +91,12 @@ std::string get_write_bytes_per_sec(const std::string &device_path) {
   }
 
   uint64_t current_bytes_written = 0;
-  std::ifstream diskstats("/proc/diskstats");
   std::string line;
-  while (std::getline(diskstats, line)) {
+
+  diskstats_stream.seekg(0);
+  diskstats_stream.clear();
+
+  while (std::getline(diskstats_stream, line)) {
     std::istringstream iss(line);
     std::string dev;
     uint64_t sectors = 0;
@@ -119,6 +135,12 @@ ConkyDiskIO conky_get_disk_io_per_sec(const std::string &device_path) {
 }
 
 DiskIO get_disk_io_per_sec(const std::string &device_path) {
+  std::ifstream diskstats("/proc/diskstats");
+  return get_disk_io_per_sec(diskstats, device_path);
+}
+
+DiskIO get_disk_io_per_sec(std::istream &diskstats_stream,
+                           const std::string &device_path) {
   if (device_path.empty()) return {};
 
   std::string device_name =
@@ -129,9 +151,12 @@ DiskIO get_disk_io_per_sec(const std::string &device_path) {
   uint64_t current_bytes_read = 0;
   uint64_t current_bytes_written = 0;
 
-  std::ifstream diskstats("/proc/diskstats");
   std::string line;
-  while (std::getline(diskstats, line)) {
+
+  diskstats_stream.seekg(0);
+  diskstats_stream.clear();
+
+  while (std::getline(diskstats_stream, line)) {
     std::istringstream iss(line);
     int major, minor;
     std::string dev;
