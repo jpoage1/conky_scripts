@@ -12,6 +12,7 @@ pkgs.mkShell {
     cmake
     libssh
     libssh2
+    nlohmann_json
     # openssl
   ];
 

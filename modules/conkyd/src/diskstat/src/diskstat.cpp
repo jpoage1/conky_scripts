@@ -63,7 +63,7 @@ int diskstat(const std::string &config_file) {
               << std::endl;
     return 1;
   }
-  auto devices = collect_device_info(device_paths);
+  std::vector<DeviceInfo> devices = collect_device_info(device_paths);
   size_t column_count = sizeof(columns) / sizeof(columns[0]);
   std::cout.setf(std::ios::unitbuf);
 
@@ -79,7 +79,7 @@ int diskstat(DataStreamProvider &provider, const std::string &config_file) {
               << std::endl;
     return 1;
   }
-  auto devices = collect_device_info(provider, device_paths);
+  std::vector<DeviceInfo> devices = collect_device_info(provider, device_paths);
   size_t column_count = sizeof(columns) / sizeof(columns[0]);
   std::cout.setf(std::ios::unitbuf);
 

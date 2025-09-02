@@ -27,32 +27,39 @@ SRC_CPUINFO = src/cpuinfo/cpuinfo.cpp
 SRC_MEMINFO = src/meminfo/meminfo.cpp
 SRC_SWAPINFO = src/swapinfo/swapinfo.cpp
 SRC_UPTIME = src/uptime/uptime.cpp
-SRC_MAIN = src/main.cpp
+SRC_MAIN = src/conkyd.cpp
+SRC_MAIN = src/waybar.cpp
 
 # Object files
 OBJ_DATA = $(OBJ_DIR)/data/data.o
 OBJ_DATA_LOCAL = $(OBJ_DIR)/data/data_local.o
 OBJ_DATA_SSH = $(OBJ_DIR)/data/data_ssh.o
+OBJ_METRICS = $(OBJ_DIR)/data/metrics.o
 OBJ_SSH = $(OBJ_DIR)/ssh/ssh.o
 OBJ_CORESTAT = $(OBJ_DIR)/corestat/corestat.o
 OBJ_CPUINFO = $(OBJ_DIR)/cpuinfo/cpuinfo.o
 OBJ_MEMINFO = $(OBJ_DIR)/meminfo/meminfo.o
 OBJ_SWAPINFO = $(OBJ_DIR)/swapinfo/swapinfo.o
 OBJ_UPTIME = $(OBJ_DIR)/uptime/uptime.o
-OBJ_MAIN = $(OBJ_DIR)/main.o
+OBJ_CONKYD = $(OBJ_DIR)/conkyd.o
+OBJ_WAYBARD = $(OBJ_DIR)/waybar.o
 
 # Diskstat sources/objects
 DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
 DISKSTAT_OBJ = $(patsubst $(DISKSTAT_SRC_DIR)/%.cpp,$(DISKSTAT_OBJ_DIR)/%.o,$(DISKSTAT_SRC))
 
 # Final binary
-BIN = conkyd.bin
+CONKYD_BIN = conkyd.bin
+WAYBARD_BIN = waybard.bin
 
 .PHONY: all clean debug
 
 all: $(DISKSTAT_LIB) $(BIN)
 
-$(BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_MAIN) $(DISKSTAT_LIB)
+$(CONKYD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CONKYD) $(DISKSTAT_LIB)
+	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh
+
+$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBARD) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh
 
 # Build static lib
@@ -86,6 +93,10 @@ $(OBJ_DATA_SSH): src/data/data_ssh.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(OBJ_METRICS): src/data/metrics.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 $(OBJ_SSH): src/ssh/ssh.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -106,13 +117,18 @@ $(OBJ_UPTIME): src/uptime/uptime.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_MAIN): src/main.cpp
+$(OBJ_CONKYD): src/conkyd.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_WAYBARD): src/waybar.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(BIN)
+	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(WAYBARD_BIN) $(CONKYD_BIN)
 
-install: $(BIN)
+install: $(CONKYD_BIN) $(WAYBARD_BIN)
 	mkdir -p $(INSTALL_DIR)
-	cp $(BIN) $(INSTALL_DIR)/conkyd
+	cp $(CONKYD_BIN) $(INSTALL_DIR)/conkyd
+	cp $(WAYBARD_BIN) $(INSTALL_DIR)/warbard
