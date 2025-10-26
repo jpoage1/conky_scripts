@@ -28,7 +28,7 @@ SRC_MEMINFO = src/meminfo/meminfo.cpp
 SRC_SWAPINFO = src/swapinfo/swapinfo.cpp
 SRC_UPTIME = src/uptime/uptime.cpp
 SRC_MAIN = src/conkyd.cpp
-SRC_MAIN = src/waybar.cpp
+SRC_WAYBAR = src/waybar.cpp
 
 # Object files
 OBJ_DATA = $(OBJ_DIR)/data/data.o

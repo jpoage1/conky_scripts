@@ -38,7 +38,7 @@ struct ColoredString {
   std::string formatted(TargetFormat target) const {
     switch (target) {
       case TargetFormat::WAYBAR:
-        return "<span foreground='" + color + "'>" + text + "</span>";
+        return "<span foreground='#" + color + "'>" + text + "</span>";
 
       case TargetFormat::CONKY:
       default:

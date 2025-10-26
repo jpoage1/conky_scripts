@@ -12,9 +12,9 @@
 #include "mount_info.h"
 
 std::vector<DeviceInfo> collect_device_info(
-    const std::vector<std::string> &device_paths) {
+    const std::vector<std::string>& device_paths) {
   std::vector<DeviceInfo> data;
-  for (const auto &device_path : device_paths) {
+  for (const auto& device_path : device_paths) {
     DeviceInfo info;
     // DiskIO io = get_disk_io_per_sec(device_path);
     ConkyDiskIO io = conky_get_disk_io_per_sec(device_path);
@@ -38,10 +38,10 @@ std::vector<DeviceInfo> collect_device_info(
 }
 
 std::vector<DeviceInfo> collect_device_info(
-    DataStreamProvider &provider,
-    const std::vector<std::string> &device_paths) {
+    DataStreamProvider& provider,
+    const std::vector<std::string>& device_paths) {
   std::vector<DeviceInfo> data;
-  for (const auto &device_path : device_paths) {
+  for (const auto& device_path : device_paths) {
     DeviceInfo info;
     // DiskIO io = get_disk_io_per_sec(device_path);
     ConkyDiskIO io = conky_get_disk_io_per_sec(device_path);
@@ -65,13 +65,13 @@ std::vector<DeviceInfo> collect_device_info(
   return data;
 }
 
-uint64_t get_used_space_bytes(const std::string &mount_point) {
+uint64_t get_used_space_bytes(const std::string& mount_point) {
   struct statvfs stat;
   if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return 0;
   return (stat.f_blocks - stat.f_bfree) * stat.f_frsize;
 }
 
-uint64_t get_disk_size_bytes(const std::string &mount_point) {
+uint64_t get_disk_size_bytes(const std::string& mount_point) {
   struct statvfs stat;
   if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return 0;
   return stat.f_blocks * stat.f_frsize;

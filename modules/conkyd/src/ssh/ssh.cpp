@@ -7,7 +7,10 @@
 
 static ssh_session session = NULL;
 
-int setup_ssh_session() {
+int setup_ssh_session() { return setup_ssh_session("192.168.1.200", "conky"); }
+int ssh_connection() { return ssh_connection("192.168.1.200", "conky"); }
+
+int setup_ssh_session(const std::string host, const std::string user) {
   if (session != NULL) {
     return 0;  // Session already exists
   }
@@ -18,8 +21,8 @@ int setup_ssh_session() {
     return 1;
   }
 
-  ssh_options_set(session, SSH_OPTIONS_HOST, "192.168.1.200");
-  ssh_options_set(session, SSH_OPTIONS_USER, "conky");
+  ssh_options_set(session, SSH_OPTIONS_HOST, host.c_str());
+  ssh_options_set(session, SSH_OPTIONS_USER, user.c_str());
 
   int rc = ssh_connect(session);
   if (rc != SSH_OK) {
@@ -81,7 +84,7 @@ void cleanup_ssh_session() {
     session = NULL;
   }
 }
-int ssh_connection() {
+int ssh_connection(const std::string host, const std::string user) {
   ssh_session session;
   session = ssh_new();
   if (session == NULL) {
@@ -90,8 +93,8 @@ int ssh_connection() {
   }
 
   // Replace with your remote host and username
-  ssh_options_set(session, SSH_OPTIONS_HOST, "192.168.1.200");
-  ssh_options_set(session, SSH_OPTIONS_USER, "conky");
+  ssh_options_set(session, SSH_OPTIONS_HOST, host.c_str());
+  ssh_options_set(session, SSH_OPTIONS_USER, user.c_str());
 
   // Establish the connection
   int rc = ssh_connect(session);
