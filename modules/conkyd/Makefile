@@ -8,7 +8,8 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O2 \
   -Isrc/meminfo \
   -Isrc/networkstats \
   -Isrc/swapinfo \
-  -Isrc/uptime
+  -Isrc/uptime \
+  -Isrc/waybar
 
 # Directories
 OBJ_DIR = obj
@@ -30,6 +31,10 @@ SRC_NETWORKSTATS = src/networkstats/networkstats.cpp
 SRC_SWAPINFO = src/swapinfo/swapinfo.cpp
 SRC_UPTIME = src/uptime/uptime.cpp
 SRC_MAIN = src/conkyd.cpp
+SRC_WAYBAR_TYPES = src/waybar_types.cpp
+SRC_WAYBAR_CLI_PARSER = src/waybar_cli_parser.cpp
+SRC_WAYBAR_FORMATTER = src/waybar_formatter.cpp
+SRC_WAYBAR_MAIN = src/waybar/main.cpp
 SRC_WAYBAR = src/waybar.cpp
 
 # Object files
@@ -44,6 +49,9 @@ OBJ_MEMINFO = $(OBJ_DIR)/meminfo/meminfo.o
 OBJ_NETWORKSTATS = $(OBJ_DIR)/networkstats/networkstats.o
 OBJ_SWAPINFO = $(OBJ_DIR)/swapinfo/swapinfo.o
 OBJ_UPTIME = $(OBJ_DIR)/uptime/uptime.o
+OBJ_WAYBAR_CLI_PARSER = src/waybar_cli_parser.o
+OBJ_WAYBAR_FORMATTER = src/waybar_formatter.o
+OBJ_WAYBAR_MAIN = src/waybar/main.cpp
 OBJ_CONKYD = $(OBJ_DIR)/conkyd.o
 OBJ_WAYBARD = $(OBJ_DIR)/waybar.o
 
@@ -54,6 +62,7 @@ DISKSTAT_OBJ = $(patsubst $(DISKSTAT_SRC_DIR)/%.cpp,$(DISKSTAT_OBJ_DIR)/%.o,$(DI
 # Final binary
 CONKYD_BIN = conkyd.bin
 WAYBARD_BIN = waybard.bin
+WAYBARD2_BIN = waybard2.bin
 
 .PHONY: all clean debug
 
@@ -62,7 +71,7 @@ all: $(DISKSTAT_LIB) $(BIN)
 $(CONKYD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CONKYD) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh
 
-$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBARD) $(DISKSTAT_LIB)
+$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBAR_CLI_PARSER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_WAYBAR_MAIN) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh
 
 # Build static lib
@@ -124,6 +133,18 @@ $(OBJ_UPTIME): src/uptime/uptime.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(OBJ_WAYBAR_CLI_PARSER): src/waybar/waybar_cli_parser.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_WAYBAR_FORMATTER): src/waybar/waybar_formatter.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_WAYBAR_MAIN): src/waybar/main.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 $(OBJ_CONKYD): src/conkyd.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -133,9 +154,19 @@ $(OBJ_WAYBARD): src/waybar.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(WAYBARD_BIN) $(CONKYD_BIN)
+	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(CONKYD_BIN)
 
-install: $(CONKYD_BIN) $(WAYBARD_BIN)
+install: $(CONKYD_BIN) $(WAYBARD_BIN) $(WAYBARD2_BIN)
 	mkdir -p $(INSTALL_DIR)
 	cp $(CONKYD_BIN) $(INSTALL_DIR)/conkyd
 	cp $(WAYBARD_BIN) $(INSTALL_DIR)/warbard
+	cp $(WAYBARD2_BIN) $(INSTALL_DIR)/warbard2
+
+
+waybard: $(WAYBARD_BIN)
+	mkdir -p $(INSTALL_DIR)
+	cp $(WAYBARD_BIN) $(INSTALL_DIR)/warbard
+
+waybard2: $(WAYBARD2_BIN)
+	mkdir -p $(INSTALL_DIR)
+	cp $(WAYBARD2_BIN) $(INSTALL_DIR)/warbard2
