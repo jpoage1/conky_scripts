@@ -6,7 +6,7 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O2 \
   -Isrc/corestat \
   -Isrc/cpuinfo \
   -Isrc/meminfo \
-  -Isrc/networkstats \
+  -Isrc/processinfo \
   -Isrc/networkstats \
   -Isrc/swapinfo \
   -Isrc/uptime \
