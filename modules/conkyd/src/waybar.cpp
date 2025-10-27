@@ -200,15 +200,38 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
                      << std::setw(rate_col_width) << "Down"
                      << std::setw(rate_col_width) << "Up" << "\n";
 
+          // Rows - Iterate over the filtered list
           for (const auto& net_stat : filtered_interfaces) {
-            auto down_formatted = format_size_rate(net_stat.rx_bytes_per_sec);
-            auto up_formatted = format_size_rate(net_stat.tx_bytes_per_sec);
+            // Get the formatted size objects (containing text and color)
+            auto down_formatted_obj =
+                format_size_rate(net_stat.rx_bytes_per_sec);
+            auto up_formatted_obj = format_size_rate(net_stat.tx_bytes_per_sec);
 
+            // Create stringstreams and pad the RAW text
+            std::stringstream down_text_ss;
+            down_text_ss << std::left
+                         << std::setw(rate_col_width -
+                                      1)  // Leave 1 space padding
+                         << down_formatted_obj.text;
+
+            std::stringstream up_text_ss;
+            up_text_ss << std::left
+                       << std::setw(rate_col_width -
+                                    1)  // Leave 1 space padding
+                       << up_formatted_obj.text;
+
+            // Construct the table row with manual Pango spans
             tooltip_ss << std::left << std::setw(if_col_width)
-                       << net_stat.interface_name << std::setw(rate_col_width)
-                       << down_formatted.formatted(target)
-                       << std::setw(rate_col_width)
-                       << up_formatted.formatted(target) << "\n";
+                       << net_stat.interface_name
+                       // Down rate: wrap padded text in span
+                       << "<span foreground='#" << down_formatted_obj.color
+                       << "'>" << down_text_ss.str()
+                       << "</span> "  // Add manual space
+                       // Up rate: wrap padded text in span
+                       << "<span foreground='#" << up_formatted_obj.color
+                       << "'>" << up_text_ss.str()
+                       << "</span>"  // No trailing space before newline
+                       << "\n";
           }
         }
         tooltip_ss << "</tt>\n\n";
