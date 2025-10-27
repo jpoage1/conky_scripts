@@ -224,12 +224,22 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
     }
   }  // end for loop
 
-  // --- Set Main Text ---
-  if (any_errors) {
-    waybar_output["text"] = " ⚠";
+  std::string main_text_label = " Unknown";  // Default
+  if (!all_results.empty()) {
+    const auto& first_result =
+        all_results[0];  // Assume only one result due to toggle logic
+    main_text_label = " " + first_result.source_name;
+    if (!first_result.success) {
+      any_errors = true;
+      main_text_label += " ⚠";  // Append warning icon on error
+    }
   } else {
-    waybar_output["text"] = " Stats";
+    // Handle case where all_results might be empty (though should not happen
+    // with current main logic)
+    any_errors = true;  // Treat empty result as an error case for text/class
+    main_text_label = " Error";
   }
+  waybar_output["text"] = main_text_label;
 
   // --- Set CSS Class ---
   int avg_mem =
