@@ -8,6 +8,9 @@
 #include <vector>
 
 #include "corestat.h"
+#include "networkstats.hpp"
+
+void rewind(std::stringstream& stream);
 
 struct SystemMetrics {
   std::vector<CoreStats> cores;
@@ -20,6 +23,18 @@ struct SystemMetrics {
   long swap_total_kb;
   int swap_percent;
   std::string uptime;
+
+  double load_avg_1m = 0.0;
+  double load_avg_5m = 0.0;
+  double load_avg_15m = 0.0;
+  long processes_total = 0;
+  long processes_running = 0;
+
+  std::string sys_name;
+  std::string node_name;
+  std::string kernel_release;
+  std::string machine_type;
+  std::vector<NetworkInterfaceStats> network_interfaces;
 };
 
 class DataStreamProvider {
@@ -31,6 +46,8 @@ class DataStreamProvider {
   virtual std::istream& get_stat_stream() = 0;
   virtual std::istream& get_mounts_stream() = 0;
   virtual std::istream& get_diskstats_stream() = 0;
+  virtual std::istream& get_loadavg_stream() = 0;
+  virtual std::istream& get_net_dev_stream() = 0;
   virtual uint64_t get_used_space_bytes(const std::string& mount_point) = 0;
   virtual uint64_t get_disk_size_bytes(const std::string& mount_point) = 0;
   virtual double get_cpu_temperature() = 0;
@@ -38,3 +55,5 @@ class DataStreamProvider {
 SystemMetrics read_data(DataStreamProvider&);
 
 void print_metrics(const SystemMetrics&);
+void get_load_and_process_stats(DataStreamProvider& provider,
+                                SystemMetrics& metrics);

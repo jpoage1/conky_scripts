@@ -29,7 +29,7 @@ std::vector<CPUCore> read_cpu_times(std::istream& input_stream) {
 
 std::vector<float> get_cpu_usages(std::istream& input_stream) {
   auto t1 = read_cpu_times(input_stream);
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
   auto t2 = read_cpu_times(input_stream);
   std::vector<float> usages;
   for (size_t i = 0; i < t1.size(); ++i) {

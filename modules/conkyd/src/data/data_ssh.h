@@ -12,36 +12,40 @@ struct ProcDataStreams : public DataStreamProvider {
   std::stringstream stat;
   std::stringstream mounts;
   std::stringstream diskstats;
+  std::stringstream loadavg;
+  std::stringstream net_dev;
 
   std::istream& get_cpuinfo_stream() override {
-    cpuinfo.clear();
-    cpuinfo.seekg(0, std::ios::beg);
+    rewind(cpuinfo);
     return cpuinfo;
   }
   std::istream& get_meminfo_stream() override {
-    meminfo.clear();
-    meminfo.seekg(0, std::ios::beg);
+    rewind(meminfo);
     return meminfo;
   }
   std::istream& get_uptime_stream() override {
-    uptime.clear();
-    uptime.seekg(0, std::ios::beg);
+    rewind(uptime);
     return uptime;
   }
   std::istream& get_stat_stream() override {
-    stat.clear();
-    stat.seekg(0, std::ios::beg);
+    rewind(stat);
     return stat;
   }
   std::istream& get_mounts_stream() override {
-    mounts.clear();
-    mounts.seekg(0, std::ios::beg);
+    rewind(mounts);
     return mounts;
   }
   std::istream& get_diskstats_stream() override {
-    diskstats.clear();
-    diskstats.seekg(0, std::ios::beg);
+    rewind(diskstats);
     return diskstats;
+  }
+  std::istream& get_loadavg_stream() override {
+    rewind(loadavg);
+    return loadavg;
+  }
+  std::istream& get_net_dev_stream() override {
+    rewind(net_dev);
+    return net_dev;
   }
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;

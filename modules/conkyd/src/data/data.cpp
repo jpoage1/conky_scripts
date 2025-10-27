@@ -1,23 +1,29 @@
 #include "data.h"
 
+#include <sys/utsname.h>
+
+#include <chrono>
 #include <iomanip>
+#include <map>
 
 #include "corestat.h"
 #include "cpuinfo.h"
 #include "diskstat.h"
 #include "meminfo.h"
+#include "networkstats.hpp"
 #include "swapinfo.h"
 #include "uptime.h"
+
+void rewind(std::stringstream& stream) {
+  stream.clear();
+  stream.seekg(0, std::ios::beg);
+}
 
 SystemMetrics read_data(DataStreamProvider& provider) {
   SystemMetrics metrics;
 
-  // This function (defined in previous turn) now returns the
-  // std.vector<CoreStats> with all percentages calculated.
-  // The 100ms sleep is inside calculate_cpu_usages.
   metrics.cores = calculate_cpu_usages(provider.get_stat_stream());
 
-  // The rest of the data gathering:
   metrics.cpu_temp_c = provider.get_cpu_temperature();
 
   get_mem_usage(provider.get_meminfo_stream(), metrics.mem_used_kb,
@@ -27,6 +33,24 @@ SystemMetrics read_data(DataStreamProvider& provider) {
 
   metrics.uptime = get_uptime(provider.get_uptime_stream());
   metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
+
+  get_load_and_process_stats(provider, metrics);
+  get_network_stats(provider, metrics);
+
+  struct utsname uts_info;
+  if (uname(&uts_info) == 0) {  // 0 indicates success
+    metrics.sys_name = uts_info.sysname;
+    metrics.node_name = uts_info.nodename;
+    metrics.kernel_release = uts_info.release;
+    metrics.machine_type = uts_info.machine;
+  } else {
+    // Handle uname error if needed, e.g., set default strings
+    metrics.sys_name = "N/A";
+    metrics.node_name = "N/A";
+    metrics.kernel_release = "N/A";
+    metrics.machine_type = "N/A";
+  }
+
   return metrics;
 }
 
@@ -57,4 +81,30 @@ void print_metrics(const SystemMetrics& metrics) {
   std::cout << "Swap: " << metrics.swap_used_kb << " / "
             << metrics.swap_total_kb << " kB (" << metrics.swap_percent << "%)"
             << std::endl;
+}
+void get_load_and_process_stats(DataStreamProvider& provider,
+                                SystemMetrics& metrics) {
+  // 1. Get Load Average
+  provider.get_loadavg_stream() >> metrics.load_avg_1m >> metrics.load_avg_5m >>
+      metrics.load_avg_15m;
+
+  // 2. Get Process Counts
+  std::istream& stat_stream = provider.get_stat_stream();
+  stat_stream.clear();
+  stat_stream.seekg(0, std::ios::beg);
+  std::string line;
+  while (std::getline(stat_stream, line)) {
+    if (line.rfind("processes", 0) == 0) {
+      std::stringstream ss(line);
+      std::string key;
+      ss >> key >> metrics.processes_total;
+    } else if (line.rfind("procs_running", 0) == 0) {
+      std::stringstream ss(line);
+      std::string key;
+      ss >> key >> metrics.processes_running;
+    } else if (line.rfind("procs_blocked", 0) == 0) {
+      // All process lines are together, so we can stop
+      break;
+    }
+  }
 }

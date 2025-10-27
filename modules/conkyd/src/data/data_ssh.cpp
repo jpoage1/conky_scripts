@@ -8,6 +8,8 @@ ProcDataStreams get_ssh_streams() {
   std::string stat_data = execute_ssh_command("cat /proc/stat");
   std::string mounts_data = execute_ssh_command("cat /proc/mounts");
   std::string diskstats_data = execute_ssh_command("cat /proc/diskstats");
+  std::string loadavg_data = execute_ssh_command("cat /proc/loadavg");
+  std::string net_dev_data = execute_ssh_command("cat /proc/net/dev");
 
   // Create string streams from the retrieved data
   std::stringstream cpu_file_stream(cpu_data);
@@ -16,6 +18,8 @@ ProcDataStreams get_ssh_streams() {
   std::stringstream stat_file_stream(stat_data);
   std::stringstream mounts_file_stream(mounts_data);
   std::stringstream diskstats_file_stream(diskstats_data);
+  std::stringstream loadavg_file_stream(loadavg_data);
+  std::stringstream net_dev_file_stream(net_dev_data);
 
   ProcDataStreams streams;
   streams.cpuinfo << cpu_data;
@@ -24,6 +28,8 @@ ProcDataStreams get_ssh_streams() {
   streams.stat << stat_data;
   streams.mounts << mounts_data;
   streams.diskstats << diskstats_data;
+  streams.loadavg << loadavg_data;
+  streams.net_dev << net_dev_data;
 
   return streams;
 }

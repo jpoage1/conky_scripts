@@ -2,7 +2,13 @@
 #include "data_local.h"
 
 #include <filesystem>
+#include <iostream>
 #include <optional>
+
+void rewind(std::ifstream& stream) {
+  stream.clear();
+  stream.seekg(0, std::ios::beg);
+}
 
 LocalDataStreams get_local_file_streams() {
   LocalDataStreams streams;
@@ -12,10 +18,10 @@ LocalDataStreams get_local_file_streams() {
   streams.stat.open("/proc/stat");
   streams.mounts.open("/proc/mounts");
   streams.diskstats.open("/proc/diskstats");
+  streams.loadavg.open("/proc/loadavg");
+  streams.net_dev.open("/proc/net/dev");
   return streams;
 }
-
-LocalDataStreams get_local_file_streams();
 
 uint64_t LocalDataStreams::get_used_space_bytes(
     const std::string& mount_point) {

@@ -6,6 +6,7 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O2 \
   -Isrc/corestat \
   -Isrc/cpuinfo \
   -Isrc/meminfo \
+  -Isrc/networkstats \
   -Isrc/swapinfo \
   -Isrc/uptime
 
@@ -25,6 +26,7 @@ SRC_SSH = src/ssh/ssh.cpp
 SRC_CORESTAT = src/corestat/corestat.cpp
 SRC_CPUINFO = src/cpuinfo/cpuinfo.cpp
 SRC_MEMINFO = src/meminfo/meminfo.cpp
+SRC_NETWORKSTATS = src/networkstats/networkstats.cpp
 SRC_SWAPINFO = src/swapinfo/swapinfo.cpp
 SRC_UPTIME = src/uptime/uptime.cpp
 SRC_MAIN = src/conkyd.cpp
@@ -39,6 +41,7 @@ OBJ_SSH = $(OBJ_DIR)/ssh/ssh.o
 OBJ_CORESTAT = $(OBJ_DIR)/corestat/corestat.o
 OBJ_CPUINFO = $(OBJ_DIR)/cpuinfo/cpuinfo.o
 OBJ_MEMINFO = $(OBJ_DIR)/meminfo/meminfo.o
+OBJ_NETWORKSTATS = $(OBJ_DIR)/networkstats/networkstats.o
 OBJ_SWAPINFO = $(OBJ_DIR)/swapinfo/swapinfo.o
 OBJ_UPTIME = $(OBJ_DIR)/uptime/uptime.o
 OBJ_CONKYD = $(OBJ_DIR)/conkyd.o
@@ -56,10 +59,10 @@ WAYBARD_BIN = waybard.bin
 
 all: $(DISKSTAT_LIB) $(BIN)
 
-$(CONKYD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CONKYD) $(DISKSTAT_LIB)
+$(CONKYD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CONKYD) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh
 
-$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBARD) $(DISKSTAT_LIB)
+$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBARD) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh
 
 # Build static lib
@@ -106,6 +109,10 @@ $(OBJ_CPUINFO): src/cpuinfo/cpuinfo.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_MEMINFO): src/meminfo/meminfo.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_NETWORKSTATS): src/networkstats/networkstats.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
