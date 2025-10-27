@@ -9,6 +9,7 @@
 
 #include "corestat.h"
 #include "networkstats.hpp"
+#include "processinfo.hpp"
 
 void rewind(std::stringstream& stream);
 
