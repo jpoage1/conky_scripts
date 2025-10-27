@@ -45,6 +45,10 @@ struct ProcDataStreams : public DataStreamProvider {
   }
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
+
+  double get_cpu_temperature() override {
+    return -1.0;  // TODO: Implement SSH temp logic
+  }
 };
 
 ProcDataStreams get_ssh_streams();

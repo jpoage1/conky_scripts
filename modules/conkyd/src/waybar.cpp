@@ -47,44 +47,56 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
 
   const TargetFormat target = TargetFormat::WAYBAR;
 
-  // Loop through each command's result
   for (const auto& result : all_results) {
     if (result.success) {
-      // --- This result was a SUCCESS, print its tables ---
-
-      // FIX: 'system_metrics' holds stats like uptime/mem, 'devices' holds
-      // disks
       const auto& system_metrics = result.metrics.system;
       const auto& devices = result.metrics.disks;
-
-      // Add System Info section
-      // FIX: Check mem_total_kb on system_metrics
       if (system_metrics.mem_total_kb > 0) {
         tooltip_ss
-            << "<b>System Information (" << result.source_name
-            << ")</b>\n"
-            // FIX: Access all system stats via system_metrics
+            << "<b>System Information (" << result.source_name << ")</b>\n"
             << "Uptime: " << system_metrics.uptime << "\n"
             << "CPU Freq: " << std::fixed << std::setprecision(2)
             << system_metrics.cpu_frequency_ghz << " GHz\n"
+            << "CPU Temp: " << std::fixed << std::setprecision(2)
+            << system_metrics.cpu_temp_c << " C\n"
             << "Memory: "
             << format_size(system_metrics.mem_used_kb * 1024).formatted(target)
             << " / "
             << format_size(system_metrics.mem_total_kb * 1024).formatted(target)
-            << " (" << system_metrics.mem_percent << "%)\n\n";
+            << " (" << system_metrics.mem_percent << "%)\n";
 
-        // FIX: Add mem_percent from system_metrics
+        tooltip_ss << "<tt>";
+
+        tooltip_ss << std::fixed << std::setprecision(1);
+        tooltip_ss << "  Core   Total   User    Sys   IOWait\n";
+
+        for (const auto& core : system_metrics.cores) {
+          std::string label;
+          if (core.core_id == 0) {
+            label = "Avg";
+          } else {
+            label = std::to_string(core.core_id - 1);
+          }
+
+          tooltip_ss << "  " << std::setw(4) << std::left
+                     << label  // Use the new label
+                     << std::setw(7) << std::right << core.total_usage_percent
+                     << "%" << std::setw(7) << std::right << core.user_percent
+                     << "%" << std::setw(7) << std::right << core.system_percent
+                     << "%" << std::setw(7) << std::right << core.iowait_percent
+                     << "%"
+                     << "\n";
+        }
+        tooltip_ss << "</tt>\n\n";
+
         total_mem_percent += system_metrics.mem_percent;
         valid_mem_sources++;
       }
-
-      // Add Filesystem Table section
       if (!devices.empty()) {
         tooltip_ss << "<b>Filesystem Usage (" << result.source_name
                    << ")</b>\n";
-        tooltip_ss << "<tt>";  // Wrap in <tt> for monospaced font
+        tooltip_ss << "<tt>";
 
-        // (This block was already correct and uses the 'devices' variable)
         size_t max_mount_len = 5;
         for (const auto& dev : devices) {
           if (dev.mount_point.length() > max_mount_len) {
@@ -123,7 +135,7 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
                      << total_text_ss.str() << "</span> "
                      << "(" << used_percent << "%)\n";
         }
-        tooltip_ss << "</tt>\n\n";  // Add spacing after table
+        tooltip_ss << "</tt>\n\n";
       }
     } else {
       // --- This result was an ERROR, print the error message ---

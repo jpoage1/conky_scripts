@@ -1,5 +1,6 @@
 #include "corestat.h"
 
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <sstream>
@@ -48,4 +49,70 @@ std::string format_cpu_times(const CPUCore& core, size_t index) {
          ": Idle=" + std::to_string(core.idle_time) +
          ", Total=" + std::to_string(core.total_time) +
          ", Usage=" + std::to_string(usagePercent) + "%";
+}
+std::vector<CpuSnapshot> read_cpu_snapshots(std::istream& input_stream) {
+  std::vector<CpuSnapshot> snapshots;
+  std::string line;
+
+  input_stream.clear();
+  input_stream.seekg(0, std::ios::beg);
+
+  while (std::getline(input_stream, line)) {
+    if (line.compare(0, 3, "cpu") != 0) {
+      break;
+    }
+
+    std::istringstream ss(line);
+    std::string label;
+    ss >> label;
+
+    CpuSnapshot snap;
+    ss >> snap.user >> snap.nice >> snap.system >> snap.idle >> snap.iowait >>
+        snap.irq >> snap.softirq >> snap.steal;
+    snapshots.push_back(snap);
+  }
+  return snapshots;
+}
+std::vector<CoreStats> calculate_cpu_usages(std::istream& input_stream) {
+  auto t1_snapshots = read_cpu_snapshots(input_stream);
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  auto t2_snapshots = read_cpu_snapshots(input_stream);
+
+  std::vector<CoreStats> all_core_stats;
+  size_t num_cores_and_agg = std::min(t1_snapshots.size(), t2_snapshots.size());
+
+  for (size_t i = 0; i < num_cores_and_agg; ++i) {
+    const auto& t1 = t1_snapshots[i];
+    const auto& t2 = t2_snapshots[i];
+
+    unsigned long long total_delta = t2.get_total_time() - t1.get_total_time();
+
+    if (total_delta == 0) {
+      all_core_stats.push_back({i, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f});
+      continue;
+    }
+
+    unsigned long long user_delta = t2.user - t1.user;
+    unsigned long long nice_delta = t2.nice - t1.nice;
+    unsigned long long system_delta = t2.system - t1.system;
+    unsigned long long iowait_delta = t2.iowait - t1.iowait;
+    unsigned long long idle_delta = t2.idle - t1.idle;
+
+    CoreStats core_stat;
+    core_stat.core_id = i;  // 0 = aggregate, 1 = Core 0, etc.
+
+    core_stat.user_percent = 100.0f * user_delta / total_delta;
+    core_stat.nice_percent = 100.0f * nice_delta / total_delta;
+    core_stat.system_percent = 100.0f * system_delta / total_delta;
+    core_stat.iowait_percent = 100.0f * iowait_delta / total_delta;
+    core_stat.idle_percent = 100.0f * idle_delta / total_delta;
+
+    // Total usage ("CPU Load") = user + nice + system
+    core_stat.total_usage_percent = core_stat.user_percent +
+                                    core_stat.nice_percent +
+                                    core_stat.system_percent;
+
+    all_core_stats.push_back(core_stat);
+  }
+  return all_core_stats;
 }

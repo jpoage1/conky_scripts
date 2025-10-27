@@ -42,6 +42,8 @@ struct LocalDataStreams : public DataStreamProvider {
   }
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
+
+  double get_cpu_temperature() override;
 };
 
 LocalDataStreams get_local_file_streams();
