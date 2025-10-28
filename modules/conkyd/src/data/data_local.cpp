@@ -6,8 +6,20 @@
 #include <optional>
 
 void rewind(std::ifstream& stream) {
+  // Debug: Check if stream is in a bad state before attempting reset
+  if (stream.fail() || stream.bad()) {
+    std::cerr << "DEBUG: Stream was in fail/bad state before rewind."
+              << std::endl;
+  }
+
   stream.clear();
   stream.seekg(0, std::ios::beg);
+
+  // Debug: Confirm stream is usable after reset
+  if (stream.fail() || stream.bad()) {
+    std::cerr << "DEBUG: Stream is still in fail/bad state after rewind. FATAL."
+              << std::endl;
+  }
 }
 
 LocalDataStreams get_local_file_streams() {

@@ -43,23 +43,29 @@ struct LocalDataStreams : public DataStreamProvider {
     return loadavg;
   }
   std::istream& get_net_dev_stream() override {
-    // Close if already open (might be redundant if closed in constructor, but
-    // safe)
-    if (net_dev.is_open()) {
-      net_dev.close();
-    }
-    // Re-open the file fresh each time this is called
-    net_dev.open("/proc/net/dev");
-
-    if (!net_dev.is_open()) {
-      std::cerr
-          << "[Error] Failed to re-open /proc/net/dev in get_net_dev_stream."
-          << std::endl;
-      // Stream will be in fail state
-    }
-    // No need for clear() or seekg() on a fresh open
+    rewind(net_dev);
     return net_dev;
   }
+  //   std::istream& get_net_dev_stream() override {
+  //     // Close if already open (might be redundant if closed in constructor,
+  //     but
+  //     // safe)
+  //     if (net_dev.is_open()) {
+  //       net_dev.close();
+  //     }
+  //     // Re-open the file fresh each time this is called
+  //     net_dev.open("/proc/net/dev");
+
+  //     if (!net_dev.is_open()) {
+  //       std::cerr
+  //           << "[Error] Failed to re-open /proc/net/dev in
+  //           get_net_dev_stream."
+  //           << std::endl;
+  //       // Stream will be in fail state
+  //     }
+  //     // No need for clear() or seekg() on a fresh open
+  //     return net_dev;
+  //   }
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
 
