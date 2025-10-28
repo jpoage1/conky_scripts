@@ -17,7 +17,7 @@ std::vector<DeviceInfo> collect_device_info(
   for (const auto& device_path : device_paths) {
     DeviceInfo info;
     // DiskIO io = get_disk_io_per_sec(device_path);
-    ConkyDiskIO io = conky_get_disk_io_per_sec(device_path);
+    // ConkyDiskIO io = conky_get_disk_io_per_sec(device_path);
     info.device_path = device_path;
     info.mount_point = get_mount_point(device_path);
     info.used_bytes = get_used_space_bytes(info.mount_point);
@@ -30,8 +30,6 @@ std::vector<DeviceInfo> collect_device_info(
     //     conky_color("${diskio_write " + device_path + "}", "ffaa00");
     info.read_bytes_per_sec = "${diskio_read " + device_path + "}";
     info.write_bytes_per_sec = "${diskio_write " + device_path + "}";
-    // info.read_bytes_per_sec = get_read_bytes_per_sec(device_path);
-    // info.write_bytes_per_sec = get_write_bytes_per_sec(device_path);
     data.push_back(info);
   }
   return data;
@@ -44,22 +42,13 @@ std::vector<DeviceInfo> collect_device_info(
   for (const auto& device_path : device_paths) {
     DeviceInfo info;
     // DiskIO io = get_disk_io_per_sec(device_path);
-    ConkyDiskIO io = conky_get_disk_io_per_sec(device_path);
     info.device_path = device_path;
     info.mount_point =
         get_mount_point(provider.get_mounts_stream(), device_path);
     info.used_bytes = provider.get_used_space_bytes(info.mount_point);
     info.size_bytes = provider.get_disk_size_bytes(info.mount_point);
-    // info.read_bytes_per_sec = io.read_per_sec.text;
-    // info.write_bytes_per_sec = io.write_per_sec.text;
-    // info.read_bytes_per_sec =
-    //     conky_color("${diskio_read " + device_path + "}", "ffaa00");
-    // info.write_bytes_per_sec =
-    //     conky_color("${diskio_write " + device_path + "}", "ffaa00");
-    info.read_bytes_per_sec = "${diskio_read " + device_path + "}";
-    info.write_bytes_per_sec = "${diskio_write " + device_path + "}";
-    // info.read_bytes_per_sec = get_read_bytes_per_sec(device_path);
-    // info.write_bytes_per_sec = get_write_bytes_per_sec(device_path);
+    // info.read_bytes_per_sec = io.read_per_sec;
+    // info.write_bytes_per_sec = io.write_per_sec;
     data.push_back(info);
   }
   return data;

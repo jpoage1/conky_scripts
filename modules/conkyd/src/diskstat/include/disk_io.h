@@ -15,15 +15,15 @@ struct ConkyDiskIO {
   ColoredString write_per_sec;
 };
 
-std::string get_read_bytes_per_sec(const std::string &);
-std::string get_read_bytes_per_sec(std::istream &,
-                                   const std::string &device_path);
+std::string get_read_bytes_per_sec(const std::string&);
+std::string get_read_bytes_per_sec(std::istream&,
+                                   const std::string& device_path);
 
-std::string get_write_bytes_per_sec(const std::string &);
-std::string get_write_bytes_per_sec(std::istream &,
-                                    const std::string &device_path);
+std::string get_write_bytes_per_sec(const std::string&);
+std::string get_write_bytes_per_sec(std::istream&,
+                                    const std::string& device_path);
 
-DiskIO get_disk_io_per_sec(const std::string &);
-DiskIO get_disk_io_per_sec(std::istream &, const std::string &);
+DiskIO get_disk_io_per_sec(const std::string&);
+DiskIO get_disk_io_per_sec(std::istream&, const std::string&);
 
-ConkyDiskIO conky_get_disk_io_per_sec(const std::string &);
+ConkyDiskIO conky_get_disk_io_per_sec(const std::string&);
