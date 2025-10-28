@@ -1,8 +1,10 @@
 #include <sys/statvfs.h>
 
+#include <string>
+
 #include "data.h"
 
-void rewind(std::ifstream& stream);
+void rewind(std::ifstream& stream, const std::string&);
 
 struct LocalDataStreams : public DataStreamProvider {
   std::ifstream cpuinfo;
@@ -14,58 +16,53 @@ struct LocalDataStreams : public DataStreamProvider {
   std::ifstream loadavg;
   std::ifstream net_dev;
 
-  std::istream& get_cpuinfo_stream() override {
-    rewind(cpuinfo);
-    return cpuinfo;
-  }
+  std::istream& get_cpuinfo_stream() override { return cpuinfo; }
   std::istream& get_meminfo_stream() override {
-    rewind(meminfo);
+    rewind(meminfo, "meminfo");
     return meminfo;
   }
   std::istream& get_uptime_stream() override {
-    rewind(uptime);
+    rewind(uptime, "uptime");
     return uptime;
   }
   std::istream& get_stat_stream() override {
-    rewind(stat);
+    rewind(stat, "stat");
     return stat;
   }
   std::istream& get_mounts_stream() override {
-    rewind(mounts);
+    rewind(mounts, "mounts");
     return mounts;
   }
   std::istream& get_diskstats_stream() override {
-    rewind(diskstats);
+    rewind(diskstats, "diskstats");
     return diskstats;
   }
   std::istream& get_loadavg_stream() override {
-    rewind(loadavg);
+    rewind(loadavg, "loadavg");
     return loadavg;
   }
-  std::istream& get_net_dev_stream() override {
-    rewind(net_dev);
-    return net_dev;
-  }
   //   std::istream& get_net_dev_stream() override {
-  //     // Close if already open (might be redundant if closed in constructor,
-  //     but
-  //     // safe)
-  //     if (net_dev.is_open()) {
-  //       net_dev.close();
-  //     }
-  //     // Re-open the file fresh each time this is called
-  //     net_dev.open("/proc/net/dev");
-
-  //     if (!net_dev.is_open()) {
-  //       std::cerr
-  //           << "[Error] Failed to re-open /proc/net/dev in
-  //           get_net_dev_stream."
-  //           << std::endl;
-  //       // Stream will be in fail state
-  //     }
-  //     // No need for clear() or seekg() on a fresh open
+  //     rewind(net_dev);
   //     return net_dev;
   //   }
+  std::istream& get_net_dev_stream() override {
+    // Close if already open (might be redundant if closed in constructor,
+    // safe)
+    if (net_dev.is_open()) {
+      net_dev.close();
+    }
+    // Re-open the file fresh each time this is called
+    net_dev.open("/proc/net/dev");
+
+    if (!net_dev.is_open()) {
+      std::cerr
+          << "[Error] Failed to re-open /proc/net/dev in get_net_dev_stream."
+          << std::endl;
+      // Stream will be in fail state
+    }
+    // No need for clear() or seekg() on a fresh open
+    return net_dev;
+  }
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
 

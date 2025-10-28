@@ -11,7 +11,7 @@
 #include "networkstats.hpp"
 #include "processinfo.hpp"
 
-void rewind(std::stringstream& stream);
+void rewind(std::stringstream& stream, const std::string&);
 
 struct SystemMetrics {
   std::vector<CoreStats> cores;

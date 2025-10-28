@@ -77,7 +77,12 @@ std::vector<MetricResult> parse_arguments(int argc,
     // Don't print usage again if argc < 2 already did
   } else {
     bool any_success = false;
-    // ... (rest of success check) ...
+    for (const auto& res : all_results) {
+      if (res.success) {
+        any_success = true;
+        break;
+      }
+    }
     if (!any_success) {
       std::cerr << "Warning: All processed commands resulted in errors."
                 << std::endl;

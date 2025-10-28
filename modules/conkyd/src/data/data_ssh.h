@@ -16,35 +16,35 @@ struct ProcDataStreams : public DataStreamProvider {
   std::stringstream net_dev;
 
   std::istream& get_cpuinfo_stream() override {
-    rewind(cpuinfo);
+    rewind(cpuinfo, "cpuinfo");
     return cpuinfo;
   }
   std::istream& get_meminfo_stream() override {
-    rewind(meminfo);
+    rewind(meminfo, "meminfo");
     return meminfo;
   }
   std::istream& get_uptime_stream() override {
-    rewind(uptime);
+    rewind(uptime, "uptime");
     return uptime;
   }
   std::istream& get_stat_stream() override {
-    rewind(stat);
+    rewind(stat, "stat");
     return stat;
   }
   std::istream& get_mounts_stream() override {
-    rewind(mounts);
+    rewind(mounts, "mounts");
     return mounts;
   }
   std::istream& get_diskstats_stream() override {
-    rewind(diskstats);
+    rewind(diskstats, "diskstats");
     return diskstats;
   }
   std::istream& get_loadavg_stream() override {
-    rewind(loadavg);
+    rewind(loadavg, "loadavg");
     return loadavg;
   }
   std::istream& get_net_dev_stream() override {
-    rewind(net_dev);
+    rewind(net_dev, "net_dev");
     return net_dev;
   }
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
