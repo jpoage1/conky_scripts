@@ -1,5 +1,8 @@
 #pragma once
 
+#include <set>
+
+#include "metrics.hpp"
 #include "types.h"
 
 struct MetricResult {

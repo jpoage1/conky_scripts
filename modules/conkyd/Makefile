@@ -10,7 +10,9 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O2 \
   -Isrc/networkstats \
   -Isrc/swapinfo \
   -Isrc/uptime \
-  -Isrc/waybar
+  -Isrc/waybar \
+  -Isrc/cli \
+  -Isrc/json
 
 # Directories
 OBJ_DIR = obj
@@ -34,9 +36,11 @@ SRC_SWAPINFO = src/swapinfo/swapinfo.cpp
 SRC_UPTIME = src/uptime/uptime.cpp
 SRC_MAIN = src/conkyd.cpp
 SRC_WAYBAR_TYPES = src/waybar_types.cpp
-SRC_WAYBAR_CLI_PARSER = src/waybar_cli_parser.cpp
+SRC_WAYBAR_CLI_PARSER = src/waybar/waybar_cli_parser.cpp
+SRC_CLI_PARSER = src/cli/parser.cpp
 SRC_WAYBAR_FORMATTER = src/waybar_formatter.cpp
 SRC_WAYBAR_MAIN = src/waybar/main.cpp
+SRC_JSON_MAIN = src/json/main.cpp
 SRC_WAYBAR = src/waybar.cpp
 
 # Object files
@@ -52,11 +56,13 @@ OBJ_NETWORKSTATS = $(OBJ_DIR)/networkstats/networkstats.o
 OBJ_PROCESSINFO = $(OBJ_DIR)/processinfo/processinfo.o
 OBJ_SWAPINFO = $(OBJ_DIR)/swapinfo/swapinfo.o
 OBJ_UPTIME = $(OBJ_DIR)/uptime/uptime.o
-OBJ_WAYBAR_CLI_PARSER = src/waybar_cli_parser.o
-OBJ_WAYBAR_FORMATTER = src/waybar_formatter.o
-OBJ_WAYBAR_MAIN = src/waybar/main.cpp
+OBJ_WAYBAR_CLI_PARSER = $(OBJ_DIR)/waybar_cli_parser.o
+OBJ_CLI_PARSER = $(OBJ_DIR)/cli_parser.o
+OBJ_WAYBAR_FORMATTER = $(OBJ_DIR)/waybar_formatter.o
+OBJ_WAYBAR_MAIN = $(OBJ_DIR)/waybar/main.O
 OBJ_CONKYD = $(OBJ_DIR)/conkyd.o
 OBJ_WAYBARD = $(OBJ_DIR)/waybar.o
+OBJ_JSON_MAIN = $(OBJ_DIR)/json/main.o
 
 # Diskstat sources/objects
 DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
@@ -66,6 +72,7 @@ DISKSTAT_OBJ = $(patsubst $(DISKSTAT_SRC_DIR)/%.cpp,$(DISKSTAT_OBJ_DIR)/%.o,$(DI
 CONKYD_BIN = conkyd.bin
 WAYBARD_BIN = waybard.bin
 WAYBARD2_BIN = waybard2.bin
+JSON_BIN = json.bin
 
 .PHONY: all clean debug
 
@@ -74,7 +81,10 @@ all: $(DISKSTAT_LIB) $(BIN)
 $(CONKYD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CONKYD) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
 
-$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBAR_CLI_PARSER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_WAYBAR_MAIN) $(DISKSTAT_LIB)
+$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBAR_CLI_PARSER) $(OBJ_CLI_PARSER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_WAYBAR_MAIN) $(DISKSTAT_LIB)
+	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
+
+$(JSON_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBAR_CLI_PARSER) $(OBJ_CLI_PARSER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_JSON_MAIN) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
 
 # Build static lib
@@ -144,11 +154,19 @@ $(OBJ_WAYBAR_CLI_PARSER): src/waybar/waybar_cli_parser.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(OBJ_CLI_PARSER): src/cli/parser.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 $(OBJ_WAYBAR_FORMATTER): src/waybar/waybar_formatter.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_WAYBAR_MAIN): src/waybar/main.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_JSON_MAIN): src/json/main.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
@@ -168,6 +186,7 @@ install: $(CONKYD_BIN) $(WAYBARD_BIN) $(WAYBARD2_BIN)
 	cp $(CONKYD_BIN) $(INSTALL_DIR)/conkyd
 	cp $(WAYBARD_BIN) $(INSTALL_DIR)/warbard
 	cp $(WAYBARD2_BIN) $(INSTALL_DIR)/warbard2
+	cp $(JSON_BIN) $(INSTALL_DIR)/json
 
 
 waybard: $(WAYBARD_BIN)
@@ -177,3 +196,7 @@ waybard: $(WAYBARD_BIN)
 waybard2: $(WAYBARD2_BIN)
 	mkdir -p $(INSTALL_DIR)
 	cp $(WAYBARD2_BIN) $(INSTALL_DIR)/warbard2
+
+json: $(JSON_BIN)
+	mkdir -p $(INSTALL_DIR)
+	cp $(JSON_BIN) $(INSTALL_DIR)/json
