@@ -1,3 +1,4 @@
+// waybar.cpp
 #include <filesystem>
 #include <functional>
 #include <iomanip>

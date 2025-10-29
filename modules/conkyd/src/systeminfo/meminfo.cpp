@@ -1,3 +1,4 @@
+// meminfo.cpp
 #include "meminfo.h"
 
 #include <fstream>
@@ -5,8 +6,8 @@
 #include <limits>
 #include <string>
 
-void get_mem_usage(std::istream &input_stream, long &used, long &total,
-                   int &percent) {
+void get_mem_usage(std::istream& input_stream, long& used, long& total,
+                   int& percent) {
   std::string label;
   long mem_total = 0, mem_free = 0, buffers = 0, cached = 0;
   while (input_stream >> label) {

@@ -1,3 +1,4 @@
+// waybar_cli_parser.cpp
 #include "waybar_cli_parser.hpp"
 
 #include <iostream>

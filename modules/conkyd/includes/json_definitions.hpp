@@ -1,3 +1,4 @@
+// json_definitions.hpp
 #pragma once
 
 #include "corestat.h"        // Includes CoreStats

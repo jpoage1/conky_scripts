@@ -1,10 +1,11 @@
+// uptime.cpp
 #include "uptime.h"
 
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 
-std::string get_uptime(std::istream &input_stream) {
+std::string get_uptime(std::istream& input_stream) {
   double uptime_seconds;
   input_stream >> uptime_seconds;
   int days = uptime_seconds / 86400;

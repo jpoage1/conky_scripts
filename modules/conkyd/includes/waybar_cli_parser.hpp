@@ -1,3 +1,4 @@
+// waybar_cli_parser.hpp
 #pragma once
 
 #include <filesystem>

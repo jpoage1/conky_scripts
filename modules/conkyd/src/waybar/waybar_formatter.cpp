@@ -1,4 +1,4 @@
-
+// waybar_formatters.cpp
 
 #include "nlohmann/json.hpp"
 #include "size_format.h"

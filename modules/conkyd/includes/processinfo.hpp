@@ -1,3 +1,4 @@
+// processinfo.hpp
 #pragma once
 
 #include <string>

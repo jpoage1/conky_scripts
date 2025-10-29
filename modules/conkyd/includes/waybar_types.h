@@ -1,3 +1,4 @@
+// waybar_types.hpp
 #pragma once
 
 #include <set>

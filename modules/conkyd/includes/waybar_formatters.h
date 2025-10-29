@@ -1,3 +1,4 @@
+// waybar_formatters.hpp
 #pragma once
 
 #include <vector>

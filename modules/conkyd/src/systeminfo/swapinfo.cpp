@@ -1,11 +1,12 @@
+// swapinfo.cpp
 #include "swapinfo.h"
 
 #include <fstream>
 #include <limits>
 #include <string>
 
-void get_swap_usage(std::istream &input_stream, long &used, long &total,
-                    int &percent) {
+void get_swap_usage(std::istream& input_stream, long& used, long& total,
+                    int& percent) {
   std::string label;
   long swap_total = 0, swap_free = 0;
   while (input_stream >> label) {
