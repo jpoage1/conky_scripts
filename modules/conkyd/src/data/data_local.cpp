@@ -1,9 +1,14 @@
 
 #include "data_local.h"
 
+#include <array>
+#include <cstdio>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <optional>
+#include <sstream>
+#include <stdexcept>
 
 void rewind(std::ifstream& stream, const std::string& streamName) {
   // Debug: Check if stream is in a bad state before attempting reset
@@ -117,3 +122,33 @@ double LocalDataStreams::get_cpu_temperature() {
 
   return -1.0;  // Not found
 }
+
+std::string exec_local_cmd(const char* cmd) {
+  std::array<char, 128> buffer;
+  std::string result;
+  // Use unique_ptr for automatic pclose
+  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+  if (!pipe) {
+    std::cerr << "popen() failed for command: " << cmd << std::endl;
+    return "";
+  }
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    result += buffer.data();
+  }
+  return result;
+}
+
+// std::istream& LocalDataStreams::get_top_mem_processes_stream() {
+//   // Command: Get PID, RSS (in KiB), and command name.
+//   // --no-headers simplifies parsing.
+//   // --sort=-rss sorts by RSS descending.
+//   // head -n 10 gets the top 10.
+//   const char* cmd = "ps -eo pid,rss,comm --no-headers --sort=-rss | head -n
+//   10";
+
+//   std::string cmd_output = exec_local_cmd(cmd);
+
+//   top_mem_procs_stream.str(std::move(cmd_output));  // Move output into
+//   stream top_mem_procs_stream.clear(); top_mem_procs_stream.seekg(0); return
+//   top_mem_procs_stream;
+// }

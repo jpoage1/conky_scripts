@@ -15,6 +15,7 @@ struct LocalDataStreams : public DataStreamProvider {
   std::ifstream diskstats;
   std::ifstream loadavg;
   std::ifstream net_dev;
+  std::stringstream top_mem_procs_stream;
 
   std::istream& get_cpuinfo_stream() override { return cpuinfo; }
   std::istream& get_meminfo_stream() override {
@@ -63,6 +64,7 @@ struct LocalDataStreams : public DataStreamProvider {
     // No need for clear() or seekg() on a fresh open
     return net_dev;
   }
+  //   std::istream& get_top_mem_processes_stream() override;
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
 

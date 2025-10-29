@@ -35,7 +35,9 @@ struct SystemMetrics {
   std::string node_name;
   std::string kernel_release;
   std::string machine_type;
+
   std::vector<NetworkInterfaceStats> network_interfaces;
+  std::vector<ProcessInfo> top_processes_mem;
 };
 
 class DataStreamProvider {
@@ -49,6 +51,7 @@ class DataStreamProvider {
   virtual std::istream& get_diskstats_stream() = 0;
   virtual std::istream& get_loadavg_stream() = 0;
   virtual std::istream& get_net_dev_stream() = 0;
+  //   virtual std::istream& get_top_mem_processes_stream() = 0;
   virtual uint64_t get_used_space_bytes(const std::string& mount_point) = 0;
   virtual uint64_t get_disk_size_bytes(const std::string& mount_point) = 0;
   virtual double get_cpu_temperature() = 0;
@@ -58,3 +61,5 @@ SystemMetrics read_data(DataStreamProvider&);
 void print_metrics(const SystemMetrics&);
 void get_load_and_process_stats(DataStreamProvider& provider,
                                 SystemMetrics& metrics);
+void get_top_processes_mem(DataStreamProvider& provider,
+                           SystemMetrics& metrics);

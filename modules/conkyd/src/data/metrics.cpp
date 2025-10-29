@@ -6,10 +6,8 @@
 #include "data_ssh.h"
 #include "diskstat.h"
 
+// This function's logic is restructured to avoid the null pointer
 int get_metrics(const std::string& config_file, const bool use_ssh) {
-  LocalDataStreams local_streams;
-  ProcDataStreams ssh_streams;
-  DataStreamProvider* provider = nullptr;
   SystemMetrics metrics;
 
   if (use_ssh) {
@@ -17,24 +15,24 @@ int get_metrics(const std::string& config_file, const bool use_ssh) {
       std::cerr << "Failed to set up SSH session. Exiting." << std::endl;
       return 2;
     }
-    ssh_streams = get_ssh_streams();
-    provider = &ssh_streams;
+    ProcDataStreams ssh_streams = get_ssh_streams();  // <--- Object created
+
+    // Logic is moved inside the 'if' block
+    metrics = read_data(ssh_streams);  // <--- No *
+    print_metrics(metrics);
+    diskstat(ssh_streams, config_file);  // <--- No *
+
+    cleanup_ssh_session();
   } else {
-    local_streams = get_local_file_streams();
-    provider = &local_streams;
+    LocalDataStreams local_streams =
+        get_local_file_streams();  // <--- Object created
+
+    // Logic is moved inside the 'else' block
+    metrics = read_data(local_streams);  // <--- No *
+    print_metrics(metrics);
+    diskstat(local_streams, config_file);  // <--- No *
   }
 
-  if (provider) {
-    metrics = read_data(*provider);
-    print_metrics(metrics);
-    diskstat(*provider, config_file);
-  } else {
-    std::cerr << "Error: No data provider could be initialized." << std::endl;
-    return 1;
-  }
-  if (use_ssh) {
-    cleanup_ssh_session();
-  }
   return 0;
 }
 
@@ -44,7 +42,9 @@ int get_metrics(const std::string& config_file, const bool use_ssh) {
 int get_local_metrics(const std::string& config_file,
                       CombinedMetrics& metrics) {
   LocalDataStreams local_streams = get_local_file_streams();
-  return get_metrics_from_provider(&local_streams, config_file, metrics);
+  // Pass the object directly, not its address
+  return get_metrics_from_provider(local_streams, config_file,
+                                   metrics);  // <--- Changed
 }
 
 /**
@@ -52,13 +52,15 @@ int get_local_metrics(const std::string& config_file,
  */
 int get_server_metrics(const std::string& config_file,
                        CombinedMetrics& metrics) {
-  if (setup_ssh_session() != 0) {  // Calls the default version
+  if (setup_ssh_session() != 0) {
     std::cerr << "Failed to set up default SSH session. Exiting." << std::endl;
     return 2;
   }
 
   ProcDataStreams ssh_streams = get_ssh_streams();
-  int result = get_metrics_from_provider(&ssh_streams, config_file, metrics);
+  // Pass the object directly, not its address
+  int result = get_metrics_from_provider(ssh_streams, config_file,
+                                         metrics);  // <--- Changed
   cleanup_ssh_session();
   return result;
 }
@@ -68,14 +70,16 @@ int get_server_metrics(const std::string& config_file,
  */
 int get_server_metrics(const std::string& config_file, CombinedMetrics& metrics,
                        const std::string& host, const std::string& user) {
-  if (setup_ssh_session(host, user) != 0) {  // Calls the parameterized version
+  if (setup_ssh_session(host, user) != 0) {
     std::cerr << "Failed to set up SSH session to " << user << "@" << host
               << ". Exiting." << std::endl;
     return 2;
   }
 
   ProcDataStreams ssh_streams = get_ssh_streams();
-  int result = get_metrics_from_provider(&ssh_streams, config_file, metrics);
+  // Pass the object directly, not its address
+  int result = get_metrics_from_provider(ssh_streams, config_file,
+                                         metrics);  // <--- Changed
   cleanup_ssh_session();
   return result;
 }
@@ -85,13 +89,12 @@ int get_server_metrics(const std::string& config_file, CombinedMetrics& metrics,
  * * This private helper function contains the logic from the old get_metrics
  * function. It is generic and operates on any DataStreamProvider.
  */
-int get_metrics_from_provider(DataStreamProvider* provider,
+// Accepts a reference (&) instead of a pointer (*)
+int get_metrics_from_provider(DataStreamProvider& provider,  // <--- Changed
                               const std::string& config_file,
                               CombinedMetrics& metrics) {
-  if (!provider) {
-    std::cerr << "Error: No data provider could be initialized." << std::endl;
-    return 1;
-  }
+  // A reference cannot be null, so the null check is removed.
+  // if (!provider) { ... } // <--- Removed
 
   std::vector<std::string> device_paths;
   if (read_device_paths(config_file, device_paths) == 1) {
@@ -100,7 +103,8 @@ int get_metrics_from_provider(DataStreamProvider* provider,
     return 1;
   }
 
-  metrics.system = read_data(*provider);
-  metrics.disks = collect_device_info(*provider, device_paths);
+  // No dereferencing (*) needed, use object syntax
+  metrics.system = read_data(provider);                         // <--- Changed
+  metrics.disks = collect_device_info(provider, device_paths);  // <--- Changed
   return 0;
 }
