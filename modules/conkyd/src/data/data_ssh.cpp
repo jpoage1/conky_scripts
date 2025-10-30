@@ -32,7 +32,7 @@ ProcDataStreams get_ssh_streams() {
   streams.diskstats << diskstats_data;
   streams.loadavg << loadavg_data;
   streams.net_dev << net_dev_data;
-  //   streams.top_mem_procs_stream << top_mem_data;
+  streams.top_mem_procs << top_mem_data;
 
   return streams;
 }

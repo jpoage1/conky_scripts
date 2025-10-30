@@ -138,17 +138,17 @@ std::string exec_local_cmd(const char* cmd) {
   return result;
 }
 
-// std::istream& LocalDataStreams::get_top_mem_processes_stream() {
-//   // Command: Get PID, RSS (in KiB), and command name.
-//   // --no-headers simplifies parsing.
-//   // --sort=-rss sorts by RSS descending.
-//   // head -n 10 gets the top 10.
-//   const char* cmd = "ps -eo pid,rss,comm --no-headers --sort=-rss | head -n
-//   10";
+std::istream& LocalDataStreams::get_top_mem_processes_stream() {
+  // Command: Get PID, RSS (in KiB), and command name.
+  // --no-headers simplifies parsing.
+  // --sort=-rss sorts by RSS descending.
+  // head -n 10 gets the top 10.
+  const char* cmd = "ps -eo pid,rss,comm --no-headers --sort=-rss | head -n 10";
 
-//   std::string cmd_output = exec_local_cmd(cmd);
+  std::string cmd_output = exec_local_cmd(cmd);
 
-//   top_mem_procs_stream.str(std::move(cmd_output));  // Move output into
-//   stream top_mem_procs_stream.clear(); top_mem_procs_stream.seekg(0); return
-//   top_mem_procs_stream;
-// }
+  top_mem_procs.str(std::move(cmd_output));  // Move output into stream
+  top_mem_procs.clear();
+  top_mem_procs.seekg(0);
+  return top_mem_procs;
+}

@@ -51,7 +51,7 @@ class DataStreamProvider {
   virtual std::istream& get_diskstats_stream() = 0;
   virtual std::istream& get_loadavg_stream() = 0;
   virtual std::istream& get_net_dev_stream() = 0;
-  //   virtual std::istream& get_top_mem_processes_stream() = 0;
+  virtual std::istream& get_top_mem_processes_stream() = 0;
   virtual uint64_t get_used_space_bytes(const std::string& mount_point) = 0;
   virtual uint64_t get_disk_size_bytes(const std::string& mount_point) = 0;
   virtual double get_cpu_temperature() = 0;

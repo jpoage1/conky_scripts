@@ -89,6 +89,33 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
         total_mem_percent += system_metrics.mem_percent;
         valid_mem_sources++;
       }
+      const auto& top_procs_mem = system_metrics.top_processes_mem;
+      if (!top_procs_mem.empty()) {
+        tooltip_ss << "<b>Top Processes (Mem) (" << result.source_name
+                   << ")</b>\n";
+        tooltip_ss << "<tt>";
+
+        const size_t pid_col_width = 7;
+        const size_t rss_col_width = 12;  // "VmRSS (MiB)"
+        std::string pid_header = "PID";
+        std::string rss_header = "VmRSS (MiB)";
+        std::string name_header = "Name";
+
+        // Set precision for this block
+        tooltip_ss << std::fixed << std::setprecision(1);
+
+        tooltip_ss << std::left << std::setw(pid_col_width) << pid_header
+                   << std::right << std::setw(rss_col_width) << rss_header
+                   << "  " << name_header << "\n";
+
+        for (const auto& proc : top_procs_mem) {
+          double vmRssMiB = static_cast<double>(proc.vmRssKb) / 1024.0;
+          tooltip_ss << std::left << std::setw(pid_col_width) << proc.pid
+                     << std::right << std::setw(rss_col_width) << vmRssMiB
+                     << "  " << proc.name << "\n";
+        }
+        tooltip_ss << "</tt>\n\n";
+      }
       if (!devices.empty()) {
         tooltip_ss << "<b>Filesystem Usage (" << result.source_name
                    << ")</b>\n";

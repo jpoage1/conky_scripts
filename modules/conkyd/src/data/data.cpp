@@ -11,6 +11,7 @@
 #include "diskstat.h"
 #include "meminfo.h"
 #include "networkstats.hpp"
+#include "processinfo.hpp"
 #include "swapinfo.h"
 #include "uptime.h"
 
@@ -49,6 +50,7 @@ SystemMetrics read_data(DataStreamProvider& provider) {
 
   get_load_and_process_stats(provider, metrics);
   get_network_stats(provider, metrics);
+  get_top_processes_mem(provider, metrics);
 
   struct utsname uts_info;
   if (uname(&uts_info) == 0) {  // 0 indicates success
@@ -94,6 +96,15 @@ void print_metrics(const SystemMetrics& metrics) {
   std::cout << "Swap: " << metrics.swap_used_kb << " / "
             << metrics.swap_total_kb << " kB (" << metrics.swap_percent << "%)"
             << std::endl;
+
+  std::cout << "--- Top Processes (Mem) ---" << std::endl;
+  std::cout << "PID\tVmRSS (MiB)\tName" << std::endl;
+  for (const auto& proc : metrics.top_processes_mem) {
+    double vmRssMiB = static_cast<double>(proc.vmRssKb) / 1024.0;
+    std::cout << proc.pid << "\t" << std::fixed << std::setprecision(1)
+              << vmRssMiB << "\t\t" << proc.name << std::endl;
+  }
+  std::cout << "---------------------------" << std::endl;
 }
 void get_load_and_process_stats(DataStreamProvider& provider,
                                 SystemMetrics& metrics) {
@@ -118,6 +129,34 @@ void get_load_and_process_stats(DataStreamProvider& provider,
     } else if (line.rfind("procs_blocked", 0) == 0) {
       // All process lines are together, so we can stop
       break;
+    }
+  }
+}
+void get_top_processes_mem(DataStreamProvider& provider,
+                           SystemMetrics& metrics) {
+  metrics.top_processes_mem.clear();  // Clear old data
+  std::istream& stream = provider.get_top_mem_processes_stream();
+  std::string line;
+
+  while (std::getline(stream, line)) {
+    if (line.empty()) continue;
+
+    std::stringstream ss(line);
+    ProcessInfo proc;
+
+    // Parse PID and RSS
+    if (ss >> proc.pid >> proc.vmRssKb) {
+      // The rest of the line is the command name, which can have spaces
+      std::getline(ss, proc.name);
+
+      // trim leading whitespace from name
+      size_t first = proc.name.find_first_not_of(" \t");
+      if (std::string::npos != first) {
+        proc.name = proc.name.substr(first);
+      } else {
+        proc.name = "unknown";  // Fallback
+      }
+      metrics.top_processes_mem.push_back(proc);
     }
   }
 }
