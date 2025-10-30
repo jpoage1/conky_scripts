@@ -162,7 +162,7 @@ std::istream& LocalDataStreams::get_top_mem_processes_stream() {
 std::istream& LocalDataStreams::get_top_cpu_processes_stream() {
   // Command sorted by %cpu
   const char* cmd =
-      "ps -eo pid,%cpu,comm --no-headers --sort=-%cpu | head -n 10";
+      "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | head -n 10";
   std::string cmd_output = exec_local_cmd(cmd);
 
   top_cpu_procs.str(std::move(cmd_output));  // Use the cpu stream member

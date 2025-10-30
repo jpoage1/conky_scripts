@@ -89,6 +89,7 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
         total_mem_percent += system_metrics.mem_percent;
         valid_mem_sources++;
       }
+      // --- BEGIN TOP PROCESSES (MEM) BLOCK ---
       const auto& top_procs_mem = system_metrics.top_processes_mem;
       if (!top_procs_mem.empty()) {
         tooltip_ss << "<b>Top Processes (Mem) (" << result.source_name
@@ -96,9 +97,11 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
         tooltip_ss << "<tt>";
 
         const size_t pid_col_width = 7;
-        const size_t rss_col_width = 12;  // "VmRSS (MiB)"
+        const size_t rss_col_width = 12;      // "VmRSS (MiB)"
+        const size_t mem_perc_col_width = 6;  // "%Mem"
         std::string pid_header = "PID";
         std::string rss_header = "VmRSS (MiB)";
+        std::string mem_perc_header = "%Mem";
         std::string name_header = "Name";
 
         // Set precision for this block
@@ -106,16 +109,24 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
 
         tooltip_ss << std::left << std::setw(pid_col_width) << pid_header
                    << std::right << std::setw(rss_col_width) << rss_header
-                   << "  " << name_header << "\n";
+                   << std::right << std::setw(mem_perc_col_width)
+                   << mem_perc_header << "  " << name_header << "\n";
 
         for (const auto& proc : top_procs_mem) {
           double vmRssMiB = static_cast<double>(proc.vmRssKb) / 1024.0;
           tooltip_ss << std::left << std::setw(pid_col_width) << proc.pid
-                     << std::right << std::setw(rss_col_width) << vmRssMiB
+                     << std::right << std::setw(rss_col_width)
+                     << vmRssMiB
+                     // Add Mem % column
+                     << std::right << std::setw(mem_perc_col_width - 1)
+                     << proc.mem_percent << "%"
                      << "  " << proc.name << "\n";
         }
         tooltip_ss << "</tt>\n\n";
       }
+      // --- END TOP PROCESSES (MEM) BLOCK ---
+
+      // --- BEGIN TOP PROCESSES (CPU) BLOCK ---
       const auto& top_procs_cpu = system_metrics.top_processes_cpu;
       if (!top_procs_cpu.empty()) {
         tooltip_ss << "<b>Top Processes (CPU) (" << result.source_name
@@ -123,28 +134,34 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
         tooltip_ss << "<tt>";
 
         const size_t pid_col_width = 7;
-        const size_t cpu_col_width = 6;  // Width for "  %CPU"
+        const size_t cpu_col_width = 6;       // Width for "  %CPU"
+        const size_t mem_perc_col_width = 6;  // Width for "  %Mem"
         std::string pid_header = "PID";
         std::string cpu_header = "%CPU";
+        std::string mem_perc_header = "%Mem";
         std::string name_header = "Name";
 
         // Assumes std::fixed and std::setprecision(1) are already set
-        // from earlier in the function.
-
         tooltip_ss << std::left << std::setw(pid_col_width) << pid_header
                    << std::right << std::setw(cpu_col_width) << cpu_header
-                   << "  " << name_header << "\n";
+                   << std::right << std::setw(mem_perc_col_width)
+                   << mem_perc_header << "  " << name_header << "\n";
 
         for (const auto& proc : top_procs_cpu) {
           tooltip_ss << std::left << std::setw(pid_col_width)
                      << proc.pid
-                     // Set width for the number, manually append %
+                     // CPU % column
                      << std::right << std::setw(cpu_col_width - 1)
-                     << proc.cpu_percent << "%"
+                     << proc.cpu_percent
+                     << "%"
+                     // Add Mem % column
+                     << std::right << std::setw(mem_perc_col_width - 1)
+                     << proc.mem_percent << "%"
                      << "  " << proc.name << "\n";
         }
         tooltip_ss << "</tt>\n\n";
       }
+      // --- END TOP PROCESSES (CPU) BLOCK ---
       if (!devices.empty()) {
         tooltip_ss << "<b>Filesystem Usage (" << result.source_name
                    << ")</b>\n";

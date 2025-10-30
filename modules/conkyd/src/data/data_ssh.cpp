@@ -13,7 +13,7 @@ ProcDataStreams get_ssh_streams() {
   std::string top_mem_data = execute_ssh_command(
       "ps -eo pid,rss,comm --no-headers --sort=-rss | head -n 10");
   std::string top_cpu_data = execute_ssh_command(
-      "ps -eo pid,%cpu,comm --no-headers --sort=-%cpu | head -n 10");
+      "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | head -n 10");
 
   // Create string streams from the retrieved data
   std::stringstream cpu_file_stream(cpu_data);

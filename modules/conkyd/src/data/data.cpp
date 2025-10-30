@@ -146,6 +146,9 @@ void get_top_processes_mem(DataStreamProvider& provider,
   metrics.top_processes_mem.clear();  // Clear old data
   std::istream& stream = provider.get_top_mem_processes_stream();
   std::string line;
+  double total_mem_kb = (metrics.mem_total_kb > 0)
+                            ? static_cast<double>(metrics.mem_total_kb)
+                            : 1.0;
 
   while (std::getline(stream, line)) {
     if (line.empty()) continue;
@@ -155,6 +158,9 @@ void get_top_processes_mem(DataStreamProvider& provider,
 
     // Parse PID and RSS
     if (ss >> proc.pid >> proc.vmRssKb) {
+      proc.mem_percent =
+          (static_cast<double>(proc.vmRssKb) / total_mem_kb) * 100.0;
+
       // The rest of the line is the command name, which can have spaces
       std::getline(ss, proc.name);
 
@@ -174,13 +180,19 @@ void get_top_processes_cpu(DataStreamProvider& provider,
   metrics.top_processes_cpu.clear();  // Clear old data
   std::istream& stream = provider.get_top_cpu_processes_stream();
   std::string line;
+  double total_mem_kb = (metrics.mem_total_kb > 0)
+                            ? static_cast<double>(metrics.mem_total_kb)
+                            : 1.0;
   while (std::getline(stream, line)) {
     if (line.empty()) continue;
     std::stringstream ss(line);
     ProcessInfo proc;  // Use the *same* struct. vmRssKb defaults to 0.
 
     // Parse PID and %CPU (double). vmRssKb is untouched.
-    if (ss >> proc.pid >> proc.cpu_percent) {
+    if (ss >> proc.pid >> proc.cpu_percent >> proc.vmRssKb) {
+      proc.mem_percent =
+          (static_cast<double>(proc.vmRssKb) / total_mem_kb) * 100.0;
+
       std::getline(ss, proc.name);
 
       size_t first = proc.name.find_first_not_of(" \t");
