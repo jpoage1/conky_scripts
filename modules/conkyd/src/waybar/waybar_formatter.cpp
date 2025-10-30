@@ -116,6 +116,35 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
         }
         tooltip_ss << "</tt>\n\n";
       }
+      const auto& top_procs_cpu = system_metrics.top_processes_cpu;
+      if (!top_procs_cpu.empty()) {
+        tooltip_ss << "<b>Top Processes (CPU) (" << result.source_name
+                   << ")</b>\n";
+        tooltip_ss << "<tt>";
+
+        const size_t pid_col_width = 7;
+        const size_t cpu_col_width = 6;  // Width for "  %CPU"
+        std::string pid_header = "PID";
+        std::string cpu_header = "%CPU";
+        std::string name_header = "Name";
+
+        // Assumes std::fixed and std::setprecision(1) are already set
+        // from earlier in the function.
+
+        tooltip_ss << std::left << std::setw(pid_col_width) << pid_header
+                   << std::right << std::setw(cpu_col_width) << cpu_header
+                   << "  " << name_header << "\n";
+
+        for (const auto& proc : top_procs_cpu) {
+          tooltip_ss << std::left << std::setw(pid_col_width)
+                     << proc.pid
+                     // Set width for the number, manually append %
+                     << std::right << std::setw(cpu_col_width - 1)
+                     << proc.cpu_percent << "%"
+                     << "  " << proc.name << "\n";
+        }
+        tooltip_ss << "</tt>\n\n";
+      }
       if (!devices.empty()) {
         tooltip_ss << "<b>Filesystem Usage (" << result.source_name
                    << ")</b>\n";

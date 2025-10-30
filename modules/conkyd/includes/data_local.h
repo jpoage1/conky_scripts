@@ -16,6 +16,7 @@ struct LocalDataStreams : public DataStreamProvider {
   std::ifstream loadavg;
   std::ifstream net_dev;
   std::stringstream top_mem_procs;
+  std::stringstream top_cpu_procs;
 
   std::istream& get_cpuinfo_stream() override {
     rewind(cpuinfo, "cpuinfo");
@@ -68,6 +69,7 @@ struct LocalDataStreams : public DataStreamProvider {
     return net_dev;
   }
   std::istream& get_top_mem_processes_stream() override;
+  std::istream& get_top_cpu_processes_stream() override;
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
 

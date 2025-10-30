@@ -122,12 +122,20 @@ double LocalDataStreams::get_cpu_temperature() {
 
   return -1.0;  // Not found
 }
-
+struct PopenDeleter {
+  void operator()(FILE* fp) const {
+    if (fp) {
+      pclose(fp);
+    }
+  }
+};
 std::string exec_local_cmd(const char* cmd) {
   std::array<char, 128> buffer;
   std::string result;
-  // Use unique_ptr for automatic pclose
-  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+  // Use unique_ptr with the custom deleter struct
+  // This avoids the decltype warning
+  std::unique_ptr<FILE, PopenDeleter> pipe(popen(cmd, "r"));
+
   if (!pipe) {
     std::cerr << "popen() failed for command: " << cmd << std::endl;
     return "";
@@ -148,7 +156,16 @@ std::istream& LocalDataStreams::get_top_mem_processes_stream() {
   std::string cmd_output = exec_local_cmd(cmd);
 
   top_mem_procs.str(std::move(cmd_output));  // Move output into stream
-  top_mem_procs.clear();
-  top_mem_procs.seekg(0);
+  rewind(top_mem_procs, "top_mem_procs");
   return top_mem_procs;
+}
+std::istream& LocalDataStreams::get_top_cpu_processes_stream() {
+  // Command sorted by %cpu
+  const char* cmd =
+      "ps -eo pid,%cpu,comm --no-headers --sort=-%cpu | head -n 10";
+  std::string cmd_output = exec_local_cmd(cmd);
+
+  top_cpu_procs.str(std::move(cmd_output));  // Use the cpu stream member
+  rewind(top_cpu_procs, "top_cpu_procs");
+  return top_cpu_procs;
 }

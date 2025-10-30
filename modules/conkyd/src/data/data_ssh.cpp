@@ -12,6 +12,8 @@ ProcDataStreams get_ssh_streams() {
   std::string net_dev_data = execute_ssh_command("cat /proc/net/dev");
   std::string top_mem_data = execute_ssh_command(
       "ps -eo pid,rss,comm --no-headers --sort=-rss | head -n 10");
+  std::string top_cpu_data = execute_ssh_command(
+      "ps -eo pid,%cpu,comm --no-headers --sort=-%cpu | head -n 10");
 
   // Create string streams from the retrieved data
   std::stringstream cpu_file_stream(cpu_data);
@@ -33,6 +35,7 @@ ProcDataStreams get_ssh_streams() {
   streams.loadavg << loadavg_data;
   streams.net_dev << net_dev_data;
   streams.top_mem_procs << top_mem_data;
+  streams.top_cpu_procs << top_cpu_data;
 
   return streams;
 }

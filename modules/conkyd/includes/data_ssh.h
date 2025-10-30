@@ -15,6 +15,7 @@ struct ProcDataStreams : public DataStreamProvider {
   std::stringstream loadavg;
   std::stringstream net_dev;
   std::stringstream top_mem_procs;
+  std::stringstream top_cpu_procs;
 
   std::istream& get_cpuinfo_stream() override {
     rewind(cpuinfo, "cpuinfo");
@@ -51,6 +52,10 @@ struct ProcDataStreams : public DataStreamProvider {
   std::istream& get_top_mem_processes_stream() override {
     rewind(top_mem_procs, "top_mem_procs");
     return top_mem_procs;
+  };
+  std::istream& get_top_cpu_processes_stream() override {
+    rewind(top_cpu_procs, "top_cpu_procs");
+    return top_cpu_procs;
   }
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;

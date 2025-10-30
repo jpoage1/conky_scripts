@@ -51,6 +51,7 @@ SystemMetrics read_data(DataStreamProvider& provider) {
   get_load_and_process_stats(provider, metrics);
   get_network_stats(provider, metrics);
   get_top_processes_mem(provider, metrics);
+  get_top_processes_cpu(provider, metrics);
 
   struct utsname uts_info;
   if (uname(&uts_info) == 0) {  // 0 indicates success
@@ -105,6 +106,14 @@ void print_metrics(const SystemMetrics& metrics) {
               << vmRssMiB << "\t\t" << proc.name << std::endl;
   }
   std::cout << "---------------------------" << std::endl;
+  std::cout << "--- Top Processes (CPU) ---" << std::endl;
+  std::cout << "PID\t%CPU\t\tName" << std::endl;
+  // Iterate over the new vector, accessing the cpu_percent field
+  for (const auto& proc : metrics.top_processes_cpu) {
+    std::cout << proc.pid << "\t" << std::fixed << std::setprecision(1)
+              << proc.cpu_percent << "%\t\t" << proc.name << std::endl;
+  }
+  std::cout << "---------------------------" << std::endl;
 }
 void get_load_and_process_stats(DataStreamProvider& provider,
                                 SystemMetrics& metrics) {
@@ -157,6 +166,30 @@ void get_top_processes_mem(DataStreamProvider& provider,
         proc.name = "unknown";  // Fallback
       }
       metrics.top_processes_mem.push_back(proc);
+    }
+  }
+}
+void get_top_processes_cpu(DataStreamProvider& provider,
+                           SystemMetrics& metrics) {
+  metrics.top_processes_cpu.clear();  // Clear old data
+  std::istream& stream = provider.get_top_cpu_processes_stream();
+  std::string line;
+  while (std::getline(stream, line)) {
+    if (line.empty()) continue;
+    std::stringstream ss(line);
+    ProcessInfo proc;  // Use the *same* struct. vmRssKb defaults to 0.
+
+    // Parse PID and %CPU (double). vmRssKb is untouched.
+    if (ss >> proc.pid >> proc.cpu_percent) {
+      std::getline(ss, proc.name);
+
+      size_t first = proc.name.find_first_not_of(" \t");
+      if (std::string::npos != first) {
+        proc.name = proc.name.substr(first);
+      } else {
+        proc.name = "unknown";
+      }
+      metrics.top_processes_cpu.push_back(proc);
     }
   }
 }
