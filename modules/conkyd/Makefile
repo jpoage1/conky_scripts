@@ -31,8 +31,8 @@ SRC_WAYBAR_TYPES = src/waybar_types.cpp
 SRC_WAYBAR_CLI_PARSER = src/waybar/waybar_cli_parser.cpp
 SRC_CLI_PARSER = src/parser.cpp
 SRC_WAYBAR_FORMATTER = src/waybar_formatter.cpp
-SRC_WAYBAR_MAIN = src/waybar/main.cpp
-SRC_JSON_MAIN = src/json/main.cpp
+SRC_WAYBAR_MAIN = src/waybar.cpp
+SRC_JSON_MAIN = src/json.cpp
 SRC_WAYBAR = src/waybar.cpp
 
 # Object files
@@ -51,10 +51,10 @@ OBJ_UPTIME = $(OBJ_DIR)/systeminfo/uptime.o
 OBJ_WAYBAR_CLI_PARSER = $(OBJ_DIR)/waybar_cli_parser.o
 OBJ_CLI_PARSER = $(OBJ_DIR)/cli_parser.o
 OBJ_WAYBAR_FORMATTER = $(OBJ_DIR)/waybar_formatter.o
-OBJ_WAYBAR_MAIN = $(OBJ_DIR)/waybar/main.O
+OBJ_WAYBAR_MAIN = $(OBJ_DIR)/waybar.O
 OBJ_CONKYD = $(OBJ_DIR)/conkyd.o
 OBJ_WAYBARD = $(OBJ_DIR)/waybar.o
-OBJ_JSON_MAIN = $(OBJ_DIR)/json/main.o
+OBJ_JSON_MAIN = $(OBJ_DIR)/json.o
 
 # Diskstat sources/objects
 DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
@@ -154,11 +154,11 @@ $(OBJ_WAYBAR_FORMATTER): src/waybar/waybar_formatter.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_WAYBAR_MAIN): src/waybar/main.cpp
+$(OBJ_WAYBAR_MAIN): src/waybar.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_JSON_MAIN): src/json/main.cpp
+$(OBJ_JSON_MAIN): src/json.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

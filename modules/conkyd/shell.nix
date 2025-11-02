@@ -19,6 +19,8 @@ pkgs.mkShell {
 
   # Shell-specific settings
   shellHook = ''
+    alias waybard="./waybard.bin ~/.config/conky/file-systems.txt"
+    alias json="./json.bin ~/.config/conky/file-systems.txt"
     echo "Entering a Nix development shell for conkyd..."
     echo "C++ compiler available: $(which g++)"
     echo "Build system available: $(which cmake)"

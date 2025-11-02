@@ -1,47 +1,65 @@
 // json_definitions.hpp
 #pragma once
 
-#include "corestat.h"        // Includes CoreStats
-#include "networkstats.hpp"  // Includes NetworkInterfaceStats
+// 1. Include all struct definitions FIRST
+#include "corestat.h"
+#include "data.h"
+#include "networkstats.hpp"
+#include "processinfo.hpp"
+#include "waybar_types.h"  // Includes DeviceInfo, SystemMetrics, CombinedMetrics, etc.
+
+// 2. Include nlohmann/json.hpp SECOND
 #include "nlohmann/json.hpp"
-#include "waybar_types.h"  // Includes MetricResult, CombinedMetrics, etc.
-// Add other headers defining your structs if they aren't included via
-// waybar_types.h
 
 // Use the nlohmann namespace for convenience
 using json = nlohmann::json;
 
 // --- Define serialization for each struct ---
 
-// Example for DeviceInfo (adjust field names if they differ)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DeviceInfo, device_path, mount_point,
-                                   used_bytes, size_bytes, used_space, size,
-                                   used_space_percent, read_bytes_per_sec,
-                                   write_bytes_per_sec);
+// 3. Explicit inline functions for ProcessInfo
+// These must be defined *after* nlohmann/json.hpp is included
+inline void to_json(json& j, const ProcessInfo& p) {
+  j = json{{"pid", p.pid},
+           {"vmRssKb", p.vmRssKb},
+           {"cpu_percent", p.cpu_percent},
+           {"mem_percent", p.mem_percent},
+           {"name", p.name}};
+}
 
-// Example for CoreStats
+inline void from_json(const json& j, ProcessInfo& p) {
+  j.at("pid").get_to(p.pid);
+  j.at("vmRssKb").get_to(p.vmRssKb);
+  j.at("cpu_percent").get_to(p.cpu_percent);
+  j.at("mem_percent").get_to(p.mem_percent);
+  j.at("name").get_to(p.name);
+}
+
+// 4. All other macros
+// CORRECTED: DeviceInfo macro to match your implementation
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DeviceInfo, device_path, mount_point,
+                                   used_bytes, size_bytes);
+
+// CoreStats
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CoreStats, core_id, user_percent,
                                    nice_percent, system_percent, iowait_percent,
                                    idle_percent, total_usage_percent);
 
-// Example for NetworkInterfaceStats
+// NetworkInterfaceStats
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(NetworkInterfaceStats, interface_name,
                                    rx_bytes_per_sec, tx_bytes_per_sec);
 
-// Example for SystemMetrics
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SystemMetrics, cores, cpu_frequency_ghz,
-                                   cpu_temp_c, mem_used_kb, mem_total_kb,
-                                   mem_percent, swap_used_kb, swap_total_kb,
-                                   swap_percent, uptime, load_avg_1m,
-                                   load_avg_5m, load_avg_15m, processes_total,
-                                   processes_running, sys_name, node_name,
-                                   kernel_release, machine_type,
-                                   network_interfaces);
+// SystemMetrics
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+    SystemMetrics, cores, cpu_frequency_ghz, cpu_temp_c, mem_used_kb,
+    mem_total_kb, mem_percent, swap_used_kb, swap_total_kb, swap_percent,
+    uptime, load_avg_1m, load_avg_5m, load_avg_15m, processes_total,
+    processes_running, sys_name, node_name, kernel_release, machine_type,
+    network_interfaces, top_processes_mem, top_processes_cpu);
 
-// Example for CombinedMetrics
+// CombinedMetrics
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CombinedMetrics, system, disks);
 
-// Example for MetricResult
+// MetricResult
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MetricResult, source_name, device_file,
                                    metrics, error_message, success,
                                    specific_interfaces);

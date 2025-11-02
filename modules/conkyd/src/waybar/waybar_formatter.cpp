@@ -139,6 +139,8 @@ std::string show_top_cpu_procs(const MetricResult& result,
     std::string mem_perc_header = "%Mem";
     std::string name_header = "Name";
 
+    tooltip_ss << std::fixed << std::setprecision(1);
+
     // Assumes std::fixed and std::setprecision(1) are already set
     tooltip_ss << std::left << std::setw(pid_col_width) << pid_header
                << std::right << std::setw(cpu_col_width) << cpu_header
