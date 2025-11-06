@@ -39,7 +39,7 @@ SRC_WAYBAR_FORMATTER = src/waybar_formatter.cpp
 SRC_WAYBAR_MAIN = src/waybar.cpp
 SRC_JSON_MAIN = src/json.cpp
 SRC_WAYBAR = src/waybar.cpp
-SRC_WIDGETS = src/widgets.cpp
+SRC_WIDGETS = src/widgets/main.cpp
 
 # Object files
 OBJ_DATA = $(OBJ_DIR)/data/data.o
@@ -61,7 +61,9 @@ OBJ_WAYBAR_MAIN = $(OBJ_DIR)/waybar.O
 OBJ_CONKYD = $(OBJ_DIR)/conkyd.o
 OBJ_WAYBARD = $(OBJ_DIR)/waybar.o
 OBJ_JSON_MAIN = $(OBJ_DIR)/json.o
-OBJ_WIDGETS = $(OBJ_DIR)/widgets.o
+OBJ_WIDGETS_WIDGETS = $(OBJ_DIR)/widgets_widgets.o
+OBJ_WIDGETS_MAIN = $(OBJ_DIR)/widgets_main.o
+OBJ_WIDGETS_WINDOW = $(OBJ_DIR)/widgets_window.o
 
 # Diskstat sources/objects
 DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
@@ -87,8 +89,8 @@ $(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(O
 $(JSON_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBAR_CLI_PARSER) $(OBJ_CLI_PARSER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_JSON_MAIN) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
 
-$(WIDGETS_BIN): $(OBJ_WIDGETS)
-	$(CXX) -o $@ $^ $(WIDGETS_CXXFLAGS) $(GTK_LIBS)
+$(WIDGETS_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBAR_CLI_PARSER) $(OBJ_CLI_PARSER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_WIDGETS_WIDGETS) $(OBJ_WIDGETS_WINDOW) $(OBJ_WIDGETS_MAIN) $(DISKSTAT_LIB)
+	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs  $(GTK_LIBS)
 
 # Build static lib
 $(DISKSTAT_LIB): $(DISKSTAT_OBJ)
@@ -181,9 +183,17 @@ $(OBJ_WAYBARD): src/waybar.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_WIDGETS): src/widgets.cpp
+$(OBJ_WIDGETS_MAIN): src/widgets/main.cpp
 	mkdir -p $(dir $@)
-	$(CXX) $(WIDGETS_CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(GTK_CFLAGS) -c $< -o $@
+
+$(OBJ_WIDGETS_WIDGETS): src/widgets/widgets.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(GTK_CFLAGS) -c $< -o $@
+
+$(OBJ_WIDGETS_WINDOW): src/widgets/window.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(GTK_CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(CONKYD_BIN) $(WIDGETS_BIN)
