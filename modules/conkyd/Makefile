@@ -4,7 +4,12 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O2 \
   -Isrc/systeminfo \
   -Isrc/processinfo \
   -Isrc/data \
+  -Isrc/widgets \
   -Iincludes
+
+GTK_CFLAGS = $(shell pkg-config --cflags gtkmm-4.0)
+GTK_LIBS = $(shell pkg-config --libs gtkmm-4.0)
+WIDGETS_CXXFLAGS = -std=c++17 -Wall -Wextra -O2 $(GTK_CFLAGS)
 
 # Directories
 OBJ_DIR = obj
@@ -34,6 +39,7 @@ SRC_WAYBAR_FORMATTER = src/waybar_formatter.cpp
 SRC_WAYBAR_MAIN = src/waybar.cpp
 SRC_JSON_MAIN = src/json.cpp
 SRC_WAYBAR = src/waybar.cpp
+SRC_WIDGETS = src/widgets.cpp
 
 # Object files
 OBJ_DATA = $(OBJ_DIR)/data/data.o
@@ -55,6 +61,7 @@ OBJ_WAYBAR_MAIN = $(OBJ_DIR)/waybar.O
 OBJ_CONKYD = $(OBJ_DIR)/conkyd.o
 OBJ_WAYBARD = $(OBJ_DIR)/waybar.o
 OBJ_JSON_MAIN = $(OBJ_DIR)/json.o
+OBJ_WIDGETS = $(OBJ_DIR)/widgets.o
 
 # Diskstat sources/objects
 DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
@@ -65,10 +72,11 @@ CONKYD_BIN = conkyd.bin
 WAYBARD_BIN = waybard.bin
 WAYBARD2_BIN = waybard2.bin
 JSON_BIN = json.bin
+WIDGETS_BIN = widgets.bin
 
-.PHONY: all clean debug
+.PHONY: all clean debug waybard json widgets
 
-all: $(DISKSTAT_LIB) $(BIN)
+all: $(DISKSTAT_LIB) $(CONKY_BIN) $(WAYBARD_BIN) (JSON_BIN) $(WIDGETS_BIN)
 
 $(CONKYD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CONKYD) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
@@ -78,6 +86,9 @@ $(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(O
 
 $(JSON_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_WAYBAR_CLI_PARSER) $(OBJ_CLI_PARSER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_JSON_MAIN) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
+
+$(WIDGETS_BIN): $(OBJ_WIDGETS)
+	$(CXX) -o $@ $^ $(WIDGETS_CXXFLAGS) $(GTK_LIBS)
 
 # Build static lib
 $(DISKSTAT_LIB): $(DISKSTAT_OBJ)
@@ -170,15 +181,20 @@ $(OBJ_WAYBARD): src/waybar.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-clean:
-	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(CONKYD_BIN)
+$(OBJ_WIDGETS): src/widgets.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(WIDGETS_CXXFLAGS) -c $< -o $@
 
-install: $(CONKYD_BIN) $(WAYBARD_BIN) $(WAYBARD2_BIN)
+clean:
+	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(CONKYD_BIN) $(WIDGETS_BIN)
+
+install: $(CONKYD_BIN) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(WIDGETS_BIN)
 	mkdir -p $(INSTALL_DIR)
 	cp $(CONKYD_BIN) $(INSTALL_DIR)/conkyd
 	cp $(WAYBARD_BIN) $(INSTALL_DIR)/warbard
 	cp $(WAYBARD2_BIN) $(INSTALL_DIR)/warbard2
 	cp $(JSON_BIN) $(INSTALL_DIR)/json
+	cp $(WIDGETS_BIN) $(INSTALL_DIR)/widgets
 
 
 waybard: $(WAYBARD_BIN)
@@ -192,3 +208,7 @@ waybard2: $(WAYBARD2_BIN)
 json: $(JSON_BIN)
 	mkdir -p $(INSTALL_DIR)
 	cp $(JSON_BIN) $(INSTALL_DIR)/json
+
+widgets: $(WIDGETS_BIN)
+	mkdir -p $(INSTALL_DIR)
+	cp $(WIDGETS_BIN) $(INSTALL_DIR)/widgets

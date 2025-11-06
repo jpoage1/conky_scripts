@@ -13,6 +13,8 @@ pkgs.mkShell {
     libssh
     libssh2
     nlohmann_json
+    gtkmm4
+    pkg-config
     # openssl
   ];
 
@@ -24,6 +26,7 @@ pkgs.mkShell {
     echo "Entering a Nix development shell for conkyd..."
     echo "C++ compiler available: $(which g++)"
     echo "Build system available: $(which cmake)"
+    echo "pkg-config available: $(which pkg-config)"
     echo "libssh headers and library are now available for your project."
   '';
 }
