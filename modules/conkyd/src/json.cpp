@@ -11,6 +11,7 @@
 #include "parser.hpp"            // Shared parser (handles argc check now)
 #include "waybar_types.h"
 #include "metrics.hpp"
+#include "data.h"
 
 using json = nlohmann::json;
 
@@ -31,7 +32,9 @@ int main(int argc, char* argv[]) {
         json output_json = config.tasks;
         std::cout << output_json.dump() << std::endl;
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        if ( config.mode != RunMode::RUN_ONCE ) {
+            std::this_thread::sleep_for(config.get_pooling_interval<std::chrono::milliseconds>());
+        }
     } while  (config.mode == RunMode::PERSISTENT);
     return 0;
 }

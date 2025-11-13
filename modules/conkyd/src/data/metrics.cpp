@@ -24,8 +24,7 @@ int get_metrics(const std::string& config_file, const bool use_ssh) {
 
     cleanup_ssh_session();
   } else {
-    LocalDataStreams local_streams =
-        get_local_file_streams();  // <--- Object created
+    LocalDataStreams local_streams = get_local_file_streams();  // <--- Object created
 
     // Logic is moved inside the 'else' block
     metrics = read_data(local_streams);  // <--- No *
@@ -44,7 +43,7 @@ int get_local_metrics(const std::string& config_file,
   LocalDataStreams local_streams = get_local_file_streams();
   // Pass the object directly, not its address
   return get_metrics_from_provider(local_streams, config_file,
-                                   metrics);  // <--- Changed
+                                   metrics);
 }
 
 /**
@@ -60,7 +59,7 @@ int get_server_metrics(const std::string& config_file,
   ProcDataStreams ssh_streams = get_ssh_streams();
   // Pass the object directly, not its address
   int result = get_metrics_from_provider(ssh_streams, config_file,
-                                         metrics);  // <--- Changed
+                                         metrics);
   cleanup_ssh_session();
   return result;
 }
@@ -79,7 +78,7 @@ int get_server_metrics(const std::string& config_file, CombinedMetrics& metrics,
   ProcDataStreams ssh_streams = get_ssh_streams();
   // Pass the object directly, not its address
   int result = get_metrics_from_provider(ssh_streams, config_file,
-                                         metrics);  // <--- Changed
+                                         metrics);
   cleanup_ssh_session();
   return result;
 }
@@ -90,7 +89,7 @@ int get_server_metrics(const std::string& config_file, CombinedMetrics& metrics,
  * function. It is generic and operates on any DataStreamProvider.
  */
 // Accepts a reference (&) instead of a pointer (*)
-int get_metrics_from_provider(DataStreamProvider& provider,  // <--- Changed
+int get_metrics_from_provider(DataStreamProvider& provider,
                               const std::string& config_file,
                               CombinedMetrics& metrics) {
   // A reference cannot be null, so the null check is removed.
@@ -104,7 +103,7 @@ int get_metrics_from_provider(DataStreamProvider& provider,  // <--- Changed
   }
 
   // No dereferencing (*) needed, use object syntax
-  metrics.system = read_data(provider);                         // <--- Changed
-  metrics.disks = collect_device_info(provider, device_paths);  // <--- Changed
+  metrics.system = read_data(provider);
+  metrics.disks = collect_device_info(provider, device_paths);
   return 0;
 }

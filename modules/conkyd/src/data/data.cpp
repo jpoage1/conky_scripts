@@ -7,6 +7,7 @@
 #include <map>
 #include <thread> // For sleep_for
 #include <chrono> // For seconds
+#include <type_traits>
 
 #include "corestat.h"
 #include "cpuinfo.h"
@@ -230,6 +231,23 @@ void poll_dynamic_stats(DataStreamProvider& provider, SystemMetrics& metrics) {
 
     // --- CALCULATIONS ---
     std::chrono::duration<double> time_delta = t2_metrics.timestamp - t1_metrics.timestamp;
+
+    // --- DEBUG MESSAGE ---
+    // Convert the seconds (time_delta.count()) to milliseconds
+    double time_delta_ms = time_delta.count() * 1000.0;
+
+    std::cerr << "[DEBUG] poll_dynamic_stats: "
+            << "Expected sleep: 500ms. "
+            << "Actual time_delta: "
+            << std::fixed << std::setprecision(1) << time_delta_ms << "ms."
+            << std::endl;
+    // --- END DEBUG ---
+
+    // (Optional) Add a warning if the time is excessive
+    if (time_delta_ms > 600) { // 100ms buffer
+        std::cerr << "[WARNING] High latency in poll_dynamic_stats. "
+                << "Task took " << (int)time_delta_ms << "ms." << std::endl;
+    }
 
     metrics.cores = calculate_cpu_usages(
         t1_metrics.cpu_snapshots,
