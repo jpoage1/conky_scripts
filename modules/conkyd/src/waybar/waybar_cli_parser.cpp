@@ -1,5 +1,6 @@
 // waybar_cli_parser.cpp
 #include "waybar_cli_parser.hpp"
+#include "waybar_types.h"
 
 #include <iostream>
 #include <set>
@@ -68,13 +69,15 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
         (command == "--local") ? "Local (Error)" : "SSH (Error)";
     all_results.push_back(result);
     return current_index - initial_index;  // Return consumed args
+  } else {
+    result.device_file = config_file;
   }
 
   // --- 3. Call Appropriate Get Function ---
   bool success = false;
   if (command == "--local") {
     result.source_name = "Local";
-    success = (get_local_metrics(config_file, result.metrics) == 0);
+    result.set_callback(get_local_metrics);
     if (!success) result.error_message = "Failed to get local metrics.";
 
   } else if (command == "--ssh") {
@@ -85,14 +88,23 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
       std::string host = args[current_index];
       std::string user = args[current_index + 1];
       result.source_name = user + "@" + host;
-      success =
-          (get_server_metrics(config_file, result.metrics, host, user) == 0);
+    //       (get_server_metrics(config_file, result.metrics, host, user) == 0);
+      result.set_callback(
+            [host, user](const std::string& cfg, CombinedMetrics& m) {
+                // The lambda's body calls the REAL 4-argument function
+                return get_server_metrics(cfg, m, host, user);
+            }
+        );
+
+       success = true;
       if (!success) result.error_message = "Failed to connect.";
       current_index += 2;  // Consume host + user
     } else {
       // Default SSH host
       result.source_name = "Default SSH";
-      success = (get_server_metrics(config_file, result.metrics) == 0);
+      result.set_callback(
+            static_cast<int(*)(const std::string&, CombinedMetrics&)>(get_server_metrics)
+        );
       if (!success) result.error_message = "Failed to connect.";
     }
   }

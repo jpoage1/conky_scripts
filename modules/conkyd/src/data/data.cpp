@@ -5,6 +5,8 @@
 #include <chrono>
 #include <iomanip>
 #include <map>
+#include <thread> // For sleep_for
+#include <chrono> // For seconds
 
 #include "corestat.h"
 #include "cpuinfo.h"
@@ -14,6 +16,7 @@
 #include "processinfo.hpp"
 #include "swapinfo.h"
 #include "uptime.h"
+#include "metrics.hpp"
 
 void rewind(std::stringstream& stream, const std::string& streamName) {
   // Debug: Check if stream is in a bad state before attempting reset
@@ -36,7 +39,11 @@ void rewind(std::stringstream& stream, const std::string& streamName) {
 SystemMetrics read_data(DataStreamProvider& provider) {
   SystemMetrics metrics;
 
-  metrics.cores = calculate_cpu_usages(provider.get_stat_stream());
+  // Polling functions
+//   get_network_stats(provider, metrics);
+//   metrics.cores = calculate_cpu_usages(provider.get_stat_stream());
+  poll_dynamic_stats(provider, metrics);
+  // End polling functions
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
 
@@ -49,7 +56,6 @@ SystemMetrics read_data(DataStreamProvider& provider) {
   metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
 
   get_load_and_process_stats(provider, metrics);
-  get_network_stats(provider, metrics);
   get_top_processes_mem(provider, metrics);
   get_top_processes_cpu(provider, metrics);
 
@@ -204,4 +210,35 @@ void get_top_processes_cpu(DataStreamProvider& provider,
       metrics.top_processes_cpu.push_back(proc);
     }
   }
+}
+/**
+ * @brief Performs time-based polling for all dynamic stats (CPU, Network).
+ *
+ * This function is designed to be the single, centralized source of polling.
+ * It reads T1 snapshots, sleeps for a fixed interval, reads T2 snapshots,
+ * and then calls the appropriate calculator functions to populate metrics.
+ */
+void poll_dynamic_stats(DataStreamProvider& provider, SystemMetrics& metrics) {
+    // 1. Get T1 snapshot
+    PollingMetrics t1_metrics(provider);
+
+    // 2. Centralized sleep
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    // 3. Get T2 snapshot
+    PollingMetrics t2_metrics(provider);
+
+    // --- CALCULATIONS ---
+    std::chrono::duration<double> time_delta = t2_metrics.timestamp - t1_metrics.timestamp;
+
+    metrics.cores = calculate_cpu_usages(
+        t1_metrics.cpu_snapshots,
+        t2_metrics.cpu_snapshots
+    );
+
+    metrics.network_interfaces = calculate_network_rates(
+        t1_metrics.network_snapshots,
+        t2_metrics.network_snapshots,
+        time_delta.count()
+    );
 }

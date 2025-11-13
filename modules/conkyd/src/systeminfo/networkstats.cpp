@@ -1,5 +1,6 @@
 // networkstats.cpp
 #include "networkstats.hpp"
+#include "metrics.hpp"
 
 #include <chrono>
 #include <map>
@@ -76,6 +77,12 @@ std::vector<NetworkInterfaceStats> calculate_network_rates(
   }
   return rates;
 }
+
+/*
+// DEPRECATED: Polling logic has been centralized in poll_dynamic_stats().
+// These functions perform their own sleep and are no longer used.
+*/
+//std::map<std::string, NetworkSnapshot>
 void get_network_stats(DataStreamProvider& provider, SystemMetrics& metrics) {
   // Snapshot 1
   auto t1_timestamp = std::chrono::steady_clock::now();
@@ -99,3 +106,12 @@ void get_network_stats(DataStreamProvider& provider, SystemMetrics& metrics) {
 
   // No state needs to be updated for the next call
 }
+
+/*
+// DEPRECATED: Polling logic has been centralized in poll_dynamic_stats().
+// These functions perform their own sleep and are no longer used.
+*/
+// Delegates the metrics calculation
+// void get_network_stats(DataStreamProvider& provider, , SystemMetrics& metrics) {
+//   metrics.network_interfaces = read_network_snapshot(provider.get_net_dev_stream(), );
+// }

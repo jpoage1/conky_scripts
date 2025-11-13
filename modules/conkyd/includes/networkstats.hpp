@@ -39,3 +39,13 @@ struct NetworkInterfaceStats {
  * @param initialized Reference to the boolean tracking initialization.
  */
 void get_network_stats(DataStreamProvider& provider, SystemMetrics& metrics);
+
+void get_network_stats(DataStreamProvider& provider);
+std::map<std::string, NetworkSnapshot> read_network_snapshot(
+    std::istream& net_dev_stream);
+
+std::vector<NetworkInterfaceStats> calculate_network_rates(
+    const std::map<std::string, NetworkSnapshot>& prev_snapshot,
+    const std::map<std::string, NetworkSnapshot>& current_snapshot,
+    double time_delta_seconds
+);

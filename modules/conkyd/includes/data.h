@@ -68,3 +68,5 @@ void get_top_processes_mem(DataStreamProvider& provider,
 
 void get_top_processes_cpu(DataStreamProvider& provider,
                            SystemMetrics& metrics);
+
+void poll_dynamic_stats(DataStreamProvider& provider, SystemMetrics& metrics);

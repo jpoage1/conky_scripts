@@ -28,21 +28,6 @@ std::vector<CPUCore> read_cpu_times(std::istream& input_stream) {
   return cores;
 }
 
-std::vector<float> get_cpu_usages(std::istream& input_stream) {
-  auto t1 = read_cpu_times(input_stream);
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  auto t2 = read_cpu_times(input_stream);
-  std::vector<float> usages;
-  for (size_t i = 0; i < t1.size(); ++i) {
-    unsigned long long idle_diff = t2[i].idle_time - t1[i].idle_time;
-    unsigned long long total_diff = t2[i].total_time - t1[i].total_time;
-    float usage =
-        total_diff == 0 ? 0 : 100.0f * (total_diff - idle_diff) / total_diff;
-    usages.push_back(usage);
-  }
-  return usages;
-}
-
 std::string format_cpu_times(const CPUCore& core, size_t index) {
   double idlePercent = 100.0 * core.idle_time / core.total_time;
   double usagePercent = 100.0 - idlePercent;
@@ -74,11 +59,41 @@ std::vector<CpuSnapshot> read_cpu_snapshots(std::istream& input_stream) {
   }
   return snapshots;
 }
+/*
+// DEPRECATED: Polling logic has been centralized in poll_dynamic_stats().
+// These functions perform their own sleep and are no longer used.
+*/
+std::vector<float> get_cpu_usages(std::istream& input_stream) {
+  auto t1 = read_cpu_times(input_stream);
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  auto t2 = read_cpu_times(input_stream);
+  return get_cpu_usages(t1, t2);
+}
+
+/*
+// DEPRECATED: Polling logic has been centralized in poll_dynamic_stats().
+// These functions perform their own sleep and are no longer used.
+*/
 std::vector<CoreStats> calculate_cpu_usages(std::istream& input_stream) {
   auto t1_snapshots = read_cpu_snapshots(input_stream);
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   auto t2_snapshots = read_cpu_snapshots(input_stream);
+  return calculate_cpu_usages(t1_snapshots, t2_snapshots);
+}
 
+std::vector<float> get_cpu_usages(const std::vector<CPUCore> &t1, const std::vector<CPUCore> &t2) {
+  std::vector<float> usages;
+  for (size_t i = 0; i < t1.size(); ++i) {
+    unsigned long long idle_diff = t2[i].idle_time - t1[i].idle_time;
+    unsigned long long total_diff = t2[i].total_time - t1[i].total_time;
+    float usage =
+        total_diff == 0 ? 0 : 100.0f * (total_diff - idle_diff) / total_diff;
+    usages.push_back(usage);
+  }
+  return usages;
+}
+
+std::vector<CoreStats> calculate_cpu_usages(const std::vector<CpuSnapshot> &t1_snapshots, const std::vector<CpuSnapshot> &t2_snapshots) {
   std::vector<CoreStats> all_core_stats;
   size_t num_cores_and_agg = std::min(t1_snapshots.size(), t2_snapshots.size());
 

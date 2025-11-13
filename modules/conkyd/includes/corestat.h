@@ -41,3 +41,8 @@ std::string format_cpu_times(const CPUCore&, size_t);
 
 std::vector<CpuSnapshot> read_cpu_snapshots(std::istream& input_stream);
 std::vector<CoreStats> calculate_cpu_usages(std::istream& input_stream);
+
+std::vector<float> get_cpu_usages(const std::vector<CpuSnapshot> &t1_snapshots, const std::vector<CpuSnapshot> &t2_snapshots);
+std::vector<float> get_cpu_usages(const std::vector<CPUCore> &t1, const std::vector<CPUCore> &t2);
+
+std::vector<CoreStats> calculate_cpu_usages(const std::vector<CpuSnapshot> &t1_snapshots, const std::vector<CpuSnapshot> &t2_snapshots);
