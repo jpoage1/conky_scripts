@@ -16,23 +16,23 @@ using json = nlohmann::json;
 
 int main(int argc, char* argv[]) {
   // 1. Call the parser (handles initial checks and processing)
-  std::vector<MetricResult> tasks = parse_arguments(argc, argv);
+  ParsedConfig config = parse_arguments(argc, argv);
 
-  if (tasks.empty()) {
+  if (config.tasks.empty()) {
         std::cerr << "Initialization failed, no valid tasks to run." << std::endl;
         return 1;
     }
-    // while (true) {
-    //     // 2. If parser returned potentially valid (even if error) results, generate
-    //     // output
-    //     for (MetricResult& task : tasks) {
-    //         task.run();
-    //     }
-    //     json output_json = tasks;
-    //     std::cout << output_json.dump() << std::endl;
+    do {
+        // 2. If parser returned potentially valid (even if error) results, generate
+        // output
+        for (MetricResult& task : config.tasks) {
+            task.run();
+        }
+        json output_json = config.tasks;
+        std::cout << output_json.dump() << std::endl;
 
-    //     std::this_thread::sleep_for(std::chrono::seconds(1));
-    // }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    } while  (config.mode == RunMode::PERSISTENT);
     return 0;
 }
 // int persistent_feed(int argc, char* argv[]) {

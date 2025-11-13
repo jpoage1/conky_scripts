@@ -6,16 +6,17 @@
 
 #include "waybar_cli_parser.hpp"
 
-std::vector<MetricResult> parse_arguments(int argc,
+
+ParsedConfig parse_arguments(int argc,
                                           char* argv[]) {  // Changed signature
-  std::vector<MetricResult> all_results;
+  ParsedConfig config;
   const char* prog_name = argv[0];  // Get program name
 
   // --- Moved argc check here ---
   if (argc < 2) {
     std::cerr << "Error: No arguments provided." << std::endl;
     print_usage(prog_name);
-    return all_results;  // Return empty
+    return config;  // Return empty
   }
 
   // --- Moved vector conversion here ---
@@ -39,13 +40,18 @@ std::vector<MetricResult> parse_arguments(int argc,
       std::vector<std::string> temp_args = {prog_name, "--local"};
       temp_args.insert(temp_args.end(), args_in.begin(), args_in.end());
       size_t temp_i = 1;
-      consumed = process_command(temp_args, temp_i, all_results);
+      consumed = process_command(temp_args, temp_i, config.tasks);
       consumed = (consumed > 0) ? consumed - 1 : 0;
       i += (consumed > 0) ? consumed : 1;
     }
+    // Handle Persistent Flag
+    else if (command == "--persistent") {
+        config.mode = PERSISTENT;
+        i++; // Consume this flag and continue parsing
+    }
     // Handle Explicit Commands
     else if (command == "--local" || command == "--ssh") {
-      consumed = process_command(args_full, i, all_results);
+      consumed = process_command(args_full, i, config.tasks);
       // Ensure loop advances if process_command fails/returns 0 or doesn't
       // update 'i'
       if (consumed == 0) {
@@ -62,7 +68,7 @@ std::vector<MetricResult> parse_arguments(int argc,
       result.source_name = "Parser";
       result.success = false;
       result.error_message = "Unknown command or flag: " + command;
-      all_results.push_back(result);
+      config.tasks.push_back(result);
       i++;  // Consume unknown command
     }
     // Backup check to prevent infinite loop if consumed is weirdly negative or
@@ -73,22 +79,22 @@ std::vector<MetricResult> parse_arguments(int argc,
   }  // end while
 
   // Final checks (remain the same)
-  if (all_results.empty()) {
+  if (config.tasks.empty() && config.mode == RUN_ONCE) {
     std::cerr << "Error: No valid commands resulted in metrics." << std::endl;
-    // Don't print usage again if argc < 2 already did
-  } else {
-    bool any_success = false;
-    for (const auto& res : all_results) {
-      if (res.success) {
-        any_success = true;
-        break;
-      }
-    }
-    if (!any_success) {
-      std::cerr << "Warning: All processed commands resulted in errors."
-                << std::endl;
-    }
+  }
+  else {
+    // bool any_success = false;
+    // for (const auto& res : all_results) {
+    //   if (res.success) {
+    //     any_success = true;
+    //     break;
+    //   }
+    // }
+    // if (!any_success) {
+    //   std::cerr << "Warning: All processed commands resulted in errors."
+    //             << std::endl;
+    // }
   }
 
-  return all_results;
+  return config;
 }

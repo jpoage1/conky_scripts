@@ -6,6 +6,14 @@
 
 #include "waybar_types.h"  // Includes MetricResult
 
+enum RunMode {
+    RUN_ONCE,
+    PERSISTENT,
+};
+struct ParsedConfig {
+    std::vector<MetricResult> tasks;
+    RunMode mode = RUN_ONCE;
+};
 /**
  * @brief Parses command line arguments (argc, argv) to collect metric results.
  * Handles initial argument checks and conversion.
@@ -14,5 +22,5 @@
  * @return A vector containing the results (MetricResult). Empty if critical
  * errors occur.
  */
-std::vector<MetricResult> parse_arguments(int argc,
+ParsedConfig parse_arguments(int argc,
                                           char* argv[]);  // Changed signature
