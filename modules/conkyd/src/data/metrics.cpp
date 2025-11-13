@@ -17,19 +17,17 @@ int get_metrics(const std::string& config_file, const bool use_ssh) {
     }
     ProcDataStreams ssh_streams = get_ssh_streams();  // <--- Object created
 
-    // Logic is moved inside the 'if' block
-    metrics = read_data(ssh_streams);  // <--- No *
+    read_data(ssh_streams, metrics);
     print_metrics(metrics);
-    diskstat(ssh_streams, config_file);  // <--- No *
+    diskstat(ssh_streams, config_file);
 
     cleanup_ssh_session();
   } else {
-    LocalDataStreams local_streams = get_local_file_streams();  // <--- Object created
+    LocalDataStreams local_streams;
 
-    // Logic is moved inside the 'else' block
-    metrics = read_data(local_streams);  // <--- No *
+    read_data(local_streams, metrics);
     print_metrics(metrics);
-    diskstat(local_streams, config_file);  // <--- No *
+    diskstat(local_streams, config_file);
   }
 
   return 0;
@@ -40,8 +38,8 @@ int get_metrics(const std::string& config_file, const bool use_ssh) {
  */
 int get_local_metrics(const std::string& config_file,
                       CombinedMetrics& metrics) {
-  LocalDataStreams local_streams = get_local_file_streams();
-  // Pass the object directly, not its address
+  LocalDataStreams local_streams;
+
   return get_metrics_from_provider(local_streams, config_file,
                                    metrics);
 }
@@ -57,7 +55,7 @@ int get_server_metrics(const std::string& config_file,
   }
 
   ProcDataStreams ssh_streams = get_ssh_streams();
-  // Pass the object directly, not its address
+
   int result = get_metrics_from_provider(ssh_streams, config_file,
                                          metrics);
   cleanup_ssh_session();
@@ -75,8 +73,8 @@ int get_server_metrics(const std::string& config_file, CombinedMetrics& metrics,
     return 2;
   }
 
-  ProcDataStreams ssh_streams = get_ssh_streams();
-  // Pass the object directly, not its address
+  ProcDataStreams ssh_streams = get_ssh_streams(); // fixme later
+
   int result = get_metrics_from_provider(ssh_streams, config_file,
                                          metrics);
   cleanup_ssh_session();
@@ -88,12 +86,9 @@ int get_server_metrics(const std::string& config_file, CombinedMetrics& metrics,
  * * This private helper function contains the logic from the old get_metrics
  * function. It is generic and operates on any DataStreamProvider.
  */
-// Accepts a reference (&) instead of a pointer (*)
 int get_metrics_from_provider(DataStreamProvider& provider,
                               const std::string& config_file,
                               CombinedMetrics& metrics) {
-  // A reference cannot be null, so the null check is removed.
-  // if (!provider) { ... } // <--- Removed
 
   std::vector<std::string> device_paths;
   if (read_device_paths(config_file, device_paths) == 1) {
@@ -102,8 +97,7 @@ int get_metrics_from_provider(DataStreamProvider& provider,
     return 1;
   }
 
-  // No dereferencing (*) needed, use object syntax
-  metrics.system = read_data(provider);
+  metrics.polled = read_data(provider, metrics.system);
   metrics.disks = collect_device_info(provider, device_paths);
   return 0;
 }

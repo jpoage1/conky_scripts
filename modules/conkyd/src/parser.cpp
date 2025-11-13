@@ -8,29 +8,25 @@
 
 
 ParsedConfig parse_arguments(int argc,
-                                          char* argv[]) {  // Changed signature
+                                          char* argv[]) {
   ParsedConfig config;
   const char* prog_name = argv[0];  // Get program name
 
-  // --- Moved argc check here ---
   if (argc < 2) {
     std::cerr << "Error: No arguments provided." << std::endl;
     print_usage(prog_name);
     return config;  // Return empty
   }
 
-  // --- Moved vector conversion here ---
   std::vector<std::string> args_in(argv + 1,
                                    argv + argc);  // args_in is argv[1] onwards
 
-  // Reconstruct argv-style vector needed by process_command logic
   std::vector<std::string> args_full;
   args_full.push_back(prog_name);  // argv[0] equivalent
   args_full.insert(args_full.end(), args_in.begin(), args_in.end());
 
   size_t i = 1;  // Index for args_full (starts at argv[1] equivalent)
 
-  // --- THE REST OF THE PARSING LOOP REMAINS THE SAME ---
   while (i < args_full.size()) {
     std::string command = args_full[i];
     int consumed = 0;
@@ -68,17 +64,13 @@ ParsedConfig parse_arguments(int argc,
       result.source_name = "Parser";
       result.success = false;
       result.error_message = "Unknown command or flag: " + command;
-      config.tasks.push_back(result);
+    //   config.tasks.push_back(result);
+      config.tasks.push_back(std::move(result));
       i++;  // Consume unknown command
     }
-    // Backup check to prevent infinite loop if consumed is weirdly negative or
-    // causes no change This depends heavily on how process_command signals
-    // consumption (return value vs reference update) Assuming process_command
-    // updates 'i' by reference correctly, this might be redundant.
-
   }  // end while
 
-  // Final checks (remain the same)
+  // Final checks
   if (config.tasks.empty() && config.mode == RUN_ONCE) {
     std::cerr << "Error: No valid commands resulted in metrics." << std::endl;
   }

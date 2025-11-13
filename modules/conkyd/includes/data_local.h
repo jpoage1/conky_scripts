@@ -18,54 +18,46 @@ struct LocalDataStreams : public DataStreamProvider {
   std::stringstream top_mem_procs;
   std::stringstream top_cpu_procs;
 
-  std::istream& get_cpuinfo_stream() override {
-    rewind(cpuinfo, "cpuinfo");
+  void reset_stream(std::ifstream& stream, const std::string& path) {
+      if (stream.is_open()) {
+          stream.close();
+      }
+      stream.open(path);
+      if (!stream.is_open()) {
+          std::cerr << "[Error] Failed to open " << path << std::endl;
+      }
+  }
+
+    std::istream& get_cpuinfo_stream() override {
+    reset_stream(cpuinfo, "/proc/cpuinfo");
     return cpuinfo;
   }
   std::istream& get_meminfo_stream() override {
-    rewind(meminfo, "meminfo");
+    reset_stream(meminfo, "/proc/meminfo");
     return meminfo;
   }
   std::istream& get_uptime_stream() override {
-    rewind(uptime, "uptime");
+    reset_stream(uptime, "/proc/uptime");
     return uptime;
   }
   std::istream& get_stat_stream() override {
-    rewind(stat, "stat");
+    reset_stream(stat, "/proc/stat");
     return stat;
   }
   std::istream& get_mounts_stream() override {
-    rewind(mounts, "mounts");
+    reset_stream(mounts, "/proc/mounts");
     return mounts;
   }
   std::istream& get_diskstats_stream() override {
-    rewind(diskstats, "diskstats");
+    reset_stream(diskstats, "/proc/diskstats");
     return diskstats;
   }
   std::istream& get_loadavg_stream() override {
-    rewind(loadavg, "loadavg");
+    reset_stream(loadavg, "/proc/loadavg");
     return loadavg;
   }
-  //   std::istream& get_net_dev_stream() override {
-  //     rewind(net_dev);
-  //     return net_dev;
-  //   }
   std::istream& get_net_dev_stream() override {
-    // Close if already open (might be redundant if closed in constructor,
-    // safe)
-    if (net_dev.is_open()) {
-      net_dev.close();
-    }
-    // Re-open the file fresh each time this is called
-    net_dev.open("/proc/net/dev");
-
-    if (!net_dev.is_open()) {
-      std::cerr
-          << "[Error] Failed to re-open /proc/net/dev in get_net_dev_stream."
-          << std::endl;
-      // Stream will be in fail state
-    }
-    // No need for clear() or seekg() on a fresh open
+    reset_stream(net_dev, "/proc/net/dev");
     return net_dev;
   }
   std::istream& get_top_mem_processes_stream() override;
@@ -75,8 +67,6 @@ struct LocalDataStreams : public DataStreamProvider {
 
   double get_cpu_temperature() override;
 };
-
-LocalDataStreams get_local_file_streams();
 
 // uint64_t LocalDataStreams::get_used_space_bytes(const std::string
 // &mount_point); uint64_t LocalDataStreams::get_disk_size_bytes(const

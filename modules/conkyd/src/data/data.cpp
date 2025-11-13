@@ -9,6 +9,9 @@
 #include <chrono> // For seconds
 #include <type_traits>
 
+#include <vector>
+#include <memory> // For std::unique_ptr
+
 #include "corestat.h"
 #include "cpuinfo.h"
 #include "diskstat.h"
@@ -18,6 +21,8 @@
 #include "swapinfo.h"
 #include "uptime.h"
 #include "metrics.hpp"
+
+#include "parser.hpp"
 
 void rewind(std::stringstream& stream, const std::string& streamName) {
   // Debug: Check if stream is in a bad state before attempting reset
@@ -37,13 +42,15 @@ void rewind(std::stringstream& stream, const std::string& streamName) {
   }
 }
 
-SystemMetrics read_data(DataStreamProvider& provider) {
-  SystemMetrics metrics;
+std::vector<std::unique_ptr<IPollingTask>> read_data(DataStreamProvider& provider, SystemMetrics &metrics) {
 
+    std::vector<std::unique_ptr<IPollingTask>> polling_tasks;
+    polling_tasks.push_back(std::make_unique<CpuPollingTask>(provider, metrics));
+    polling_tasks.push_back(std::make_unique<NetworkPollingTask>(provider, metrics));
   // Polling functions
 //   get_network_stats(provider, metrics);
 //   metrics.cores = calculate_cpu_usages(provider.get_stat_stream());
-  poll_dynamic_stats(provider, metrics);
+//   poll_dynamic_stats(provider, metrics);
   // End polling functions
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
@@ -60,6 +67,11 @@ SystemMetrics read_data(DataStreamProvider& provider) {
   get_top_processes_mem(provider, metrics);
   get_top_processes_cpu(provider, metrics);
 
+  get_system_info(metrics);
+  return polling_tasks;
+}
+
+void get_system_info(SystemMetrics &metrics) {
   struct utsname uts_info;
   if (uname(&uts_info) == 0) {  // 0 indicates success
     metrics.sys_name = uts_info.sysname;
@@ -73,8 +85,6 @@ SystemMetrics read_data(DataStreamProvider& provider) {
     metrics.kernel_release = "N/A";
     metrics.machine_type = "N/A";
   }
-
-  return metrics;
 }
 
 void print_metrics(const SystemMetrics& metrics) {
@@ -130,8 +140,6 @@ void get_load_and_process_stats(DataStreamProvider& provider,
 
   // 2. Get Process Counts
   std::istream& stat_stream = provider.get_stat_stream();
-  stat_stream.clear();
-  stat_stream.seekg(0, std::ios::beg);
   std::string line;
   while (std::getline(stat_stream, line)) {
     if (line.rfind("processes", 0) == 0) {
@@ -260,3 +268,45 @@ void poll_dynamic_stats(DataStreamProvider& provider, SystemMetrics& metrics) {
         time_delta.count()
     );
 }
+
+
+// /**
+//  * @brief Performs time-based polling for a list of dynamic tasks.
+//  *
+//  * This function is now a generic "task runner." It doesn't
+//  * know what it's polling, only that it must follow the
+//  * T1 -> Sleep -> T2 -> Calculate pattern.
+//  */
+// void poll_dynamic_stats(const std::vector<std::unique_ptr<IPollingTask>>& tasks)
+// {
+//     // --- CHECK RUN MODE (from our previous discussion) ---
+//     // Get the config from the provider
+//     const ParsedConfig& config = provider.get_config();
+//     bool should_sleep = (config.get_run_mode() == RUN_ONCE);
+
+//     // 1. Get T1 snapshot for all tasks
+//     auto t1_timestamp = std::chrono::steady_clock::now();
+//     for (const auto& task : tasks) {
+//         task->take_snapshot_1();
+//     }
+
+//     // 2. Centralized sleep (Only in defpoll/RUN_ONCE mode)
+//     if (should_sleep) {
+//         auto sleep_duration = config.get_pooling_interval<std::chrono::milliseconds>();
+//         std::this_thread::sleep_for(sleep_duration);
+//     }
+
+//     // 3. Get T2 snapshot for all tasks
+//     auto t2_timestamp = std::chrono::steady_clock::now();
+//     for (const auto& task : tasks) {
+//         task->take_snapshot_2();
+//     }
+
+//     // --- CALCULATIONS ---
+//     std::chrono::duration<double> time_delta = t2_timestamp - t1_timestamp;
+
+//     // 4. Calculate results for all tasks
+//     for (const auto& task : tasks) {
+//         task->calculate(time_delta.count());
+//     }
+// }

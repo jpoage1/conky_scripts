@@ -6,10 +6,12 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "corestat.h"
 #include "networkstats.hpp"
 #include "processinfo.hpp"
+// #include "parser.hpp"
 
 void rewind(std::stringstream& stream, const std::string&);
 
@@ -58,7 +60,95 @@ class DataStreamProvider {
   virtual uint64_t get_disk_size_bytes(const std::string& mount_point) = 0;
   virtual double get_cpu_temperature() = 0;
 };
-SystemMetrics read_data(DataStreamProvider&);
+
+/**
+ * @brief An interface for any task that requires two snapshots over
+ * time to calculate a rate (e.g., CPU, Network).
+ */
+class IPollingTask {
+    protected:
+
+    DataStreamProvider& provider;
+    SystemMetrics& metrics;
+public:
+    /**
+     * @brief Constructs a task by storing references to its context.
+     * * We use an initializer list (the ': ...') because references
+     * MUST be initialized, they cannot be assigned later.
+     */
+    IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+        : provider(_provider),
+          metrics(_metrics)
+    {
+    }
+    virtual ~IPollingTask() = default;
+
+    /**
+     * @brief Take the "Time 1" (T1) snapshot and store it internally.
+     */
+    virtual void take_snapshot_1() = 0;
+
+    /**
+     * @brief Take the "Time 2" (T2) snapshot and store it internally.
+     */
+    virtual void take_snapshot_2() = 0;
+
+    /**
+     * @brief Use the stored T1 and T2 snapshots to perform the
+     * calculation and save the result into the metrics object.
+     */
+    virtual void calculate(double time_delta_seconds) = 0;
+};
+
+class CpuPollingTask : public IPollingTask {
+private:
+    std::vector<CpuSnapshot> t1_snapshots;
+    std::vector<CpuSnapshot> t2_snapshots;
+
+public:
+    CpuPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+        : IPollingTask(_provider, _metrics) {}
+    void take_snapshot_1() override {
+        t1_snapshots = read_cpu_snapshots(provider.get_stat_stream());
+    }
+
+    void take_snapshot_2() override {
+        t2_snapshots = read_cpu_snapshots(provider.get_stat_stream());
+    }
+
+    void calculate(double /*time_delta_seconds*/) override {
+        // CPU usage calc doesn't need the time_delta, but others might
+        metrics.cores = calculate_cpu_usages(t1_snapshots, t2_snapshots);
+    }
+};
+
+
+class NetworkPollingTask : public IPollingTask {
+private:
+    std::map<std::string, NetworkSnapshot> t1_snapshot;
+    std::map<std::string, NetworkSnapshot> t2_snapshot;
+
+public:
+    NetworkPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+        : IPollingTask(_provider, _metrics) {}
+    void take_snapshot_1() override {
+        t1_snapshot = read_network_snapshot(provider.get_net_dev_stream());
+    }
+
+    void take_snapshot_2() override {
+        t2_snapshot = read_network_snapshot(provider.get_net_dev_stream());
+    }
+
+    void calculate(double time_delta_seconds) override {
+        metrics.network_interfaces = calculate_network_rates(
+            t1_snapshot,
+            t2_snapshot,
+            time_delta_seconds // Network *does* use the time_delta
+        );
+    }
+};
+
+std::vector<std::unique_ptr<IPollingTask>> read_data(DataStreamProvider&, SystemMetrics&);
 
 void print_metrics(const SystemMetrics&);
 void get_load_and_process_stats(DataStreamProvider& provider,
@@ -70,3 +160,4 @@ void get_top_processes_cpu(DataStreamProvider& provider,
                            SystemMetrics& metrics);
 
 void poll_dynamic_stats(DataStreamProvider& provider, SystemMetrics& metrics);
+void get_system_info(SystemMetrics &metrics);

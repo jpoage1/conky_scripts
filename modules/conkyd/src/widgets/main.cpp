@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include "data.h"        // For read_data
-#include "data_local.h"  // For get_local_file_streams
+#include "data.h"
+#include "data_local.h"
 #include "types.h"
 #include "window.h"
 
@@ -55,9 +55,10 @@ AllMetrics get_all_metrics(DataStreamProvider& provider,
 // --- Main Application Class ---
 class ConkyApplication : public Gtk::Application {
  protected:  // MODIFIED: Constructor should be protected
+  LocalDataStreams local_streams
   ConkyApplication()
       : Gtk::Application("org.conkyd.gtkmm"),
-        m_provider(get_local_file_streams())  // Initialize local data provider
+        m_provider(local_streams)  // Initialize local data provider
   {
     // Load mount points from config file
     std::ifstream ifs(MOUNTS_CONFIG_FILE);

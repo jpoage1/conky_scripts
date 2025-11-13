@@ -7,11 +7,11 @@
 #include "types.h"
 
 struct CombinedMetrics {
+  std::vector<std::unique_ptr<IPollingTask>> polled;
   SystemMetrics system;
   std::vector<DeviceInfo> disks;
 };
 
-class DataStreamProvider;
 
 struct PollingMetrics {
     std::chrono::time_point<std::chrono::steady_clock> timestamp;

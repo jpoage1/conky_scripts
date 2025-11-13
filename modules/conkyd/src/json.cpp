@@ -24,11 +24,36 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     do {
-        // 2. If parser returned potentially valid (even if error) results, generate
-        // output
+
         for (MetricResult& task : config.tasks) {
             task.run();
         }
+        // A. Get T1 snapshot for all tasks
+
+        auto t1_timestamp = std::chrono::steady_clock::now();
+        for (MetricResult& task : config.tasks) {
+            for (auto& polled_task : task.metrics.polled) {
+                polled_task->take_snapshot_1();
+            }
+        }
+        std::this_thread::sleep_for(config.get_pooling_interval<std::chrono::milliseconds>());
+        // C. Get T2 snapshot
+        auto t2_timestamp = std::chrono::steady_clock::now();
+
+        for (MetricResult& task : config.tasks) {
+            for (auto& polled_task : task.metrics.polled) {
+                polled_task->take_snapshot_2();
+            }
+        }
+
+        // D. Calculate
+        std::chrono::duration<double> time_delta = t2_timestamp - t1_timestamp;
+        for (MetricResult& task : config.tasks) {
+            for (auto& polled_task : task.metrics.polled) {
+                polled_task->calculate(time_delta.count());
+            }
+        }
+
         json output_json = config.tasks;
         std::cout << output_json.dump() << std::endl;
 
