@@ -15,7 +15,7 @@ int get_metrics(const std::string& config_file, const bool use_ssh) {
       std::cerr << "Failed to set up SSH session. Exiting." << std::endl;
       return 2;
     }
-    ProcDataStreams ssh_streams = get_ssh_streams();  // <--- Object created
+    ProcDataStreams ssh_streams;
 
     read_data(ssh_streams, metrics);
     print_metrics(metrics);
@@ -54,7 +54,7 @@ int get_server_metrics(const std::string& config_file,
     return 2;
   }
 
-  ProcDataStreams ssh_streams = get_ssh_streams();
+  ProcDataStreams ssh_streams;
 
   int result = get_metrics_from_provider(ssh_streams, config_file,
                                          metrics);
@@ -73,7 +73,7 @@ int get_server_metrics(const std::string& config_file, CombinedMetrics& metrics,
     return 2;
   }
 
-  ProcDataStreams ssh_streams = get_ssh_streams(); // fixme later
+  ProcDataStreams ssh_streams;
 
   int result = get_metrics_from_provider(ssh_streams, config_file,
                                          metrics);

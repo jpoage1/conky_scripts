@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
       result.source_name = "Parser";
       result.success = false;
       result.error_message = "Unknown command or flag: " + command;
-      all_results.push_back(result);
+      all_results.push_back(std::move(result));
       consumed = 1;  // Consume the unknown command
     }
 

@@ -28,8 +28,8 @@ int main(int argc, char* argv[]) {
         for (MetricResult& task : config.tasks) {
             task.run();
         }
-        // A. Get T1 snapshot for all tasks
 
+        // A. Get T1 snapshot
         auto t1_timestamp = std::chrono::steady_clock::now();
         for (MetricResult& task : config.tasks) {
             for (auto& polled_task : task.metrics.polled) {

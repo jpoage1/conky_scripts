@@ -4,8 +4,6 @@
 
 #include "data.h"
 
-void rewind(std::ifstream& stream, const std::string&);
-
 struct LocalDataStreams : public DataStreamProvider {
   std::ifstream cpuinfo;
   std::ifstream meminfo;

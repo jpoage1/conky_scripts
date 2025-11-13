@@ -44,7 +44,7 @@ std::set<std::string> parse_interface_list(const std::string& list_str) {
   return interfaces;
 }
 int process_command(const std::vector<std::string>& args, size_t& current_index,
-                    std::vector<MetricResult>& all_results) {
+                    std::vector<MetricResult>& tasks) {
   MetricResult result;
   std::string command = args[current_index];
   size_t initial_index = current_index;
@@ -55,7 +55,7 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
     result.error_message = command + " requires a <config_file> argument.";
     result.source_name =
         (command == "--local") ? "Local (Error)" : "SSH (Error)";
-    all_results.push_back(result);
+    tasks.push_back(std::move(result));
     return 1;  // Consume only the command itself
   }
   std::string config_file = args[current_index + 1];
@@ -67,7 +67,7 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
     result.error_message = "Config file not found: " + config_file;
     result.source_name =
         (command == "--local") ? "Local (Error)" : "SSH (Error)";
-    all_results.push_back(result);
+    tasks.push_back(std::move(result));
     return current_index - initial_index;  // Return consumed args
   } else {
     result.device_file = config_file;
@@ -124,6 +124,6 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
   }
 
   result.success = success;
-  all_results.push_back(result);
+  tasks.push_back(std::move(result));
   return current_index - initial_index;  // Return total consumed args
 }

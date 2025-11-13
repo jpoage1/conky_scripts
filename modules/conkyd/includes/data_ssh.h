@@ -17,6 +17,35 @@ struct ProcDataStreams : public DataStreamProvider {
   std::stringstream top_mem_procs;
   std::stringstream top_cpu_procs;
 
+  ProcDataStreams () {
+        std::string cpu_data = execute_ssh_command("cat /proc/cpuinfo");
+        std::string meminfo_data = execute_ssh_command("cat /proc/meminfo");
+        std::string uptime_data = execute_ssh_command("cat /proc/uptime");
+        std::string stat_data = execute_ssh_command("cat /proc/stat");
+        std::string mounts_data = execute_ssh_command("cat /proc/mounts");
+        std::string diskstats_data = execute_ssh_command("cat /proc/diskstats");
+        std::string loadavg_data = execute_ssh_command("cat /proc/loadavg");
+        std::string net_dev_data = execute_ssh_command("cat /proc/net/dev");
+        std::string top_mem_data = execute_ssh_command(
+            "ps -eo pid,rss,comm --no-headers --sort=-rss | grep -v \" ps$\" | head "
+            "-n 10");
+        std::string top_cpu_data = execute_ssh_command(
+            "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | grep -v \" ps$\" | "
+            "head -n 10");
+
+    cpuinfo.str(cpu_data);
+    meminfo.str(meminfo_data);
+    uptime.str(uptime_data);
+    stat.str(stat_data);
+    mounts.str(mounts_data);
+    diskstats.str(diskstats_data);
+    loadavg.str(loadavg_data);
+    net_dev.str(net_dev_data);
+    top_mem_procs.str(top_mem_data);
+    top_cpu_procs.str(top_cpu_data);
+  }
+
+
   std::istream& get_cpuinfo_stream() override {
     rewind(cpuinfo, "cpuinfo");
     return cpuinfo;
@@ -61,11 +90,10 @@ struct ProcDataStreams : public DataStreamProvider {
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
 
   double get_cpu_temperature() override {
-    return -1.0;  // TODO: Implement SSH temp logic
+    return -1.0;
   }
 };
 
-ProcDataStreams get_ssh_streams();
 
 std::string trim(const std::string& str);
 uint64_t get_df_data_bytes(const std::string& mount_point, bool get_used);

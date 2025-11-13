@@ -1,47 +1,5 @@
 #include "data_ssh.h"
 
-ProcDataStreams get_ssh_streams() {
-  // Get the remote data
-  std::string cpu_data = execute_ssh_command("cat /proc/cpuinfo");
-  std::string meminfo_data = execute_ssh_command("cat /proc/meminfo");
-  std::string uptime_data = execute_ssh_command("cat /proc/uptime");
-  std::string stat_data = execute_ssh_command("cat /proc/stat");
-  std::string mounts_data = execute_ssh_command("cat /proc/mounts");
-  std::string diskstats_data = execute_ssh_command("cat /proc/diskstats");
-  std::string loadavg_data = execute_ssh_command("cat /proc/loadavg");
-  std::string net_dev_data = execute_ssh_command("cat /proc/net/dev");
-  std::string top_mem_data = execute_ssh_command(
-      "ps -eo pid,rss,comm --no-headers --sort=-rss | grep -v \" ps$\" | head "
-      "-n 10");
-  std::string top_cpu_data = execute_ssh_command(
-      "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | grep -v \" ps$\" | "
-      "head -n 10");
-
-  // Create string streams from the retrieved data
-  std::stringstream cpu_file_stream(cpu_data);
-  std::stringstream meminfo_file_stream(meminfo_data);
-  std::stringstream uptime_file_stream(uptime_data);
-  std::stringstream stat_file_stream(stat_data);
-  std::stringstream mounts_file_stream(mounts_data);
-  std::stringstream diskstats_file_stream(diskstats_data);
-  std::stringstream loadavg_file_stream(loadavg_data);
-  std::stringstream net_dev_file_stream(net_dev_data);
-
-  ProcDataStreams streams;
-  streams.cpuinfo << cpu_data;
-  streams.meminfo << meminfo_data;
-  streams.uptime << uptime_data;
-  streams.stat << stat_data;
-  streams.mounts << mounts_data;
-  streams.diskstats << diskstats_data;
-  streams.loadavg << loadavg_data;
-  streams.net_dev << net_dev_data;
-  streams.top_mem_procs << top_mem_data;
-  streams.top_cpu_procs << top_cpu_data;
-
-  return streams;
-}
-
 // Helper function to trim leading and trailing whitespace.
 std::string trim(const std::string& str) {
   const auto str_begin = str.find_first_not_of(" \t\n\r\f\v");
