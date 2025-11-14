@@ -54,9 +54,6 @@ std::vector<CpuSnapshot> read_cpu_snapshots(std::istream& input_stream) {
   std::vector<CpuSnapshot> snapshots;
   std::string line;
 
-  input_stream.clear();
-  input_stream.seekg(0, std::ios::beg);
-
   while (std::getline(input_stream, line)) {
     if (line.compare(0, 3, "cpu") != 0) {
       break;
@@ -72,40 +69,6 @@ std::vector<CpuSnapshot> read_cpu_snapshots(std::istream& input_stream) {
     snapshots.push_back(snap);
   }
   return snapshots;
-}
-/*
-// DEPRECATED: Polling logic has been centralized in poll_dynamic_stats().
-// These functions perform their own sleep and are no longer used.
-*/
-std::vector<float> get_cpu_usages(std::istream& input_stream) {
-  auto t1 = read_cpu_times(input_stream);
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  auto t2 = read_cpu_times(input_stream);
-  return get_cpu_usages(t1, t2);
-}
-
-/*
-// DEPRECATED: Polling logic has been centralized in poll_dynamic_stats().
-// These functions perform their own sleep and are no longer used.
-*/
-std::vector<CoreStats> calculate_cpu_usages(std::istream& input_stream) {
-  auto t1_snapshots = read_cpu_snapshots(input_stream);
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  auto t2_snapshots = read_cpu_snapshots(input_stream);
-  return calculate_cpu_usages(t1_snapshots, t2_snapshots);
-}
-
-std::vector<float> get_cpu_usages(const std::vector<CPUCore>& t1,
-                                  const std::vector<CPUCore>& t2) {
-  std::vector<float> usages;
-  for (size_t i = 0; i < t1.size(); ++i) {
-    unsigned long long idle_diff = t2[i].idle_time - t1[i].idle_time;
-    unsigned long long total_diff = t2[i].total_time - t1[i].total_time;
-    float usage =
-        total_diff == 0 ? 0 : 100.0f * (total_diff - idle_diff) / total_diff;
-    usages.push_back(usage);
-  }
-  return usages;
 }
 
 std::vector<CoreStats> calculate_cpu_usages(

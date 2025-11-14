@@ -13,7 +13,7 @@ std::istream& LocalDataStreams::get_top_mem_processes_stream() {
   std::string cmd_output = exec_local_cmd(cmd);
 
   top_mem_procs.str(std::move(cmd_output));  // Move output into stream
-  rewind(top_mem_procs, "top_mem_procs");
+  //   rewind(top_mem_procs, "top_mem_procs");
   return top_mem_procs;
 }
 std::istream& ProcDataStreams::get_top_mem_processes_stream() {

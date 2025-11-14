@@ -8,8 +8,8 @@ std::istream& LocalDataStreams::get_top_cpu_processes_stream() {
       "head -n 10";
   std::string cmd_output = exec_local_cmd(cmd);
 
-  top_cpu_procs.str(std::move(cmd_output));  // Use the cpu stream member
-  rewind(top_cpu_procs, "top_cpu_procs");
+  top_cpu_procs.str(std::move(cmd_output));
+  //   rewind(top_cpu_procs, "top_cpu_procs");
   return top_cpu_procs;
 }
 

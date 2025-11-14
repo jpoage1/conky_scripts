@@ -1,5 +1,5 @@
 // uptime.cpp
-#include "uptime.h"
+#include "uptime.hpp"
 
 #include <fstream>
 #include <iomanip>
