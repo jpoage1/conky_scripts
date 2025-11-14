@@ -1,4 +1,6 @@
 // parser.hpp
+#include "nlohmann/json.hpp"
+#include "json_definitions.hpp"
 
 #pragma once
 #include <filesystem>
@@ -13,16 +15,23 @@
 
 #include "waybar_types.h"
 
+using json = nlohmann::json;
+
 enum RunMode {
     RUN_ONCE,
     PERSISTENT,
 };
+enum OutputMode {
+    CONKY,
+    JSON,
+};
 class ParsedConfig {
     private:
         std::chrono::nanoseconds pooling_interval = std::chrono::milliseconds(500);
+        OutputMode _output_mode = JSON;
+        RunMode _run_mode = RUN_ONCE;
     public:
         std::vector<MetricResult> tasks;
-        RunMode mode = RUN_ONCE;
 
         /**
          * @brief A single template setter.
@@ -41,8 +50,42 @@ class ParsedConfig {
         DurationType get_pooling_interval() const {
             return std::chrono::duration_cast<DurationType>(pooling_interval);
         }
-        RunMode get_run_mode() const {
-            return mode;
+
+        bool run_mode(RunMode mode) const {
+            return _run_mode == mode;
+        }
+        bool output_mode(OutputMode mode) const {
+            return _output_mode == mode;
+        }
+        RunMode run_mode() const {
+            return _run_mode;
+        }
+        OutputMode get_output_mode() const {
+            return _output_mode;
+        }
+        void set_run_mode(RunMode mode) {
+            _run_mode = mode;
+        }
+        void set_output_mode(OutputMode mode) {
+            _output_mode = mode;
+        }
+        void done() {
+            switch (_output_mode) {
+                case OutputMode::JSON: {
+                    json output_json = tasks;
+                    std::cout << output_json.dump() << std::endl;
+                    break;
+                }
+                case OutputMode::CONKY: {
+                    for ( const MetricResult&task : tasks) {
+                        print_metrics(task.metrics);
+                    }
+                    break;
+                }
+                default:
+                    std::cerr  << "Invaild output type" << std::endl;
+                    exit(1);
+            }
         }
 
 };

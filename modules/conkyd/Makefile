@@ -32,9 +32,9 @@ SRC_NETWORKSTATS = src/processinfo/processinfo.cpp
 SRC_SWAPINFO = src/systeminfo/swapinfo.cpp
 SRC_UPTIME = src/systeminfo/uptime.cpp
 SRC_DISKSTAT = src/systeminfo/diskstat.cpp
-SRC_MAIN = src/conkyd.cpp
 SRC_WAYBAR_TYPES = src/waybar_types.cpp
 SRC_CLI_PARSER = src/parser.cpp
+SRC_CONKY_FORMAT = src/diskstat/src/conky_format.cpp
 SRC_WAYBAR_FORMATTER = src/waybar_formatter.cpp
 SRC_WAYBAR_MAIN = src/waybar.cpp
 SRC_JSON_MAIN = src/json.cpp
@@ -56,9 +56,9 @@ OBJ_SWAPINFO = $(OBJ_DIR)/systeminfo/swapinfo.o
 OBJ_UPTIME = $(OBJ_DIR)/systeminfo/uptime.o
 OBJ_DISKSTAT = $(OBJ_DIR)/systeminfo/diskstat.o
 OBJ_CLI_PARSER = $(OBJ_DIR)/cli_parser.o
+OBJ_CONKY_FORMAT = $(OBJ_DIR)/conky_format.o
 OBJ_WAYBAR_FORMATTER = $(OBJ_DIR)/waybar_formatter.o
 OBJ_WAYBAR_MAIN = $(OBJ_DIR)/waybar.O
-OBJ_CONKYD = $(OBJ_DIR)/conkyd.o
 OBJ_WAYBARD = $(OBJ_DIR)/waybar.o
 OBJ_JSON_MAIN = $(OBJ_DIR)/json.o
 OBJ_WIDGETS_WIDGETS = $(OBJ_DIR)/widgets_widgets.o
@@ -70,7 +70,6 @@ DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
 DISKSTAT_OBJ = $(patsubst $(DISKSTAT_SRC_DIR)/%.cpp,$(DISKSTAT_OBJ_DIR)/%.o,$(DISKSTAT_SRC))
 
 # Final binary
-CONKYD_BIN = conkyd.bin
 WAYBARD_BIN = waybard.bin
 WAYBARD2_BIN = waybard2.bin
 JSON_BIN = json.bin
@@ -78,15 +77,12 @@ WIDGETS_BIN = widgets.bin
 
 .PHONY: all clean debug waybard json widgets
 
-all: $(DISKSTAT_LIB) $(CONKY_BIN) $(WAYBARD_BIN) (JSON_BIN) $(WIDGETS_BIN)
-
-$(CONKYD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_DISKSTAT) $(OBJ_CONKYD) $(DISKSTAT_LIB)
-	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
+all: $(DISKSTAT_LIB) $(WAYBARD_BIN) (JSON_BIN) $(WIDGETS_BIN)
 
 $(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_DISKSTAT) $(OBJ_CLI_PARSER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_WAYBAR_MAIN) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
 
-$(JSON_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CLI_PARSER) $(OBJ_DISKSTAT) $(OBJ_WAYBAR_FORMATTER) $(OBJ_JSON_MAIN) $(DISKSTAT_LIB)
+$(JSON_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CLI_PARSER) $(OBJ_DISKSTAT) $(OBJ_WAYBAR_FORMATTER) $(OBJ_CONKY_FORMAT) $(OBJ_JSON_MAIN) $(DISKSTAT_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
 
 $(WIDGETS_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) $(OBJ_PROCESSINFO) $(OBJ_SWAPINFO) $(OBJ_UPTIME) $(OBJ_CLI_PARSER) $(OBJ_DISKSTAT) $(OBJ_WAYBAR_FORMATTER) $(OBJ_WIDGETS_WIDGETS) $(OBJ_WIDGETS_WINDOW) $(OBJ_WIDGETS_MAIN) $(DISKSTAT_LIB)
@@ -159,8 +155,11 @@ $(OBJ_DISKSTAT): src/systeminfo/diskstat.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-
 $(OBJ_CLI_PARSER): src/parser.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_CONKY_FORMAT): $(SRC_CONKY_FORMAT)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
@@ -173,10 +172,6 @@ $(OBJ_WAYBAR_MAIN): src/waybar.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_JSON_MAIN): src/json.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(OBJ_CONKYD): src/conkyd.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
@@ -197,11 +192,10 @@ $(OBJ_WIDGETS_WINDOW): src/widgets/window.cpp
 	$(CXX) $(CXXFLAGS) $(GTK_CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(CONKYD_BIN) $(WIDGETS_BIN)
+	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(WIDGETS_BIN)
 
-install: $(CONKYD_BIN) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(WIDGETS_BIN)
+install: $(WAYBARD_BIN) $(WAYBARD2_BIN) $(WIDGETS_BIN)
 	mkdir -p $(INSTALL_DIR)
-	cp $(CONKYD_BIN) $(INSTALL_DIR)/conkyd
 	cp $(WAYBARD_BIN) $(INSTALL_DIR)/warbard
 	cp $(WAYBARD2_BIN) $(INSTALL_DIR)/warbard2
 	cp $(JSON_BIN) $(INSTALL_DIR)/json
@@ -211,10 +205,6 @@ install: $(CONKYD_BIN) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(WIDGETS_BIN)
 waybard: $(WAYBARD_BIN)
 	mkdir -p $(INSTALL_DIR)
 	cp $(WAYBARD_BIN) $(INSTALL_DIR)/warbard
-
-waybard2: $(WAYBARD2_BIN)
-	mkdir -p $(INSTALL_DIR)
-	cp $(WAYBARD2_BIN) $(INSTALL_DIR)/warbard2
 
 json: $(JSON_BIN)
 	mkdir -p $(INSTALL_DIR)

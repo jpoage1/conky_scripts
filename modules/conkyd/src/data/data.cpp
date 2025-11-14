@@ -66,7 +66,25 @@ void get_system_info(SystemMetrics &metrics) {
   }
 }
 
+
+void print_device_metrics(const std::vector<DeviceInfo> &devices) {
+
+  extern std::tuple<std::string, std::function<FuncType>> conky_columns[];
+  extern const size_t CONKY_COLUMNS_COUNT;
+  std::cout.setf(std::ios::unitbuf);
+
+  print_column_headers(conky_columns, CONKY_COLUMNS_COUNT);
+  print_rows(devices, CONKY_COLUMNS_COUNT);
+}
+
+void print_metrics(const CombinedMetrics& metrics) {
+    print_system_metrics(metrics.system);
+    print_device_metrics(metrics.disks);
+}
 void print_metrics(const SystemMetrics& metrics) {
+    print_system_metrics(metrics);
+}
+void print_system_metrics(const SystemMetrics& metrics) {
   // Set precision for floating point numbers (percentages, temp, freq)
   std::cout << std::fixed << std::setprecision(1);
 

@@ -12,13 +12,13 @@ void pad_str(const ColoredString &cstr) {
   std::cout << "${color " << cstr.color << "}" << cstr.text << "${color}";
 }
 void print_column_headers(
-    std::tuple<std::string, std::function<FuncType>> columns[], size_t count) {
+    std::tuple<std::string, std::function<FuncType>> conky_columns[], size_t count) {
   std::cout << "${color " << paleblue << "}";
   int xpos = 0;
 
   for (size_t i = 0; i < count; ++i) {
     std::cout << "${goto " << xpos << "}";
-    pad_str(std::get<0>(columns[i]));
+    pad_str(std::get<0>(conky_columns[i]));
 
     int width = DEFAULT_COL_WIDTH;
     if (column_widths.count(i)) width = column_widths[i];
@@ -29,14 +29,14 @@ void print_column_headers(
   std::cout << "${color}" << std::endl;
 }
 
-void print_rows(std::vector<DeviceInfo> &devices, const size_t column_count) {
-  extern std::tuple<std::string, std::function<FuncType>> columns[];
+void print_rows(const std::vector<DeviceInfo> &devices, const size_t column_count) {
+  extern std::tuple<std::string, std::function<FuncType>> conky_columns[];
 
   for (const auto &device : devices) {
     int xpos = 0;
     for (size_t i = 0; i < column_count; ++i) {
       std::cout << "${goto " << xpos << "}";
-      pad_str(std::get<1>(columns[i])(device));
+      pad_str(std::get<1>(conky_columns[i])(device));
 
       int width = DEFAULT_COL_WIDTH;
       if (column_widths.count(i)) width = column_widths[i];

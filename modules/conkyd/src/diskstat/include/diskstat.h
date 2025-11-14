@@ -11,6 +11,6 @@
 
 int read_device_paths(const std::string &path, std::vector<std::string> &);
 
-int diskstat(const std::string &config_file);
+void diskstat(const std::string &config_file);
 
 int diskstat(DataStreamProvider &provider, const std::string &config_file);

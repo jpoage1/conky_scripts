@@ -54,12 +54,11 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        json output_json = config.tasks;
-        std::cout << output_json.dump() << std::endl;
+        config.done();
 
-        if ( config.mode != RunMode::RUN_ONCE ) {
+        if ( !config.run_mode(RunMode::RUN_ONCE) ) {
             std::this_thread::sleep_for(config.get_pooling_interval<std::chrono::milliseconds>());
         }
-    } while  (config.mode == RunMode::PERSISTENT);
+    } while  (config.run_mode(RunMode::PERSISTENT));
     return 0;
 }

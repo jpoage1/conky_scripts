@@ -43,7 +43,7 @@ ParsedConfig parse_arguments(int argc,
     }
     // Handle Persistent Flag
     else if (command == "--persistent") {
-        config.mode = PERSISTENT;
+        config.set_run_mode(PERSISTENT);
         i++; // Consume this flag and continue parsing
     }
     // Handle Explicit Commands
@@ -72,12 +72,12 @@ ParsedConfig parse_arguments(int argc,
   }  // end while
 
   // Final checks
-  if (config.tasks.empty() && config.mode == RUN_ONCE) {
+  if (config.tasks.empty() && config.run_mode(RUN_ONCE))  {
     std::cerr << "Error: No valid commands resulted in metrics." << std::endl;
   }
   else {
     // bool any_success = false;
-    // for (const auto& res : all_results) {
+    // for (const auto& res : config.tasks) {
     //   if (res.success) {
     //     any_success = true;
     //     break;

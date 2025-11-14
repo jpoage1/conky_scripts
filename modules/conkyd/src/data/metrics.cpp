@@ -1,37 +1,12 @@
 #include "metrics.hpp"
 
 #include <iostream>
+#include <memory>
 
 #include "data_local.h"
 #include "data_ssh.h"
 #include "diskstat.h"
-
-// This function's logic is restructured to avoid the null pointer
-int get_metrics(const std::string& config_file, const bool use_ssh) {
-  SystemMetrics metrics;
-
-  if (use_ssh) {
-    if (setup_ssh_session() != 0) {
-      std::cerr << "Failed to set up SSH session. Exiting." << std::endl;
-      return 2;
-    }
-    ProcDataStreams ssh_streams;
-
-    read_data(ssh_streams, metrics);
-    print_metrics(metrics);
-    diskstat(ssh_streams, config_file);
-
-    cleanup_ssh_session();
-  } else {
-    LocalDataStreams local_streams;
-
-    read_data(local_streams, metrics);
-    print_metrics(metrics);
-    diskstat(local_streams, config_file);
-  }
-
-  return 0;
-}
+#include "data.h"
 
 /**
  * @brief Gets metrics from the local filesystem.
