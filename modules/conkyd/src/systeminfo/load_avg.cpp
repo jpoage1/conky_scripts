@@ -23,14 +23,16 @@ std::istream& ProcDataStreams::get_loadavg_stream() {
   return loadavg;
 }
 
-void get_load_and_process_stats(DataStreamProvider& provider,
+void get_load_and_process_stats(std::istream& stat_stream,
                                 SystemMetrics& metrics) {
   // 1. Get Load Average
-  provider.get_loadavg_stream() >> metrics.load_avg_1m >> metrics.load_avg_5m >>
+  stat_stream >> metrics.load_avg_1m >> metrics.load_avg_5m >>
       metrics.load_avg_15m;
 
+  stat_stream.clear();
+  stat_stream.seekg(0, std::ios::beg);
+
   // 2. Get Process Counts
-  std::istream& stat_stream = provider.get_stat_stream();
   std::string line;
   while (std::getline(stat_stream, line)) {
     if (line.rfind("processes", 0) == 0) {

@@ -35,18 +35,20 @@ PollingTaskList read_data(DataStreamProvider& provider,
   // metrics));
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
+  std::cerr << "Mem Usage" << std::endl;
 
   get_mem_usage(provider.get_meminfo_stream(), metrics.mem_used_kb,
                 metrics.mem_total_kb, metrics.mem_percent);
   get_swap_usage(provider.get_meminfo_stream(), metrics.swap_used_kb,
                  metrics.swap_total_kb, metrics.swap_percent);
 
+  std::cerr << "Uptime" << std::endl;
   metrics.uptime = get_uptime(provider.get_uptime_stream());
   metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
 
-  get_load_and_process_stats(provider, metrics);
-  get_top_processes_mem(provider, metrics);
-  get_top_processes_cpu(provider, metrics);
+  get_load_and_process_stats(provider.get_loadavg_stream(), metrics);
+  get_top_processes_mem(provider.get_top_mem_processes_stream(), metrics);
+  get_top_processes_cpu(provider.get_top_cpu_processes_stream(), metrics);
 
   get_system_info(metrics);
   return polling_tasks;
@@ -128,4 +130,60 @@ void print_system_metrics(const SystemMetrics& metrics) {
               << proc.cpu_percent << "%\t\t" << proc.name << std::endl;
   }
   std::cout << "---------------------------" << std::endl;
+}
+
+void DataStreamProvider::rewind(std::stringstream& stream,
+                                const std::string& streamName) {
+  if (stream.fail() || stream.bad()) {
+    std::cerr << "DEBUG: Stream '" << streamName
+              << "' was in fail/bad state before rewind." << std::endl;
+  }
+
+  stream.clear();
+  stream.seekg(0, std::ios::beg);
+
+  if (stream.fail() || stream.bad()) {
+    std::cerr << "DEBUG: Stream '" << streamName
+              << "' is still in fail/bad state after rewind. FATAL."
+              << std::endl;
+  }
+}
+void DataStreamProvider::rewind(std::stringstream& stream) {
+  if (stream.fail() || stream.bad()) {
+    std::cerr << "DEBUG: Stream was in fail/bad state before rewind."
+              << std::endl;
+  }
+
+  stream.clear();
+  stream.seekg(0, std::ios::beg);
+
+  if (stream.fail() || stream.bad()) {
+    std::cerr << "DEBUG: Stream is still in fail/bad state after rewind. FATAL."
+              << std::endl;
+  }
+}
+
+void DataStreamProvider::rewind(std::ifstream& stream,
+                                const std::string& streamName) {
+  // Debug: Check if stream is in a bad state before attempting reset
+  if (stream.fail()) {
+    std::cerr << "DEBUG: Stream '" << streamName
+              << "' was in fail state before rewind." << std::endl;
+  } else if (stream.bad()) {
+    std::cerr << "DEBUG: Stream '" << streamName
+              << "' was in bad state before rewind." << std::endl;
+  } else {
+    std::cerr << "DEBUG: Stream '" << streamName
+              << "' was in good state before rewind." << std::endl;
+  }
+
+  stream.clear();
+  stream.seekg(0, std::ios::beg);
+
+  // Debug: Confirm stream is usable after reset
+  if (stream.fail() || stream.bad()) {
+    std::cerr << "DEBUG: Stream '" << streamName
+              << "' is still in fail/bad state after rewind. FATAL."
+              << std::endl;
+  }
 }

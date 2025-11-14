@@ -4,5 +4,4 @@
 #include "data_local.h"
 #include "data_ssh.h"
 
-void get_top_processes_mem(DataStreamProvider& provider,
-                           SystemMetrics& metrics);
+void get_top_processes_mem(std::istream& stream, SystemMetrics& metrics);

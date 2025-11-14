@@ -24,10 +24,8 @@ std::istream& ProcDataStreams::get_top_cpu_processes_stream() {
   return top_cpu_procs;
 }
 
-void get_top_processes_cpu(DataStreamProvider& provider,
-                           SystemMetrics& metrics) {
+void get_top_processes_cpu(std::istream& stream, SystemMetrics& metrics) {
   metrics.top_processes_cpu.clear();  // Clear old data
-  std::istream& stream = provider.get_top_cpu_processes_stream();
   std::string line;
   double total_mem_kb = (metrics.mem_total_kb > 0)
                             ? static_cast<double>(metrics.mem_total_kb)
