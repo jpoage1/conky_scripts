@@ -2,14 +2,12 @@
 #include "parser.hpp"
 
 #include <iostream>
-#include <vector>
 #include <set>
+#include <vector>
 
 #include "waybar_types.h"
 
-
-ParsedConfig parse_arguments(int argc,
-                                          char* argv[]) {
+ParsedConfig parse_arguments(int argc, char* argv[]) {
   ParsedConfig config;
   const char* prog_name = argv[0];  // Get program name
 
@@ -43,8 +41,8 @@ ParsedConfig parse_arguments(int argc,
     }
     // Handle Persistent Flag
     else if (command == "--persistent") {
-        config.set_run_mode(PERSISTENT);
-        i++; // Consume this flag and continue parsing
+      config.set_run_mode(PERSISTENT);
+      i++;  // Consume this flag and continue parsing
     }
     // Handle Explicit Commands
     else if (command == "--local" || command == "--ssh") {
@@ -65,17 +63,16 @@ ParsedConfig parse_arguments(int argc,
       result.source_name = "Parser";
       result.success = false;
       result.error_message = "Unknown command or flag: " + command;
-    //   config.tasks.push_back(result);
+      //   config.tasks.push_back(result);
       config.tasks.push_back(std::move(result));
       i++;  // Consume unknown command
     }
   }  // end while
 
   // Final checks
-  if (config.tasks.empty() && config.run_mode(RUN_ONCE))  {
+  if (config.tasks.empty() && config.run_mode(RUN_ONCE)) {
     std::cerr << "Error: No valid commands resulted in metrics." << std::endl;
-  }
-  else {
+  } else {
     // bool any_success = false;
     // for (const auto& res : config.tasks) {
     //   if (res.success) {
@@ -92,14 +89,13 @@ ParsedConfig parse_arguments(int argc,
   return config;
 }
 
-
 int check_config_file(const std::string& config_file) {
   if (!std::filesystem::exists(config_file)) {
     std::cerr << "Warning: Config file not found, skipping: " << config_file
               << std::endl;
-    return 1;  // Return 1 to indicate an error
+    return 1;
   }
-  return 0;  // Success
+  return 0;
 }
 
 void print_usage(const char* prog_name) {
@@ -162,12 +158,9 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
   }
 
   // --- 3. Call Appropriate Get Function ---
-  bool success = false;
   if (command == "--local") {
     result.source_name = "Local";
     result.set_callback(get_local_metrics);
-    if (!success) result.error_message = "Failed to get local metrics.";
-
   } else if (command == "--ssh") {
     // Check for specific host/user
     if (current_index + 1 < args.size() &&
@@ -176,24 +169,18 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
       std::string host = args[current_index];
       std::string user = args[current_index + 1];
       result.source_name = user + "@" + host;
-    //       (get_server_metrics(config_file, result.metrics, host, user) == 0);
       result.set_callback(
-            [host, user](const std::string& cfg, CombinedMetrics& m) {
-                // The lambda's body calls the REAL 4-argument function
-                return get_server_metrics(cfg, m, host, user);
-            }
-        );
-
-       success = true;
-      if (!success) result.error_message = "Failed to connect.";
+          [host, user](const std::string& cfg, CombinedMetrics& m) {
+            // The lambda's body calls the REAL 4-argument function
+            return get_server_metrics(cfg, m, host, user);
+          });
       current_index += 2;  // Consume host + user
     } else {
       // Default SSH host
       result.source_name = "Default SSH";
       result.set_callback(
-            static_cast<int(*)(const std::string&, CombinedMetrics&)>(get_server_metrics)
-        );
-      if (!success) result.error_message = "Failed to connect.";
+          static_cast<int (*)(const std::string&, CombinedMetrics&)>(
+              get_server_metrics));
     }
   }
   // --- 4. Check for --interfaces ---
@@ -211,7 +198,6 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
     }
   }
 
-  result.success = success;
   tasks.push_back(std::move(result));
   return current_index - initial_index;  // Return total consumed args
 }

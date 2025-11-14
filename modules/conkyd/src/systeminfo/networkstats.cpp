@@ -1,12 +1,27 @@
 // networkstats.cpp
 #include "networkstats.hpp"
-#include "metrics.hpp"
 
 #include <chrono>
 #include <map>
 #include <thread>
 
 #include "data.h"
+#include "data_local.h"
+#include "data_ssh.h"
+#include "metrics.hpp"
+
+std::istream& LocalDataStreams::get_net_dev_stream() {
+  reset_stream(net_dev, "/proc/net/dev");
+  return net_dev;
+}
+
+std::istream& ProcDataStreams::get_net_dev_stream() {
+  std::string net_dev_data = execute_ssh_command("cat /proc/net/dev");
+  net_dev.str(net_dev_data);
+  //   rewind(net_dev, "net_dev");
+  return net_dev;
+}
+
 std::map<std::string, NetworkSnapshot> read_network_snapshot(
     std::istream& net_dev_stream) {
   std::map<std::string, NetworkSnapshot> snapshots;
@@ -82,7 +97,7 @@ std::vector<NetworkInterfaceStats> calculate_network_rates(
 // DEPRECATED: Polling logic has been centralized in poll_dynamic_stats().
 // These functions perform their own sleep and are no longer used.
 */
-//std::map<std::string, NetworkSnapshot>
+// std::map<std::string, NetworkSnapshot>
 void get_network_stats(DataStreamProvider& provider, SystemMetrics& metrics) {
   // Snapshot 1
   auto t1_timestamp = std::chrono::steady_clock::now();
@@ -112,6 +127,8 @@ void get_network_stats(DataStreamProvider& provider, SystemMetrics& metrics) {
 // These functions perform their own sleep and are no longer used.
 */
 // Delegates the metrics calculation
-// void get_network_stats(DataStreamProvider& provider, , SystemMetrics& metrics) {
-//   metrics.network_interfaces = read_network_snapshot(provider.get_net_dev_stream(), );
+// void get_network_stats(DataStreamProvider& provider, , SystemMetrics&
+// metrics) {
+//   metrics.network_interfaces =
+//   read_network_snapshot(provider.get_net_dev_stream(), );
 // }

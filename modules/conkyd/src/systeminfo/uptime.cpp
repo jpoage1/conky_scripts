@@ -5,6 +5,19 @@
 #include <iomanip>
 #include <iostream>
 
+#include "data_local.h"
+#include "data_ssh.h"
+
+std::istream& LocalDataStreams::get_uptime_stream() {
+  reset_stream(uptime, "/proc/uptime");
+  return uptime;
+}
+std::istream& ProcDataStreams::get_uptime_stream() {
+  std::string uptime_data = execute_ssh_command("cat /proc/uptime");
+  uptime.str(uptime_data);
+  //   rewind(uptime, "uptime");
+  return uptime;
+}
 std::string get_uptime(std::istream& input_stream) {
   double uptime_seconds;
   input_stream >> uptime_seconds;

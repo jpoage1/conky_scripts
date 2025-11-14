@@ -1,14 +1,13 @@
 // waybar_formatters.cpp
 
-#include "nlohmann/json.hpp"
-#include "size_format.h"
-#include "parser.hpp"
 #include "waybar_formatters.h"
+
+#include "nlohmann/json.hpp"
+#include "parser.hpp"
+#include "size_format.h"
 #include "waybar_types.h"
 
 using json = nlohmann::json;
-
-FormattedSize format_size_rate(double bytes_per_sec);
 void generate_waybar_output(const std::vector<MetricResult>& all_results);
 
 FormattedSize format_size_rate(double bytes_per_sec) {

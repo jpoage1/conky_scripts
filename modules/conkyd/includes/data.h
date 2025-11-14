@@ -3,16 +3,15 @@
 #include <fstream>
 #include <iostream>
 #include <istream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <memory>
-
 
 #include "corestat.h"
+#include "diskstat.hpp"
 #include "networkstats.hpp"
 #include "processinfo.hpp"
-#include "diskstat.hpp"
 #include "types.h"
 
 struct SystemMetrics {
@@ -49,7 +48,7 @@ class DataStreamProvider {
  public:
   void rewind(std::stringstream& stream, const std::string& streamName) {
     if (stream.fail() || stream.bad()) {
-        std::cerr << "DEBUG: Stream '" << streamName
+      std::cerr << "DEBUG: Stream '" << streamName
                 << "' was in fail/bad state before rewind." << std::endl;
     }
 
@@ -57,7 +56,7 @@ class DataStreamProvider {
     stream.seekg(0, std::ios::beg);
 
     if (stream.fail() || stream.bad()) {
-        std::cerr << "DEBUG: Stream '" << streamName
+      std::cerr << "DEBUG: Stream '" << streamName
                 << "' is still in fail/bad state after rewind. FATAL."
                 << std::endl;
     }
@@ -65,26 +64,26 @@ class DataStreamProvider {
 
   void rewind(std::ifstream& stream, const std::string& streamName) {
     // Debug: Check if stream is in a bad state before attempting reset
-    if (stream.fail() ) {
-        std::cerr << "DEBUG: Stream '" << streamName
+    if (stream.fail()) {
+      std::cerr << "DEBUG: Stream '" << streamName
                 << "' was in fail state before rewind." << std::endl;
-    } else if ( stream.bad()) {
-        std::cerr << "DEBUG: Stream '" << streamName
+    } else if (stream.bad()) {
+      std::cerr << "DEBUG: Stream '" << streamName
                 << "' was in bad state before rewind." << std::endl;
-    } else  {
-        std::cerr << "DEBUG: Stream '" << streamName
+    } else {
+      std::cerr << "DEBUG: Stream '" << streamName
                 << "' was in good state before rewind." << std::endl;
     }
 
-      stream.clear();
-      stream.seekg(0, std::ios::beg);
+    stream.clear();
+    stream.seekg(0, std::ios::beg);
 
-      // Debug: Confirm stream is usable after reset
-      if (stream.fail() || stream.bad()) {
-        std::cerr << "DEBUG: Stream '" << streamName
-                  << "' is still in fail/bad state after rewind. FATAL."
-                  << std::endl;
-      }
+    // Debug: Confirm stream is usable after reset
+    if (stream.fail() || stream.bad()) {
+      std::cerr << "DEBUG: Stream '" << streamName
+                << "' is still in fail/bad state after rewind. FATAL."
+                << std::endl;
+    }
   }
   virtual ~DataStreamProvider() = default;
   virtual std::istream& get_cpuinfo_stream() = 0;
@@ -107,47 +106,42 @@ class DataStreamProvider {
  * time to calculate a rate (e.g., CPU, Network).
  */
 class IPollingTask {
-    protected:
+ protected:
+  DataStreamProvider& provider;
+  SystemMetrics& metrics;
+  std::string name;
 
-    DataStreamProvider& provider;
-    SystemMetrics& metrics;
-    std::string name;
-public:
-    /**
-     * @brief Constructs a task by storing references to its context.
-     * * We use an initializer list (the ': ...') because references
-     * MUST be initialized, they cannot be assigned later.
-     */
-    IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-        : provider(_provider),
-          metrics(_metrics)
-    {
-    }
-    virtual ~IPollingTask() = default;
-    std::string get_name() {
-        return name;
-    }
-    /**
-     * @brief Take the "Time 1" (T1) snapshot and store it internally.
-     */
-    virtual void take_snapshot_1() = 0;
+ public:
+  /**
+   * @brief Constructs a task by storing references to its context.
+   * * We use an initializer list (the ': ...') because references
+   * MUST be initialized, they cannot be assigned later.
+   */
+  IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+      : provider(_provider), metrics(_metrics) {}
+  virtual ~IPollingTask() = default;
+  std::string get_name() { return name; }
+  /**
+   * @brief Take the "Time 1" (T1) snapshot and store it internally.
+   */
+  virtual void take_snapshot_1() = 0;
 
-    /**
-     * @brief Take the "Time 2" (T2) snapshot and store it internally.
-     */
-    virtual void take_snapshot_2() = 0;
+  /**
+   * @brief Take the "Time 2" (T2) snapshot and store it internally.
+   */
+  virtual void take_snapshot_2() = 0;
 
-    /**
-     * @brief Use the stored T1 and T2 snapshots to perform the
-     * calculation and save the result into the metrics object.
-     */
-    virtual void calculate(double time_delta_seconds) = 0;
+  /**
+   * @brief Use the stored T1 and T2 snapshots to perform the
+   * calculation and save the result into the metrics object.
+   */
+  virtual void calculate(double time_delta_seconds) = 0;
 };
 
 using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
 
 struct CombinedMetrics {
-  std::vector<std::unique_ptr<IPollingTask>>  polled;
+  std::vector<std::unique_ptr<IPollingTask>> polled;
   SystemMetrics system;
   std::vector<DeviceInfo> disks;
   // Default constructor and destructor
@@ -164,119 +158,113 @@ struct CombinedMetrics {
 };
 
 class CpuPollingTask : public IPollingTask {
-private:
-    std::vector<CpuSnapshot> t1_snapshots;
-    std::vector<CpuSnapshot> t2_snapshots;
+ private:
+  std::vector<CpuSnapshot> t1_snapshots;
+  std::vector<CpuSnapshot> t2_snapshots;
 
-public:
-    CpuPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-        : IPollingTask(_provider, _metrics) {
-            name = "CPU polling";
-        }
-    void take_snapshot_1() override {
-        t1_snapshots = read_cpu_snapshots(provider.get_stat_stream());
-    }
+ public:
+  CpuPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+      : IPollingTask(_provider, _metrics) {
+    name = "CPU polling";
+  }
+  void take_snapshot_1() override {
+    t1_snapshots = read_cpu_snapshots(provider.get_stat_stream());
+  }
 
-    void take_snapshot_2() override {
-        t2_snapshots = read_cpu_snapshots(provider.get_stat_stream());
-    }
+  void take_snapshot_2() override {
+    t2_snapshots = read_cpu_snapshots(provider.get_stat_stream());
+  }
 
-    void calculate(double /*time_delta_seconds*/) override {
-        // CPU usage calc doesn't need the time_delta, but others might
-        metrics.cores = calculate_cpu_usages(t1_snapshots, t2_snapshots);
-    }
+  void calculate(double /*time_delta_seconds*/) override {
+    // CPU usage calc doesn't need the time_delta, but others might
+    metrics.cores = calculate_cpu_usages(t1_snapshots, t2_snapshots);
+  }
 };
-
 
 class NetworkPollingTask : public IPollingTask {
-private:
-    std::map<std::string, NetworkSnapshot> t1_snapshot;
-    std::map<std::string, NetworkSnapshot> t2_snapshot;
+ private:
+  std::map<std::string, NetworkSnapshot> t1_snapshot;
+  std::map<std::string, NetworkSnapshot> t2_snapshot;
 
-public:
-    NetworkPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-        : IPollingTask(_provider, _metrics) {
-            name = "Network polling";
-        }
-    void take_snapshot_1() override {
-        t1_snapshot = read_network_snapshot(provider.get_net_dev_stream());
-    }
+ public:
+  NetworkPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+      : IPollingTask(_provider, _metrics) {
+    name = "Network polling";
+  }
+  void take_snapshot_1() override {
+    t1_snapshot = read_network_snapshot(provider.get_net_dev_stream());
+  }
 
-    void take_snapshot_2() override {
-        t2_snapshot = read_network_snapshot(provider.get_net_dev_stream());
-    }
+  void take_snapshot_2() override {
+    t2_snapshot = read_network_snapshot(provider.get_net_dev_stream());
+  }
 
-    void calculate(double time_delta_seconds) override {
-        metrics.network_interfaces = calculate_network_rates(
-            t1_snapshot,
-            t2_snapshot,
-            time_delta_seconds // Network *does* use the time_delta
-        );
-    }
+  void calculate(double time_delta_seconds) override {
+    metrics.network_interfaces = calculate_network_rates(
+        t1_snapshot, t2_snapshot,
+        time_delta_seconds  // Network *does* use the time_delta
+    );
+  }
 };
 class DiskPollingTask : public IPollingTask {
-private:
-    std::map<std::string, DiskIoSnapshot> t1_snapshots;
-    std::map<std::string, DiskIoSnapshot> t2_snapshots;
+ private:
+  std::map<std::string, DiskIoSnapshot> t1_snapshots;
+  std::map<std::string, DiskIoSnapshot> t2_snapshots;
 
-public:
-    DiskPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-        : IPollingTask(_provider, _metrics) {
-            name = "Disk polling";
-        }
+ public:
+  DiskPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+      : IPollingTask(_provider, _metrics) {
+    name = "Disk polling";
+  }
 
-PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
-    void take_snapshot_1() override {
-        t1_snapshots = read_disk_io_snapshots(provider.get_diskstats_stream());
+  PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
+  void take_snapshot_1() override {
+    t1_snapshots = read_disk_io_snapshots(provider.get_diskstats_stream());
+  }
+  void take_snapshot_2() override {
+    t2_snapshots = read_disk_io_snapshots(provider.get_diskstats_stream());
+  }
+
+  void calculate(double time_delta_seconds) override {
+    // Clear old rates and fill with new ones
+    metrics.disk_io_rates.clear();
+
+    if (time_delta_seconds <= 0) return;
+
+    for (auto const& [dev_name, t2_snap] : t2_snapshots) {
+      auto t1_it = t1_snapshots.find(dev_name);
+      if (t1_it != t1_snapshots.end()) {
+        const auto& t1_snap = t1_it->second;
+
+        // Calculate deltas
+        uint64_t read_delta = (t2_snap.bytes_read >= t1_snap.bytes_read)
+                                  ? (t2_snap.bytes_read - t1_snap.bytes_read)
+                                  : 0;
+
+        uint64_t write_delta =
+            (t2_snap.bytes_written >= t1_snap.bytes_written)
+                ? (t2_snap.bytes_written - t1_snap.bytes_written)
+                : 0;
+
+        // Add the calculated rate to our metrics
+        metrics.disk_io_rates.push_back(
+            {.device_name = dev_name,
+             .read_bytes_per_sec =
+                 static_cast<uint64_t>(read_delta / time_delta_seconds),
+             .write_bytes_per_sec =
+                 static_cast<uint64_t>(write_delta / time_delta_seconds)});
+      }
     }
-    void take_snapshot_2() override {
-        t2_snapshots = read_disk_io_snapshots(provider.get_diskstats_stream());
-    }
-
-    void calculate(double time_delta_seconds) override {
-        // Clear old rates and fill with new ones
-        metrics.disk_io_rates.clear();
-
-        if (time_delta_seconds <= 0) return;
-
-        for (auto const& [dev_name, t2_snap] : t2_snapshots) {
-            auto t1_it = t1_snapshots.find(dev_name);
-            if (t1_it != t1_snapshots.end()) {
-                const auto& t1_snap = t1_it->second;
-
-                // Calculate deltas
-                uint64_t read_delta = (t2_snap.bytes_read >= t1_snap.bytes_read)
-                                      ? (t2_snap.bytes_read - t1_snap.bytes_read) : 0;
-
-                uint64_t write_delta = (t2_snap.bytes_written >= t1_snap.bytes_written)
-                                       ? (t2_snap.bytes_written - t1_snap.bytes_written) : 0;
-
-                // Add the calculated rate to our metrics
-                metrics.disk_io_rates.push_back({
-                    .device_name = dev_name,
-                    .read_bytes_per_sec = static_cast<uint64_t>(read_delta / time_delta_seconds),
-                    .write_bytes_per_sec = static_cast<uint64_t>(write_delta / time_delta_seconds)
-                });
-            }
-        }
-    }
+  }
 };
 void read_data(DataStreamProvider&, SystemMetrics&, PollingTaskList&);
 
 PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
 
-void get_load_and_process_stats(DataStreamProvider& provider,
-                                SystemMetrics& metrics);
-void get_top_processes_mem(DataStreamProvider& provider,
-                           SystemMetrics& metrics);
-
-void get_top_processes_cpu(DataStreamProvider& provider,
-                           SystemMetrics& metrics);
-
-void get_system_info(SystemMetrics &metrics);
+void get_system_info(SystemMetrics& metrics);
 
 void print_system_metrics(const SystemMetrics& metrics);
 void print_metrics(const CombinedMetrics& metrics);
 void print_metrics(const SystemMetrics& metrics);
 
-void print_device_metrics(const std::vector<DeviceInfo> &devices);
+void print_device_metrics(const std::vector<DeviceInfo>& devices);

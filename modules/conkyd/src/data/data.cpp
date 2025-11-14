@@ -3,34 +3,36 @@
 #include <sys/utsname.h>
 
 #include <chrono>
+#include <chrono>  // For seconds
 #include <iomanip>
 #include <map>
-#include <thread> // For sleep_for
-#include <chrono> // For seconds
+#include <memory>  // For std::unique_ptr
+#include <thread>  // For sleep_for
 #include <type_traits>
-
 #include <vector>
-#include <memory> // For std::unique_ptr
 
 #include "corestat.h"
+#include "cpu_processes.hpp"
 #include "cpuinfo.h"
 #include "diskstat.h"
+#include "hwmonitor.hpp"
+#include "load_avg.hpp"
+#include "mem_processes.hpp"
 #include "meminfo.h"
-#include "networkstats.hpp"
-#include "processinfo.hpp"
-#include "swapinfo.h"
-#include "uptime.h"
 #include "metrics.hpp"
-
+#include "networkstats.hpp"
 #include "parser.hpp"
+#include "processinfo.hpp"
+#include "uptime.hpp"
 
-PollingTaskList read_data(DataStreamProvider& provider, SystemMetrics &metrics) {
-
-    PollingTaskList polling_tasks;
-    polling_tasks.push_back(std::make_unique<CpuPollingTask>(provider, metrics));
-    polling_tasks.push_back(std::make_unique<NetworkPollingTask>(provider, metrics));
-    // polling_tasks.push_back(std::make_unique<DiskPollingTask>(provider, metrics));
-
+PollingTaskList read_data(DataStreamProvider& provider,
+                          SystemMetrics& metrics) {
+  PollingTaskList polling_tasks;
+  polling_tasks.push_back(std::make_unique<CpuPollingTask>(provider, metrics));
+  polling_tasks.push_back(
+      std::make_unique<NetworkPollingTask>(provider, metrics));
+  // polling_tasks.push_back(std::make_unique<DiskPollingTask>(provider,
+  // metrics));
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
 
@@ -50,7 +52,7 @@ PollingTaskList read_data(DataStreamProvider& provider, SystemMetrics &metrics) 
   return polling_tasks;
 }
 
-void get_system_info(SystemMetrics &metrics) {
+void get_system_info(SystemMetrics& metrics) {
   struct utsname uts_info;
   if (uname(&uts_info) == 0) {  // 0 indicates success
     metrics.sys_name = uts_info.sysname;
@@ -66,9 +68,7 @@ void get_system_info(SystemMetrics &metrics) {
   }
 }
 
-
-void print_device_metrics(const std::vector<DeviceInfo> &devices) {
-
+void print_device_metrics(const std::vector<DeviceInfo>& devices) {
   extern std::tuple<std::string, std::function<FuncType>> conky_columns[];
   extern const size_t CONKY_COLUMNS_COUNT;
   std::cout.setf(std::ios::unitbuf);
@@ -78,11 +78,11 @@ void print_device_metrics(const std::vector<DeviceInfo> &devices) {
 }
 
 void print_metrics(const CombinedMetrics& metrics) {
-    print_system_metrics(metrics.system);
-    print_device_metrics(metrics.disks);
+  print_system_metrics(metrics.system);
+  print_device_metrics(metrics.disks);
 }
 void print_metrics(const SystemMetrics& metrics) {
-    print_system_metrics(metrics);
+  print_system_metrics(metrics);
 }
 void print_system_metrics(const SystemMetrics& metrics) {
   // Set precision for floating point numbers (percentages, temp, freq)
@@ -128,92 +128,4 @@ void print_system_metrics(const SystemMetrics& metrics) {
               << proc.cpu_percent << "%\t\t" << proc.name << std::endl;
   }
   std::cout << "---------------------------" << std::endl;
-}
-void get_load_and_process_stats(DataStreamProvider& provider,
-                                SystemMetrics& metrics) {
-  // 1. Get Load Average
-  provider.get_loadavg_stream() >> metrics.load_avg_1m >> metrics.load_avg_5m >>
-      metrics.load_avg_15m;
-
-  // 2. Get Process Counts
-  std::istream& stat_stream = provider.get_stat_stream();
-  std::string line;
-  while (std::getline(stat_stream, line)) {
-    if (line.rfind("processes", 0) == 0) {
-      std::stringstream ss(line);
-      std::string key;
-      ss >> key >> metrics.processes_total;
-    } else if (line.rfind("procs_running", 0) == 0) {
-      std::stringstream ss(line);
-      std::string key;
-      ss >> key >> metrics.processes_running;
-    } else if (line.rfind("procs_blocked", 0) == 0) {
-      // All process lines are together, so we can stop
-      break;
-    }
-  }
-}
-void get_top_processes_mem(DataStreamProvider& provider,
-                           SystemMetrics& metrics) {
-  metrics.top_processes_mem.clear();  // Clear old data
-  std::istream& stream = provider.get_top_mem_processes_stream();
-  std::string line;
-  double total_mem_kb = (metrics.mem_total_kb > 0)
-                            ? static_cast<double>(metrics.mem_total_kb)
-                            : 1.0;
-
-  while (std::getline(stream, line)) {
-    if (line.empty()) continue;
-
-    std::stringstream ss(line);
-    ProcessInfo proc;
-
-    // Parse PID and RSS
-    if (ss >> proc.pid >> proc.vmRssKb) {
-      proc.mem_percent =
-          (static_cast<double>(proc.vmRssKb) / total_mem_kb) * 100.0;
-
-      // The rest of the line is the command name, which can have spaces
-      std::getline(ss, proc.name);
-
-      // trim leading whitespace from name
-      size_t first = proc.name.find_first_not_of(" \t");
-      if (std::string::npos != first) {
-        proc.name = proc.name.substr(first);
-      } else {
-        proc.name = "unknown";  // Fallback
-      }
-      metrics.top_processes_mem.push_back(proc);
-    }
-  }
-}
-void get_top_processes_cpu(DataStreamProvider& provider,
-                           SystemMetrics& metrics) {
-  metrics.top_processes_cpu.clear();  // Clear old data
-  std::istream& stream = provider.get_top_cpu_processes_stream();
-  std::string line;
-  double total_mem_kb = (metrics.mem_total_kb > 0)
-                            ? static_cast<double>(metrics.mem_total_kb)
-                            : 1.0;
-  while (std::getline(stream, line)) {
-    if (line.empty()) continue;
-    std::stringstream ss(line);
-    ProcessInfo proc;  // Use the *same* struct. vmRssKb defaults to 0.
-
-    // Parse PID and %CPU (double). vmRssKb is untouched.
-    if (ss >> proc.pid >> proc.cpu_percent >> proc.vmRssKb) {
-      proc.mem_percent =
-          (static_cast<double>(proc.vmRssKb) / total_mem_kb) * 100.0;
-
-      std::getline(ss, proc.name);
-
-      size_t first = proc.name.find_first_not_of(" \t");
-      if (std::string::npos != first) {
-        proc.name = proc.name.substr(first);
-      } else {
-        proc.name = "unknown";
-      }
-      metrics.top_processes_cpu.push_back(proc);
-    }
-  }
 }

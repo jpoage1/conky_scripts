@@ -9,6 +9,20 @@
 #include <thread>
 #include <vector>
 
+#include "data_local.h"
+#include "data_ssh.h"
+
+std::istream& LocalDataStreams::get_stat_stream() {
+  reset_stream(stat, "/proc/stat");
+  return stat;
+}
+
+std::istream& ProcDataStreams::get_stat_stream() {
+  std::string stat_data = execute_ssh_command("cat /proc/stat");
+  stat.str(stat_data);
+  return stat;
+}
+
 std::vector<CPUCore> read_cpu_times(std::istream& input_stream) {
   std::vector<CPUCore> cores;
   std::string line;
@@ -81,7 +95,8 @@ std::vector<CoreStats> calculate_cpu_usages(std::istream& input_stream) {
   return calculate_cpu_usages(t1_snapshots, t2_snapshots);
 }
 
-std::vector<float> get_cpu_usages(const std::vector<CPUCore> &t1, const std::vector<CPUCore> &t2) {
+std::vector<float> get_cpu_usages(const std::vector<CPUCore>& t1,
+                                  const std::vector<CPUCore>& t2) {
   std::vector<float> usages;
   for (size_t i = 0; i < t1.size(); ++i) {
     unsigned long long idle_diff = t2[i].idle_time - t1[i].idle_time;
@@ -93,7 +108,9 @@ std::vector<float> get_cpu_usages(const std::vector<CPUCore> &t1, const std::vec
   return usages;
 }
 
-std::vector<CoreStats> calculate_cpu_usages(const std::vector<CpuSnapshot> &t1_snapshots, const std::vector<CpuSnapshot> &t2_snapshots) {
+std::vector<CoreStats> calculate_cpu_usages(
+    const std::vector<CpuSnapshot>& t1_snapshots,
+    const std::vector<CpuSnapshot>& t2_snapshots) {
   std::vector<CoreStats> all_core_stats;
   size_t num_cores_and_agg = std::min(t1_snapshots.size(), t2_snapshots.size());
 

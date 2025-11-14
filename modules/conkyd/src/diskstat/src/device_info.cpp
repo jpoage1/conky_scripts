@@ -8,8 +8,35 @@
 #include <vector>
 
 #include "data.h"
+#include "data_local.h"
+#include "data_ssh.h"
 #include "disk_io.h"
 #include "mount_info.h"
+
+std::istream& LocalDataStreams::get_mounts_stream() {
+  reset_stream(mounts, "/proc/mounts");
+  return mounts;
+}
+
+std::istream& ProcDataStreams::get_mounts_stream() {
+  std::string mounts_data = execute_ssh_command("cat /proc/mounts");
+  mounts.str(mounts_data);
+  //   rewind(mounts, "mounts");
+  return mounts;
+}
+
+uint64_t LocalDataStreams::get_used_space_bytes(
+    const std::string& mount_point) {
+  struct statvfs stat;
+  if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return 0;
+  return (stat.f_blocks - stat.f_bfree) * stat.f_frsize;
+}
+
+uint64_t LocalDataStreams::get_disk_size_bytes(const std::string& mount_point) {
+  struct statvfs stat;
+  if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return 0;
+  return stat.f_blocks * stat.f_frsize;
+}
 
 std::vector<DeviceInfo> collect_device_info(
     const std::vector<std::string>& device_paths) {
