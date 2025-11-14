@@ -11,6 +11,10 @@
 #include "corestat.h"
 #include "networkstats.hpp"
 #include "processinfo.hpp"
+#include "diskstat.hpp"
+
+class IPollingTask;
+using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
 
 struct SystemMetrics {
   std::vector<CoreStats> cores;
@@ -38,6 +42,8 @@ struct SystemMetrics {
   std::vector<NetworkInterfaceStats> network_interfaces;
   std::vector<ProcessInfo> top_processes_mem;
   std::vector<ProcessInfo> top_processes_cpu;
+
+  std::vector<DiskIoStats> disk_io_rates;
 };
 
 class DataStreamProvider {
@@ -106,6 +112,7 @@ class IPollingTask {
 
     DataStreamProvider& provider;
     SystemMetrics& metrics;
+    std::string name;
 public:
     /**
      * @brief Constructs a task by storing references to its context.
@@ -118,7 +125,9 @@ public:
     {
     }
     virtual ~IPollingTask() = default;
-
+    std::string get_name() {
+        return name;
+    }
     /**
      * @brief Take the "Time 1" (T1) snapshot and store it internally.
      */
@@ -143,7 +152,9 @@ private:
 
 public:
     CpuPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-        : IPollingTask(_provider, _metrics) {}
+        : IPollingTask(_provider, _metrics) {
+            name = "CPU polling";
+        }
     void take_snapshot_1() override {
         t1_snapshots = read_cpu_snapshots(provider.get_stat_stream());
     }
@@ -166,7 +177,11 @@ private:
 
 public:
     NetworkPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-        : IPollingTask(_provider, _metrics) {}
+        : IPollingTask(_provider, _metrics) {
+            std::cerr << "Reading Network t2:" << std::endl;
+            name = "Network polling";
+            std::cerr << "Reading Network t2:" << std::endl;
+        }
     void take_snapshot_1() override {
         t1_snapshot = read_network_snapshot(provider.get_net_dev_stream());
     }
@@ -183,8 +198,60 @@ public:
         );
     }
 };
+class DiskPollingTask : public IPollingTask {
+private:
+    std::map<std::string, DiskIoSnapshot> t1_snapshots;
+    std::map<std::string, DiskIoSnapshot> t2_snapshots;
 
-std::vector<std::unique_ptr<IPollingTask>> read_data(DataStreamProvider&, SystemMetrics&);
+public:
+    DiskPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+        : IPollingTask(_provider, _metrics) {
+            name = "Disk polling";
+        }
+
+PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
+    void take_snapshot_1() override {
+        std::cerr << "Reading t1:" << std::endl;
+        t1_snapshots = read_disk_io_snapshots(provider.get_diskstats_stream());
+        std::cerr << "Done reading t1" << std::endl;
+    }
+    void take_snapshot_2() override {
+    std::cerr << "Reading t2:" << std::endl;
+        t2_snapshots = read_disk_io_snapshots(provider.get_diskstats_stream());
+        std::cerr << "Done reading t2" << std::endl;
+    }
+
+    void calculate(double time_delta_seconds) override {
+        // Clear old rates and fill with new ones
+        metrics.disk_io_rates.clear();
+
+        if (time_delta_seconds <= 0) return;
+
+        for (auto const& [dev_name, t2_snap] : t2_snapshots) {
+            auto t1_it = t1_snapshots.find(dev_name);
+            if (t1_it != t1_snapshots.end()) {
+                const auto& t1_snap = t1_it->second;
+
+                // Calculate deltas
+                uint64_t read_delta = (t2_snap.bytes_read >= t1_snap.bytes_read)
+                                      ? (t2_snap.bytes_read - t1_snap.bytes_read) : 0;
+
+                uint64_t write_delta = (t2_snap.bytes_written >= t1_snap.bytes_written)
+                                       ? (t2_snap.bytes_written - t1_snap.bytes_written) : 0;
+
+                // Add the calculated rate to our metrics
+                metrics.disk_io_rates.push_back({
+                    .device_name = dev_name,
+                    .read_bytes_per_sec = static_cast<uint64_t>(read_delta / time_delta_seconds),
+                    .write_bytes_per_sec = static_cast<uint64_t>(write_delta / time_delta_seconds)
+                });
+            }
+        }
+    }
+};
+void read_data(DataStreamProvider&, SystemMetrics&, PollingTaskList&);
+
+PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
 
 void print_metrics(const SystemMetrics&);
 void get_load_and_process_stats(DataStreamProvider& provider,
@@ -195,5 +262,4 @@ void get_top_processes_mem(DataStreamProvider& provider,
 void get_top_processes_cpu(DataStreamProvider& provider,
                            SystemMetrics& metrics);
 
-void poll_dynamic_stats(DataStreamProvider& provider, SystemMetrics& metrics);
 void get_system_info(SystemMetrics &metrics);

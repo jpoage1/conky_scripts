@@ -24,16 +24,13 @@
 
 #include "parser.hpp"
 
-std::vector<std::unique_ptr<IPollingTask>> read_data(DataStreamProvider& provider, SystemMetrics &metrics) {
+PollingTaskList read_data(DataStreamProvider& provider, SystemMetrics &metrics) {
 
-    std::vector<std::unique_ptr<IPollingTask>> polling_tasks;
+    PollingTaskList polling_tasks;
     polling_tasks.push_back(std::make_unique<CpuPollingTask>(provider, metrics));
     polling_tasks.push_back(std::make_unique<NetworkPollingTask>(provider, metrics));
-  // Polling functions
-//   get_network_stats(provider, metrics);
-//   metrics.cores = calculate_cpu_usages(provider.get_stat_stream());
-//   poll_dynamic_stats(provider, metrics);
-  // End polling functions
+    // polling_tasks.push_back(std::make_unique<DiskPollingTask>(provider, metrics));
+
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
 
@@ -202,93 +199,3 @@ void get_top_processes_cpu(DataStreamProvider& provider,
     }
   }
 }
-/**
- * @brief Performs time-based polling for all dynamic stats (CPU, Network).
- *
- * This function is designed to be the single, centralized source of polling.
- * It reads T1 snapshots, sleeps for a fixed interval, reads T2 snapshots,
- * and then calls the appropriate calculator functions to populate metrics.
- */
-void poll_dynamic_stats(DataStreamProvider& provider, SystemMetrics& metrics) {
-    // 1. Get T1 snapshot
-    PollingMetrics t1_metrics(provider);
-
-    // 2. Centralized sleep
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-    // 3. Get T2 snapshot
-    PollingMetrics t2_metrics(provider);
-
-    // --- CALCULATIONS ---
-    std::chrono::duration<double> time_delta = t2_metrics.timestamp - t1_metrics.timestamp;
-
-    // --- DEBUG MESSAGE ---
-    // Convert the seconds (time_delta.count()) to milliseconds
-    double time_delta_ms = time_delta.count() * 1000.0;
-
-    std::cerr << "[DEBUG] poll_dynamic_stats: "
-            << "Expected sleep: 500ms. "
-            << "Actual time_delta: "
-            << std::fixed << std::setprecision(1) << time_delta_ms << "ms."
-            << std::endl;
-    // --- END DEBUG ---
-
-    // (Optional) Add a warning if the time is excessive
-    if (time_delta_ms > 600) { // 100ms buffer
-        std::cerr << "[WARNING] High latency in poll_dynamic_stats. "
-                << "Task took " << (int)time_delta_ms << "ms." << std::endl;
-    }
-
-    metrics.cores = calculate_cpu_usages(
-        t1_metrics.cpu_snapshots,
-        t2_metrics.cpu_snapshots
-    );
-
-    metrics.network_interfaces = calculate_network_rates(
-        t1_metrics.network_snapshots,
-        t2_metrics.network_snapshots,
-        time_delta.count()
-    );
-}
-
-
-// /**
-//  * @brief Performs time-based polling for a list of dynamic tasks.
-//  *
-//  * This function is now a generic "task runner." It doesn't
-//  * know what it's polling, only that it must follow the
-//  * T1 -> Sleep -> T2 -> Calculate pattern.
-//  */
-// void poll_dynamic_stats(const std::vector<std::unique_ptr<IPollingTask>>& tasks)
-// {
-//     // --- CHECK RUN MODE (from our previous discussion) ---
-//     // Get the config from the provider
-//     const ParsedConfig& config = provider.get_config();
-//     bool should_sleep = (config.get_run_mode() == RUN_ONCE);
-
-//     // 1. Get T1 snapshot for all tasks
-//     auto t1_timestamp = std::chrono::steady_clock::now();
-//     for (const auto& task : tasks) {
-//         task->take_snapshot_1();
-//     }
-
-//     // 2. Centralized sleep (Only in defpoll/RUN_ONCE mode)
-//     if (should_sleep) {
-//         auto sleep_duration = config.get_pooling_interval<std::chrono::milliseconds>();
-//         std::this_thread::sleep_for(sleep_duration);
-//     }
-
-//     // 3. Get T2 snapshot for all tasks
-//     auto t2_timestamp = std::chrono::steady_clock::now();
-//     for (const auto& task : tasks) {
-//         task->take_snapshot_2();
-//     }
-
-//     // --- CALCULATIONS ---
-//     std::chrono::duration<double> time_delta = t2_timestamp - t1_timestamp;
-
-//     // 4. Calculate results for all tasks
-//     for (const auto& task : tasks) {
-//         task->calculate(time_delta.count());
-//     }
-// }

@@ -1,11 +1,17 @@
 // parser.hpp
-#pragma once
 
+#pragma once
+#include <filesystem>
+#include <set>
 #include <string>
 #include <vector>
 #include <chrono>
 
-#include "waybar_types.h"  // Includes MetricResult
+#include "metrics.hpp"
+#include "waybar_types.h"
+
+
+#include "waybar_types.h"
 
 enum RunMode {
     RUN_ONCE,
@@ -49,4 +55,14 @@ class ParsedConfig {
  * errors occur.
  */
 ParsedConfig parse_arguments(int argc,
-                                          char* argv[]);  // Changed signature
+                                          char* argv[]);
+
+
+void print_usage(const char* prog_name);
+
+int check_config_file(const std::string& config_file);
+
+std::set<std::string> parse_interface_list(const std::string& list_str);
+
+int process_command(const std::vector<std::string>& args, size_t& current_index,
+                    std::vector<MetricResult>& all_results);

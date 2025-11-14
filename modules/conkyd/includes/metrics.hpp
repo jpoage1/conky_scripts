@@ -7,22 +7,9 @@
 #include "types.h"
 
 struct CombinedMetrics {
-  std::vector<std::unique_ptr<IPollingTask>> polled;
+  PollingTaskList polled;
   SystemMetrics system;
   std::vector<DeviceInfo> disks;
-};
-
-
-struct PollingMetrics {
-    std::chrono::time_point<std::chrono::steady_clock> timestamp;
-    std::vector<CpuSnapshot> cpu_snapshots;
-    std::map<std::string, NetworkSnapshot> network_snapshots;
-
-    PollingMetrics(DataStreamProvider &provider) {
-        timestamp = std::chrono::steady_clock::now();
-        cpu_snapshots = read_cpu_snapshots(provider.get_stat_stream());
-        network_snapshots = read_network_snapshot(provider.get_net_dev_stream());
-    }
 };
 
 int get_metrics(const std::string&, const bool);

@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "waybar_cli_parser.hpp"
+#include "parser.hpp"
 #include "waybar_formatters.h"
 #include "waybar_types.h"
 
