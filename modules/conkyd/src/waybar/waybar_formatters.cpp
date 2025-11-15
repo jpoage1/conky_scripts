@@ -8,7 +8,7 @@
 #include "waybar_types.h"
 
 using json = nlohmann::json;
-void generate_waybar_output(const std::vector<MetricResult>& all_results);
+void generate_waybar_output(const std::vector<MetricsContext>& all_results);
 
 FormattedSize format_size_rate(double bytes_per_sec) {
   // Implement logic similar to format_size, but add "/s" to the text
@@ -21,7 +21,7 @@ FormattedSize format_size_rate(double bytes_per_sec) {
   return {ss.str(), "00ff00"};  // Placeholder color
 }
 
-void generate_waybar_output(const std::vector<MetricResult>& all_results) {
+void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
   json waybar_output;
   std::stringstream tooltip_ss;
   bool any_errors = false;
@@ -85,7 +85,7 @@ void generate_waybar_output(const std::vector<MetricResult>& all_results) {
   std::cout << waybar_output.dump() << std::endl;
 }
 
-std::string show_top_mem_procs(const MetricResult& result,
+std::string show_top_mem_procs(const MetricsContext& result,
                                const std::vector<ProcessInfo>& top_procs_mem) {
   std::stringstream tooltip_ss;
   if (!top_procs_mem.empty()) {
@@ -123,7 +123,7 @@ std::string show_top_mem_procs(const MetricResult& result,
   return tooltip_ss.str();
 }
 
-std::string show_top_cpu_procs(const MetricResult& result,
+std::string show_top_cpu_procs(const MetricsContext& result,
                                const std::vector<ProcessInfo>& top_procs_cpu) {
   std::stringstream tooltip_ss;
   if (!top_procs_cpu.empty()) {
@@ -164,7 +164,7 @@ std::string show_top_cpu_procs(const MetricResult& result,
 }
 
 std::string show_network_interfaces(
-    const MetricResult& result,
+    const MetricsContext& result,
     const std::vector<NetworkInterfaceStats>& network_interfaces,
     const std::set<std::string>& specific_interfaces) {
   std::stringstream tooltip_ss;
@@ -233,7 +233,7 @@ std::string show_network_interfaces(
   return tooltip_ss.str();
 }
 
-std::string show_devices(const MetricResult& result,
+std::string show_devices(const MetricsContext& result,
                          const std::vector<DeviceInfo>& devices) {
   std::stringstream tooltip_ss;
   if (!devices.empty()) {
@@ -278,7 +278,7 @@ std::string show_devices(const MetricResult& result,
   return tooltip_ss.str();
 }
 
-std::string show_system_metrics(const MetricResult& result,
+std::string show_system_metrics(const MetricsContext& result,
                                 const SystemMetrics& system_metrics,
                                 int& total_mem_percent,
                                 int& valid_mem_sources) {

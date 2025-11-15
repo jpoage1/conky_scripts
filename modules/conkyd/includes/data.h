@@ -1,3 +1,4 @@
+// data.h
 #pragma once
 #include <cstdint>
 #include <fstream>
@@ -46,10 +47,9 @@ struct SystemMetrics {
 
 class DataStreamProvider {
  public:
-  void rewind(std::stringstream& stream, const std::string& streamName);
-  void rewind(std::stringstream& stream);
+  void rewind(std::istream& stream, std::string streamName);
+  void rewind(std::istream& stream);
 
-  void rewind(std::ifstream& stream, const std::string& streamName);
   virtual ~DataStreamProvider() = default;
   virtual std::istream& get_cpuinfo_stream() = 0;
   virtual std::istream& get_meminfo_stream() = 0;
@@ -65,14 +65,16 @@ class DataStreamProvider {
   virtual uint64_t get_disk_size_bytes(const std::string& mount_point) = 0;
   virtual double get_cpu_temperature() = 0;
 };
+using DataStreamProviderPtr = std::unique_ptr<DataStreamProvider>;
 
+void dump_fstream(std::istream& stream);
 /**
  * @brief An interface for any task that requires two snapshots over
  * time to calculate a rate (e.g., CPU, Network).
  */
 class IPollingTask {
  protected:
-  DataStreamProvider provider;
+  DataStreamProvider& provider;
   SystemMetrics& metrics;
   std::string name;
 
@@ -82,8 +84,11 @@ class IPollingTask {
    * * We use an initializer list (the ': ...') because references
    * MUST be initialized, they cannot be assigned later.
    */
-  IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-      : provider(_provider), metrics(_metrics) {}
+  IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics);
+
+  //   IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+  //       : provider(_provider), metrics(_metrics) {}
+
   virtual ~IPollingTask() = default;
   std::string get_name() { return name; }
   /**
@@ -110,7 +115,7 @@ using NetworkSnapshotMap = std::map<std::string, NetworkSnapshot>;
 using DiskIoSnapshotMap = std::map<std::string, DiskIoSnapshot>;
 
 struct CombinedMetrics {
-  std::vector<std::unique_ptr<IPollingTask>> polled;
+  PollingTaskList polled;
   SystemMetrics system;
   std::vector<DeviceInfo> disks;
   // Default constructor and destructor
@@ -138,6 +143,7 @@ class CpuPollingTask : public IPollingTask {
   void calculate(double /*time_delta_seconds*/) override;
   CpuSnapshotList read_data(std::istream&);
 };
+using CpuPollingTaskPtr = std::unique_ptr<CpuPollingTask>;
 
 class NetworkPollingTask : public IPollingTask {
  private:
@@ -152,6 +158,7 @@ class NetworkPollingTask : public IPollingTask {
 
   NetworkSnapshotMap read_data(std::istream&);
 };
+using NetworkPollingTaskPtr = std::unique_ptr<NetworkPollingTask>;
 
 class DiskPollingTask : public IPollingTask {
  private:
@@ -167,6 +174,7 @@ class DiskPollingTask : public IPollingTask {
 
   DiskIoSnapshotMap read_data(std::istream&);
 };
+using DiskPollingTaskPtr = std::unique_ptr<DiskPollingTask>;
 
 void read_data(DataStreamProvider&, SystemMetrics&, PollingTaskList&);
 

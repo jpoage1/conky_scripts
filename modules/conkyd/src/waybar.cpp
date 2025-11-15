@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
   }
 
   std::vector<std::string> args(argv, argv + argc);
-  std::vector<MetricResult> all_results;
+  std::vector<MetricsContext> all_results;
   size_t i = 1;  // Use size_t for index
 
   while (i < args.size()) {
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
       // --- Handle Unknown ---
     } else {
-      MetricResult result;
+      MetricsContext result;
       result.source_name = "Parser";
       result.success = false;
       result.error_message = "Unknown command or flag: " + command;

@@ -5,7 +5,9 @@
 #include <set>
 #include <vector>
 
-#include "waybar_types.h"
+#include "data_local.h"
+#include "data_ssh.h"
+#include "runner.hpp"
 
 ParsedConfig parse_arguments(int argc, char* argv[]) {
   ParsedConfig config;
@@ -59,19 +61,19 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
     }
     // Handle Unknown
     else {
-      MetricResult result;
-      result.source_name = "Parser";
-      result.success = false;
-      result.error_message = "Unknown command or flag: " + command;
-      //   config.tasks.push_back(result);
-      config.tasks.push_back(std::move(result));
+      MetricsContext context;
+      context.source_name = "Parser";
+      context.success = false;
+      context.error_message = "Unknown command or flag: " + command;
+      //   config.tasks.push_back(context);
+      config.tasks.push_back(std::move(context));
       i++;  // Consume unknown command
     }
   }  // end while
 
   // Final checks
   if (config.tasks.empty() && config.run_mode(RUN_ONCE)) {
-    std::cerr << "Error: No valid commands resulted in metrics." << std::endl;
+    std::cerr << "Error: No valid commands contexted in metrics." << std::endl;
   } else {
     // bool any_success = false;
     // for (const auto& res : config.tasks) {
@@ -81,7 +83,7 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
     //   }
     // }
     // if (!any_success) {
-    //   std::cerr << "Warning: All processed commands resulted in errors."
+    //   std::cerr << "Warning: All processed commands contexted in errors."
     //             << std::endl;
     // }
   }
@@ -128,18 +130,18 @@ std::set<std::string> parse_interface_list(const std::string& list_str) {
   return interfaces;
 }
 int process_command(const std::vector<std::string>& args, size_t& current_index,
-                    std::vector<MetricResult>& tasks) {
-  MetricResult result;
+                    std::vector<MetricsContext>& tasks) {
+  MetricsContext context;
   std::string command = args[current_index];
   size_t initial_index = current_index;
 
   // --- 1. Parse Config File ---
   if (current_index + 1 >= args.size()) {
-    result.success = false;
-    result.error_message = command + " requires a <config_file> argument.";
-    result.source_name =
+    context.success = false;
+    context.error_message = command + " requires a <config_file> argument.";
+    context.source_name =
         (command == "--local") ? "Local (Error)" : "SSH (Error)";
-    tasks.push_back(std::move(result));
+    tasks.push_back(std::move(context));
     return 1;  // Consume only the command itself
   }
   std::string config_file = args[current_index + 1];
@@ -147,20 +149,27 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
 
   // --- 2. Check Config File ---
   if (check_config_file(config_file) != 0) {
-    result.success = false;
-    result.error_message = "Config file not found: " + config_file;
-    result.source_name =
+    context.success = false;
+    context.error_message = "Config file not found: " + config_file;
+    context.source_name =
         (command == "--local") ? "Local (Error)" : "SSH (Error)";
-    tasks.push_back(std::move(result));
+    tasks.push_back(std::move(context));
     return current_index - initial_index;  // Return consumed args
   } else {
-    result.device_file = config_file;
+    context.device_file = config_file;
   }
 
   // --- 3. Call Appropriate Get Function ---
   if (command == "--local") {
-    result.source_name = "Local";
-    result.set_callback(get_local_metrics);
+    context.source_name = "Local";
+    std::cerr << "Initializing " << context.source_name << " metrics provider"
+              << std::endl;
+    context.provider = std::make_unique<LocalDataStreams>();
+    auto local_callback = [](DataStreamProviderPtr& provider,
+                             const std::string& cfg, CombinedMetrics& m) {
+      return get_local_metrics(provider, cfg, m);
+    };
+    context.set_callback(local_callback);
   } else if (command == "--ssh") {
     // Check for specific host/user
     if (current_index + 1 < args.size() &&
@@ -168,36 +177,45 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
         args[current_index + 1].rfind("--", 0) != 0) {
       std::string host = args[current_index];
       std::string user = args[current_index + 1];
-      result.source_name = user + "@" + host;
-      result.set_callback(
-          [host, user](const std::string& cfg, CombinedMetrics& m) {
-            // The lambda's body calls the REAL 4-argument function
-            return get_server_metrics(cfg, m, host, user);
-          });
+      context.source_name = user + "@" + host;
+      std::cerr << "Initializing " << context.source_name << " metrics provider"
+                << std::endl;
+      context.provider = std::make_unique<ProcDataStreams>();
+      auto server_callback = [host, user](DataStreamProviderPtr& provider,
+                                          const std::string& cfg,
+                                          CombinedMetrics& m) {
+        return get_server_metrics(provider, cfg, m, host, user);
+      };
+      context.set_callback(server_callback);
       current_index += 2;  // Consume host + user
     } else {
       // Default SSH host
-      result.source_name = "Default SSH";
-      result.set_callback(
-          static_cast<int (*)(const std::string&, CombinedMetrics&)>(
-              get_server_metrics));
+      context.source_name = "Default SSH";
+      std::cerr << "Initializing " << context.source_name << " metrics provider"
+                << std::endl;
+      context.provider = std::make_unique<ProcDataStreams>();
+      auto server_callback = [](DataStreamProviderPtr& provider,
+                                const std::string& cfg, CombinedMetrics& m) {
+        return get_server_metrics(provider, cfg, m);
+      };
+      context.set_callback(server_callback);
     }
   }
   // --- 4. Check for --interfaces ---
   if (current_index < args.size() && args[current_index] == "--interfaces") {
     if (current_index + 1 < args.size()) {
-      result.specific_interfaces =
+      context.specific_interfaces =
           parse_interface_list(args[current_index + 1]);
       current_index += 2;  // Consume --interfaces and its value
     } else {
       // Handle error: --interfaces flag without a value
-      // You might want to add an error to result.error_message
+      // You might want to add an error to context.error_message
       std::cerr << "Warning: --interfaces flag requires a comma-separated list."
                 << std::endl;
       current_index += 1;  // Consume only the flag to avoid infinite loop
     }
   }
 
-  tasks.push_back(std::move(result));
+  tasks.push_back(std::move(context));
   return current_index - initial_index;  // Return total consumed args
 }

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -11,6 +12,22 @@
 
 #include "data_local.h"
 #include "data_ssh.h"
+
+void log_stream_state(std::istream& stream, const std::string& stream_name) {
+  std::cerr << "DEBUG STATE for " << stream_name
+            << ":"
+            // good() is true only if no flags are set
+            << " good()=" << std::boolalpha
+            << stream.good()
+            // eof() is true if end-of-file was reached
+            << " eof()=" << std::boolalpha
+            << stream.eof()
+            // fail() is true on formatting errors or if stream isn't open
+            << " fail()=" << std::boolalpha
+            << stream.fail()
+            // bad() is true on unrecoverable read/write errors
+            << " bad()=" << std::boolalpha << stream.bad() << std::endl;
+}
 
 std::istream& LocalDataStreams::get_stat_stream() {
   reset_stream(stat, "/proc/stat");
@@ -25,7 +42,11 @@ std::istream& ProcDataStreams::get_stat_stream() {
 
 CpuPollingTask::CpuPollingTask(DataStreamProvider& _provider,
                                SystemMetrics& _metrics)
-    : IPollingTask(_provider, _metrics) {}
+    : IPollingTask(_provider, _metrics) {
+  //   std::cerr << "Child constructor called" << std::endl;
+  //   dump_fstream(provider.get_stat_stream());
+  //   std::cerr << "End of child constructor call" << std::endl;
+}
 
 void CpuPollingTask::calculate(double /*time_delta_seconds*/) {
   std::vector<CoreStats> all_core_stats;
@@ -68,6 +89,7 @@ void CpuPollingTask::calculate(double /*time_delta_seconds*/) {
 }
 
 void CpuPollingTask::take_snapshot_1() {
+  //   dump_fstream(provider.get_stat_stream());
   t1_snapshots = read_data(provider.get_stat_stream());
 }
 

@@ -1,3 +1,4 @@
+// data.cpp
 #include "data.h"
 
 #include <sys/utsname.h>
@@ -29,9 +30,13 @@
 PollingTaskList read_data(DataStreamProvider& provider,
                           SystemMetrics& metrics) {
   PollingTaskList polling_tasks;
-  polling_tasks.push_back(std::make_unique<CpuPollingTask>(provider, metrics));
-  polling_tasks.push_back(
-      std::make_unique<NetworkPollingTask>(provider, metrics));
+  //   std::make_unique<CpuPollingTask>(provider, metrics);
+  CpuPollingTaskPtr cpu_tasks =
+      std::make_unique<CpuPollingTask>(provider, metrics);
+  //   CpuPollingTask cpu_tasks(provider, metrics);
+  polling_tasks.push_back(std::move(cpu_tasks));
+  //   polling_tasks.push_back(
+  //       std::make_unique<NetworkPollingTask>(provider, metrics));
   //   polling_tasks.push_back(std::make_unique<DiskPollingTask>(provider,
   //   metrics));
 
@@ -55,61 +60,47 @@ PollingTaskList read_data(DataStreamProvider& provider,
   return polling_tasks;
 }
 
-void DataStreamProvider::rewind(std::stringstream& stream,
-                                const std::string& streamName) {
-  if (stream.fail() || stream.bad()) {
-    std::cerr << "DEBUG: Stream '" << streamName
-              << "' was in fail/bad state before rewind." << std::endl;
-  }
-
-  stream.clear();
-  stream.seekg(0, std::ios::beg);
-
-  if (stream.fail() || stream.bad()) {
-    std::cerr << "DEBUG: Stream '" << streamName
-              << "' is still in fail/bad state after rewind. FATAL."
-              << std::endl;
-  }
+void dump_fstream(std::istream& stream) {
+  //   log_stream_state(stream, "/proc/stat");
+  std::stringstream buffer;
+  buffer << stream.rdbuf();
+  std::cerr << "Dumping buffer: " << std::endl;
+  std::cerr << buffer.str() << std::endl;
+  std::cerr << "Done" << std::endl;
 }
-void DataStreamProvider::rewind(std::stringstream& stream) {
-  if (stream.fail() || stream.bad()) {
-    std::cerr << "DEBUG: Stream was in fail/bad state before rewind."
-              << std::endl;
-  }
-
-  stream.clear();
-  stream.seekg(0, std::ios::beg);
-
-  if (stream.fail() || stream.bad()) {
-    std::cerr << "DEBUG: Stream is still in fail/bad state after rewind. FATAL."
-              << std::endl;
-  }
+IPollingTask::IPollingTask(DataStreamProvider& _provider,
+                           SystemMetrics& _metrics)
+    : provider(_provider), metrics(_metrics) {
+  //   std::cerr << "Parent constructor called" << std::endl;
+  //   dump_fstream(provider.get_stat_stream());
+  //   std::cerr << "End of Parent constructor call" << std::endl;
 }
 
-void DataStreamProvider::rewind(std::ifstream& stream,
-                                const std::string& streamName) {
+void DataStreamProvider::rewind(std::istream& stream, std::string streamName) {
   // Debug: Check if stream is in a bad state before attempting reset
+
+  if (streamName != "") {
+    streamName = "'" + streamName + "'";
+  }
+
   if (stream.fail()) {
-    std::cerr << "DEBUG: Stream '" << streamName
-              << "' was in fail state before rewind." << std::endl;
+    std::cerr << "DEBUG: Stream  was in fail state before rewind." << std::endl;
   } else if (stream.bad()) {
     std::cerr << "DEBUG: Stream '" << streamName
               << "' was in bad state before rewind." << std::endl;
-  } else {
-    std::cerr << "DEBUG: Stream '" << streamName
-              << "' was in good state before rewind." << std::endl;
-  }
 
-  stream.clear();
-  stream.seekg(0, std::ios::beg);
+    stream.clear();
+    stream.seekg(0, std::ios::beg);
 
-  // Debug: Confirm stream is usable after reset
-  if (stream.fail() || stream.bad()) {
-    std::cerr << "DEBUG: Stream '" << streamName
-              << "' is still in fail/bad state after rewind. FATAL."
-              << std::endl;
+    // Debug: Confirm stream is usable after reset
+    if (stream.fail() || stream.bad()) {
+      std::cerr << "DEBUG: Stream '" << streamName
+                << "' is still in fail/bad state after rewind. FATAL."
+                << std::endl;
+    }
   }
 }
+void DataStreamProvider::rewind(std::istream& stream) { rewind(stream, ""); }
 
 void print_device_metrics(const std::vector<DeviceInfo>& devices) {
   extern std::tuple<std::string, std::function<FuncType>> conky_columns[];

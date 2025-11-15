@@ -6,7 +6,7 @@
 #include "data.h"
 #include "networkstats.hpp"
 #include "processinfo.hpp"
-#include "waybar_types.h"  // Includes DeviceInfo, SystemMetrics, CombinedMetrics, etc.
+#include "runner.hpp"
 
 // 2. Include nlohmann/json.hpp SECOND
 #include "nlohmann/json.hpp"
@@ -59,8 +59,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
 // CombinedMetrics
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CombinedMetrics, system, disks);
 
-// MetricResult
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MetricResult, source_name, device_file,
+// MetricsContext
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MetricsContext, source_name, device_file,
                                    metrics, error_message, success,
                                    specific_interfaces);
 
