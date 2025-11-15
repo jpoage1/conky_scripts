@@ -15,10 +15,10 @@
 void LocalDataStreams::reset_stream(std::ifstream& stream,
                                     const std::string& path) {
   if (stream.is_open()) {
-    std::cerr << "Stream is already open" << std::endl;
+    // std::cerr << "Stream is already open" << std::endl;
     stream.close();
   } else {
-    std::cerr << "Stream is not already open" << std::endl;
+    // std::cerr << "Stream is not already open" << std::endl;
   }
   stream.open(path);
   if (!stream.is_open()) {

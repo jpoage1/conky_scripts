@@ -9,7 +9,7 @@ std::istream& LocalDataStreams::get_top_cpu_processes_stream() {
   std::string cmd_output = exec_local_cmd(cmd);
 
   top_cpu_procs.str(std::move(cmd_output));
-  //   rewind(top_cpu_procs, "top_cpu_procs");
+  rewind(top_cpu_procs, "top_cpu_procs");
   return top_cpu_procs;
 }
 
@@ -20,7 +20,7 @@ std::istream& ProcDataStreams::get_top_cpu_processes_stream() {
       "head -n 10");
 
   top_cpu_procs.str(top_cpu_data);
-  //   rewind(top_cpu_procs, "top_cpu_procs");
+  rewind(top_cpu_procs, "top_cpu_procs");
   return top_cpu_procs;
 }
 

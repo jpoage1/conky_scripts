@@ -17,7 +17,7 @@ std::istream& LocalDataStreams::get_meminfo_stream() {
 std::istream& ProcDataStreams::get_meminfo_stream() {
   std::string meminfo_data = execute_ssh_command("cat /proc/meminfo");
   meminfo.str(meminfo_data);
-  //   rewind(meminfo, "meminfo");
+  rewind(meminfo, "meminfo");
   return meminfo;
 }
 

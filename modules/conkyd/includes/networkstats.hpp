@@ -1,16 +1,9 @@
 // networkstats.hpp
 #pragma once
 
-#include <chrono>
-#include <istream>
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
-
-class DataStreamProvider;
-struct SystemMetrics;
-struct NetworkSnapshot;
 
 struct NetworkSnapshot {
   std::string interface_name;
@@ -38,11 +31,3 @@ struct NetworkInterfaceStats {
  * @param prev_timestamp Reference to the time_point of the previous snapshot.
  * @param initialized Reference to the boolean tracking initialization.
  */
-
-std::map<std::string, NetworkSnapshot> read_network_snapshot(
-    std::istream& net_dev_stream);
-
-std::vector<NetworkInterfaceStats> calculate_network_rates(
-    const std::map<std::string, NetworkSnapshot>& prev_snapshot,
-    const std::map<std::string, NetworkSnapshot>& current_snapshot,
-    double time_delta_seconds);

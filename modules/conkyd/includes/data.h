@@ -72,7 +72,7 @@ class DataStreamProvider {
  */
 class IPollingTask {
  protected:
-  DataStreamProvider& provider;
+  DataStreamProvider provider;
   SystemMetrics& metrics;
   std::string name;
 
@@ -105,6 +105,10 @@ class IPollingTask {
 
 using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
 
+using CpuSnapshotList = std::vector<CpuSnapshot>;
+using NetworkSnapshotMap = std::map<std::string, NetworkSnapshot>;
+using DiskIoSnapshotMap = std::map<std::string, DiskIoSnapshot>;
+
 struct CombinedMetrics {
   std::vector<std::unique_ptr<IPollingTask>> polled;
   SystemMetrics system;
@@ -124,112 +128,52 @@ struct CombinedMetrics {
 
 class CpuPollingTask : public IPollingTask {
  private:
-  std::vector<CpuSnapshot> t1_snapshots;
-  std::vector<CpuSnapshot> t2_snapshots;
+  CpuSnapshotList t1_snapshots;
+  CpuSnapshotList t2_snapshots;
 
  public:
-  CpuPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-      : IPollingTask(_provider, _metrics) {
-    name = "CPU polling";
-  }
-  void take_snapshot_1() override {
-    t1_snapshots = read_cpu_snapshots(provider.get_stat_stream());
-  }
-
-  void take_snapshot_2() override {
-    t2_snapshots = read_cpu_snapshots(provider.get_stat_stream());
-  }
-
-  void calculate(double /*time_delta_seconds*/) override {
-    // CPU usage calc doesn't need the time_delta, but others might
-    metrics.cores = calculate_cpu_usages(t1_snapshots, t2_snapshots);
-  }
+  CpuPollingTask(DataStreamProvider&, SystemMetrics&);
+  void take_snapshot_1() override;
+  void take_snapshot_2() override;
+  void calculate(double /*time_delta_seconds*/) override;
+  CpuSnapshotList read_data(std::istream&);
 };
 
 class NetworkPollingTask : public IPollingTask {
  private:
-  std::map<std::string, NetworkSnapshot> t1_snapshot;
-  std::map<std::string, NetworkSnapshot> t2_snapshot;
+  NetworkSnapshotMap t1_snapshot;
+  NetworkSnapshotMap t2_snapshot;
 
  public:
-  NetworkPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-      : IPollingTask(_provider, _metrics) {
-    name = "Network polling";
-  }
-  void take_snapshot_1() override {
-    t1_snapshot = read_network_snapshot(provider.get_net_dev_stream());
-  }
+  NetworkPollingTask(DataStreamProvider&, SystemMetrics&);
+  void take_snapshot_1() override;
+  void take_snapshot_2() override;
+  void calculate(double time_delta_seconds) override;
 
-  void take_snapshot_2() override {
-    t2_snapshot = read_network_snapshot(provider.get_net_dev_stream());
-  }
-
-  void calculate(double time_delta_seconds) override {
-    metrics.network_interfaces = calculate_network_rates(
-        t1_snapshot, t2_snapshot,
-        time_delta_seconds  // Network *does* use the time_delta
-    );
-  }
+  NetworkSnapshotMap read_data(std::istream&);
 };
+
 class DiskPollingTask : public IPollingTask {
  private:
-  std::map<std::string, DiskIoSnapshot> t1_snapshots;
-  std::map<std::string, DiskIoSnapshot> t2_snapshots;
+  DiskIoSnapshotMap t1_snapshots;
+  DiskIoSnapshotMap t2_snapshots;
 
  public:
-  DiskPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-      : IPollingTask(_provider, _metrics) {
-    name = "Disk polling";
-  }
+  DiskPollingTask(DataStreamProvider&, SystemMetrics&);
+  void take_snapshot_1() override;
+  void take_snapshot_2() override;
 
-  PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
-  void take_snapshot_1() override {
-    t1_snapshots = read_disk_io_snapshots(provider.get_diskstats_stream());
-  }
-  void take_snapshot_2() override {
-    t2_snapshots = read_disk_io_snapshots(provider.get_diskstats_stream());
-  }
+  void calculate(double time_delta_seconds) override;
 
-  void calculate(double time_delta_seconds) override {
-    // Clear old rates and fill with new ones
-    metrics.disk_io_rates.clear();
-
-    if (time_delta_seconds <= 0) return;
-
-    for (auto const& [dev_name, t2_snap] : t2_snapshots) {
-      auto t1_it = t1_snapshots.find(dev_name);
-      if (t1_it != t1_snapshots.end()) {
-        const auto& t1_snap = t1_it->second;
-
-        // Calculate deltas
-        uint64_t read_delta = (t2_snap.bytes_read >= t1_snap.bytes_read)
-                                  ? (t2_snap.bytes_read - t1_snap.bytes_read)
-                                  : 0;
-
-        uint64_t write_delta =
-            (t2_snap.bytes_written >= t1_snap.bytes_written)
-                ? (t2_snap.bytes_written - t1_snap.bytes_written)
-                : 0;
-
-        // Add the calculated rate to our metrics
-        metrics.disk_io_rates.push_back(
-            {.device_name = dev_name,
-             .read_bytes_per_sec =
-                 static_cast<uint64_t>(read_delta / time_delta_seconds),
-             .write_bytes_per_sec =
-                 static_cast<uint64_t>(write_delta / time_delta_seconds)});
-      }
-    }
-  }
+  DiskIoSnapshotMap read_data(std::istream&);
 };
+
 void read_data(DataStreamProvider&, SystemMetrics&, PollingTaskList&);
 
 PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
 
-void get_system_info(SystemMetrics& metrics);
+void print_system_metrics(const SystemMetrics&);
+void print_metrics(const CombinedMetrics&);
+void print_metrics(const SystemMetrics&);
 
-void print_system_metrics(const SystemMetrics& metrics);
-void print_metrics(const CombinedMetrics& metrics);
-void print_metrics(const SystemMetrics& metrics);
-
-void print_device_metrics(const std::vector<DeviceInfo>& devices);
+void print_device_metrics(const std::vector<DeviceInfo>&);

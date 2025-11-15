@@ -19,7 +19,7 @@ std::istream& LocalDataStreams::get_loadavg_stream() {
 std::istream& ProcDataStreams::get_loadavg_stream() {
   std::string loadavg_data = execute_ssh_command("cat /proc/loadavg");
   loadavg.str(loadavg_data);
-  //   rewind(loadavg, "loadavg");
+  rewind(loadavg, "loadavg");
   return loadavg;
 }
 

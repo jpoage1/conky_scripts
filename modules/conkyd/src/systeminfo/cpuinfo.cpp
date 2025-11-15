@@ -15,7 +15,7 @@ std::istream& LocalDataStreams::get_cpuinfo_stream() {
 std::istream& ProcDataStreams::get_cpuinfo_stream() {
   std::string cpu_data = execute_ssh_command("cat /proc/cpuinfo");
   cpuinfo.str(cpu_data);
-  //   rewind(cpuinfo, "cpuinfo");
+  rewind(cpuinfo, "cpuinfo");
   return cpuinfo;
 }
 

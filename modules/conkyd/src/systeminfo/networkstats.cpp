@@ -18,13 +18,26 @@ std::istream& LocalDataStreams::get_net_dev_stream() {
 std::istream& ProcDataStreams::get_net_dev_stream() {
   std::string net_dev_data = execute_ssh_command("cat /proc/net/dev");
   net_dev.str(net_dev_data);
-  //   rewind(net_dev, "net_dev");
+  rewind(net_dev, "net_dev");
   return net_dev;
 }
 
-std::map<std::string, NetworkSnapshot> read_network_snapshot(
-    std::istream& net_dev_stream) {
-  std::map<std::string, NetworkSnapshot> snapshots;
+NetworkPollingTask::NetworkPollingTask(DataStreamProvider& _provider,
+                                       SystemMetrics& _metrics)
+    : IPollingTask(_provider, _metrics) {
+  name = "Network polling";
+}
+
+void NetworkPollingTask::take_snapshot_1() {
+  t1_snapshot = read_data(provider.get_net_dev_stream());
+}
+
+void NetworkPollingTask::take_snapshot_2() {
+  t2_snapshot = read_data(provider.get_net_dev_stream());
+}
+
+NetworkSnapshotMap NetworkPollingTask::read_data(std::istream& net_dev_stream) {
+  NetworkSnapshotMap snapshots;
   std::string line;
 
   // Skip the first two header lines
@@ -59,19 +72,18 @@ std::map<std::string, NetworkSnapshot> read_network_snapshot(
   }
   return snapshots;
 }
-std::vector<NetworkInterfaceStats> calculate_network_rates(
-    const std::map<std::string, NetworkSnapshot>& prev_snapshot,
-    const std::map<std::string, NetworkSnapshot>& current_snapshot,
-    double time_delta_seconds) {
+
+void NetworkPollingTask::calculate(double time_delta_seconds) {
   std::vector<NetworkInterfaceStats> rates;
 
   if (time_delta_seconds <= 0.0) {
-    return rates;  // Avoid division by zero
+    metrics.network_interfaces = rates;  // Avoid division by zero
+    return;
   }
 
-  for (const auto& [name, current] : current_snapshot) {
-    auto prev_it = prev_snapshot.find(name);
-    if (prev_it != prev_snapshot.end()) {
+  for (const auto& [name, current] : t2_snapshot) {
+    auto prev_it = t1_snapshot.find(name);
+    if (prev_it != t1_snapshot.end()) {
       const auto& prev = prev_it->second;
 
       NetworkInterfaceStats stats;
@@ -90,5 +102,5 @@ std::vector<NetworkInterfaceStats> calculate_network_rates(
       rates.push_back(stats);
     }
   }
-  return rates;
+  metrics.network_interfaces = rates;
 }

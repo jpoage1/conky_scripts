@@ -15,7 +15,7 @@ std::istream& LocalDataStreams::get_uptime_stream() {
 std::istream& ProcDataStreams::get_uptime_stream() {
   std::string uptime_data = execute_ssh_command("cat /proc/uptime");
   uptime.str(uptime_data);
-  //   rewind(uptime, "uptime");
+  rewind(uptime, "uptime");
   return uptime;
 }
 std::string get_uptime(std::istream& input_stream) {

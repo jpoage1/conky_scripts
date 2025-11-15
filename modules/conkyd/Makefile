@@ -40,6 +40,7 @@ SRC_CPU_PROCESSES = src/systeminfo/cpu_processes.cpp
 SRC_LOAD_AVG = src/systeminfo/load_avg.cpp
 SRC_UPTIME = src/systeminfo/uptime.cpp
 SRC_DISKSTAT = src/systeminfo/diskstat.cpp
+SRC_SYSINFO = src/systeminfo/sysinfo.cpp
 SRC_HWMONITOR = src/systeminfo/hwmonitor.cpp
 SRC_WAYBAR_TYPES = src/waybar_types.cpp
 SRC_CLI_PARSER = src/parser.cpp
@@ -65,6 +66,7 @@ OBJ_CPU_PROCESSES = $(OBJ_DIR)/systeminfo/cpu_processes.o
 OBJ_LOAD_AVG = $(OBJ_DIR)/systeminfo/load_avg.o
 OBJ_UPTIME = $(OBJ_DIR)/systeminfo/uptime.o
 OBJ_DISKSTAT = $(OBJ_DIR)/systeminfo/diskstat.o
+OBJ_SYSINFO = $(OBJ_DIR)/systeminfo/sysinfo.o
 OBJ_HWMONITOR = $(OBJ_DIR)/systeminfo/hwmonitor.o
 OBJ_CLI_PARSER = $(OBJ_DIR)/cli_parser.o
 OBJ_CONKY_FORMAT = $(OBJ_DIR)/conky_format.o
@@ -80,7 +82,7 @@ OBJ_WIDGETS_WINDOW = $(OBJ_DIR)/widgets_window.o
 SYSTEMINFO_OBJ = \
     $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) \
     $(OBJ_MEM_PROCESSES) $(OBJ_CPU_PROCESSES) $(OBJ_LOAD_AVG) \
-   $(OBJ_UPTIME) $(OBJ_DISKSTAT) $(OBJ_HWMONITOR)
+   $(OBJ_UPTIME) $(OBJ_DISKSTAT) $(OBJ_SYSINFO) $(OBJ_HWMONITOR)
 
 # Diskstat sources/objects
 DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
@@ -178,6 +180,10 @@ $(OBJ_UPTIME): $(SRC_UPTIME)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DISKSTAT): $(SRC_DISKSTAT)
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_SYSINFO): $(SRC_SYSINFO)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

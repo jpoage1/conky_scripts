@@ -37,9 +37,3 @@ struct CoreStats {
 
 std::vector<CPUCore> read_cpu_times(std::istream&);
 std::string format_cpu_times(const CPUCore&, size_t);
-
-std::vector<CpuSnapshot> read_cpu_snapshots(std::istream& input_stream);
-
-std::vector<CoreStats> calculate_cpu_usages(
-    const std::vector<CpuSnapshot>& t1_snapshots,
-    const std::vector<CpuSnapshot>& t2_snapshots);

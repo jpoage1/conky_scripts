@@ -23,57 +23,11 @@ std::istream& ProcDataStreams::get_stat_stream() {
   return stat;
 }
 
-std::vector<CPUCore> read_cpu_times(std::istream& input_stream) {
-  std::vector<CPUCore> cores;
-  std::string line;
-  while (std::getline(input_stream, line)) {
-    if (line.compare(0, 3, "cpu") != 0 || line.compare(0, 4, "cpu ") == 0)
-      continue;
-    std::istringstream ss(line);
-    std::string label;
-    ss >> label;
-    unsigned long long user, nice, system, idle, iowait, irq, softirq, steal;
-    ss >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
-    unsigned long long idle_all = idle + iowait;
-    unsigned long long total =
-        user + nice + system + idle + iowait + irq + softirq + steal;
-    cores.push_back({idle_all, total});
-  }
-  return cores;
-}
+CpuPollingTask::CpuPollingTask(DataStreamProvider& _provider,
+                               SystemMetrics& _metrics)
+    : IPollingTask(_provider, _metrics) {}
 
-std::string format_cpu_times(const CPUCore& core, size_t index) {
-  double idlePercent = 100.0 * core.idle_time / core.total_time;
-  double usagePercent = 100.0 - idlePercent;
-  return "Core " + std::to_string(index) +
-         ": Idle=" + std::to_string(core.idle_time) +
-         ", Total=" + std::to_string(core.total_time) +
-         ", Usage=" + std::to_string(usagePercent) + "%";
-}
-std::vector<CpuSnapshot> read_cpu_snapshots(std::istream& input_stream) {
-  std::vector<CpuSnapshot> snapshots;
-  std::string line;
-
-  while (std::getline(input_stream, line)) {
-    if (line.compare(0, 3, "cpu") != 0) {
-      break;
-    }
-
-    std::istringstream ss(line);
-    std::string label;
-    ss >> label;
-
-    CpuSnapshot snap;
-    ss >> snap.user >> snap.nice >> snap.system >> snap.idle >> snap.iowait >>
-        snap.irq >> snap.softirq >> snap.steal;
-    snapshots.push_back(snap);
-  }
-  return snapshots;
-}
-
-std::vector<CoreStats> calculate_cpu_usages(
-    const std::vector<CpuSnapshot>& t1_snapshots,
-    const std::vector<CpuSnapshot>& t2_snapshots) {
+void CpuPollingTask::calculate(double /*time_delta_seconds*/) {
   std::vector<CoreStats> all_core_stats;
   size_t num_cores_and_agg = std::min(t1_snapshots.size(), t2_snapshots.size());
 
@@ -110,5 +64,64 @@ std::vector<CoreStats> calculate_cpu_usages(
 
     all_core_stats.push_back(core_stat);
   }
-  return all_core_stats;
+  metrics.cores = all_core_stats;
+}
+
+void CpuPollingTask::take_snapshot_1() {
+  t1_snapshots = read_data(provider.get_stat_stream());
+}
+
+void CpuPollingTask::take_snapshot_2() {
+  t2_snapshots = read_data(provider.get_stat_stream());
+}
+
+CpuSnapshotList CpuPollingTask::read_data(std::istream& input_stream) {
+  CpuSnapshotList snapshots;
+  std::string line;
+
+  while (std::getline(input_stream, line)) {
+    if (line.compare(0, 3, "cpu") != 0) {
+      break;
+    }
+
+    std::istringstream ss(line);
+    std::string label;
+    ss >> label;
+
+    CpuSnapshot snap;
+    ss >> snap.user >> snap.nice >> snap.system >> snap.idle >> snap.iowait >>
+        snap.irq >> snap.softirq >> snap.steal;
+    snapshots.push_back(snap);
+  }
+  return snapshots;
+}
+
+/* Deprecated, possibly dead code */
+std::vector<CPUCore> read_cpu_times(std::istream& input_stream) {
+  std::vector<CPUCore> cores;
+  std::string line;
+  while (std::getline(input_stream, line)) {
+    if (line.compare(0, 3, "cpu") != 0 || line.compare(0, 4, "cpu ") == 0)
+      continue;
+    std::istringstream ss(line);
+    std::string label;
+    ss >> label;
+    unsigned long long user, nice, system, idle, iowait, irq, softirq, steal;
+    ss >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+    unsigned long long idle_all = idle + iowait;
+    unsigned long long total =
+        user + nice + system + idle + iowait + irq + softirq + steal;
+    cores.push_back({idle_all, total});
+  }
+  return cores;
+}
+
+/* Deprecated, possibly dead code */
+std::string format_cpu_times(const CPUCore& core, size_t index) {
+  double idlePercent = 100.0 * core.idle_time / core.total_time;
+  double usagePercent = 100.0 - idlePercent;
+  return "Core " + std::to_string(index) +
+         ": Idle=" + std::to_string(core.idle_time) +
+         ", Total=" + std::to_string(core.total_time) +
+         ", Usage=" + std::to_string(usagePercent) + "%";
 }
