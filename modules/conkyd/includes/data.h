@@ -9,6 +9,12 @@
 
 struct ProcessInfo;
 
+enum LogLevel {
+  Debug,
+  Warning,
+  Notice,
+  None,
+};
 struct SystemMetrics {
   std::vector<CoreStats> cores;
   double cpu_frequency_ghz;
@@ -181,3 +187,12 @@ void print_metrics(const CombinedMetrics&);
 void print_metrics(const SystemMetrics&);
 
 void print_device_metrics(const std::vector<DeviceInfo>&);
+
+void log_stream_state(const std::istream& stream, const LogLevel log_level,
+                      const std::string time, const std::string stream_name);
+
+void log_stream_state(std::istream& stream, const LogLevel log_level,
+                      const std::string time);
+
+void log_stream_state(const std::string time, const std::string stream_name,
+                      const std::string state);

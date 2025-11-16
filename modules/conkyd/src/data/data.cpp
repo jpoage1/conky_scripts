@@ -82,29 +82,57 @@ IPollingTask::IPollingTask(DataStreamProvider& _provider,
   //   dump_fstream(provider.get_stat_stream());
   //   std::cerr << "End of Parent constructor call" << std::endl;
 }
-
-void DataStreamProvider::rewind(std::istream& stream, std::string streamName) {
-  if (streamName != "") {
-    streamName = "'" + streamName + "' ";
+void log_stream_state(const std::string time, const std::string stream_name,
+                      const std::string state) {
+  std::cerr << "DEBUG: Stream " << stream_name << "was in " << state
+            << " state " << time << " rewind." << std::endl;
+}
+void log_stream_state(const std::istream& stream, const LogLevel log_level,
+                      const std::string time, const std::string stream_name) {
+  if (log_level == LogLevel::None) return;
+  const std::string streamName =
+      stream_name != "" ? "`" + stream_name + "` " : "";
+  if (log_level == LogLevel::Debug) {
+    std::cerr << "DEBUG STATE for " << streamName
+              << ":"
+              // good() is true only if no flags are set
+              << " good()=" << std::boolalpha
+              << stream.good()
+              // eof() is true if end-of-file was reached
+              << " eof()=" << std::boolalpha
+              << stream.eof()
+              // fail() is true on formatting errors or if stream isn't open
+              << " fail()=" << std::boolalpha
+              << stream.fail()
+              // bad() is true on unrecoverable read/write errors
+              << " bad()=" << std::boolalpha << stream.bad() << std::endl;
+    return;
   }
-
-  if (stream.bad()) {
-    std::cerr << "DEBUG: Stream " << streamName
-              << "was in bad state before rewind." << std::endl;
+  if (stream.good() && log_level == LogLevel::Notice) {
+    log_stream_state(time, streamName, "good");
+  } else if (stream.bad() && log_level == LogLevel::Warning) {
+    log_stream_state(time, streamName, "bad");
+  } else if (stream.eof() && log_level == LogLevel::Notice) {
+    log_stream_state(time, streamName, "eof");
+  } else if (stream.fail() && log_level == LogLevel::Warning) {
+    log_stream_state(time, streamName, "fail");
   }
+}
+void log_stream_state(std::istream& stream, const LogLevel log_level,
+                      const std::string time) {
+  const std::string stream_name = "";
+  return log_stream_state(stream, log_level, time, stream_name);
+}
+void DataStreamProvider::rewind(std::istream& stream, std::string stream_name) {
+  LogLevel log_level = LogLevel::Debug;
+  log_stream_state(stream, log_level, static_cast<std::string>("before"),
+                   stream_name);
+
   stream.clear();
   stream.seekg(0, std::ios::beg);
 
-  // Debug: Confirm stream is usable after reset
-  if (stream.fail() || stream.bad()) {
-    std::cerr << "DEBUG: Stream " << streamName
-              << " is still in fail/bad state after rewind. FATAL."
-              << std::endl;
-  }
-  //   else if (stream.fail()) {
-  //     std::cerr << "NOTICE: Stream  was in fail state before rewind."
-  //               << std::endl;
-  //   }
+  log_stream_state(stream, log_level, static_cast<std::string>("after"),
+                   stream_name);
 }
 void DataStreamProvider::rewind(std::istream& stream) { rewind(stream, ""); }
 

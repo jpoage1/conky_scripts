@@ -51,4 +51,7 @@ struct LocalDataStreams : public DataStreamProvider {
   std::optional<std::string> read_sysfs_file(const std::filesystem::path& path);
   std::stringstream& create_stream_from_command(std::stringstream& stream,
                                                 const char* cmd);
+  std::stringstream& create_stream_from_command(std::stringstream& stream,
+                                                const char* cmd,
+                                                std::string stream_name);
 };

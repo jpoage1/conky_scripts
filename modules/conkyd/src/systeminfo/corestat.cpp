@@ -4,22 +4,6 @@
 #include "data_local.h"
 #include "data_ssh.h"
 
-void log_stream_state(std::istream& stream, const std::string& stream_name) {
-  std::cerr << "DEBUG STATE for " << stream_name
-            << ":"
-            // good() is true only if no flags are set
-            << " good()=" << std::boolalpha
-            << stream.good()
-            // eof() is true if end-of-file was reached
-            << " eof()=" << std::boolalpha
-            << stream.eof()
-            // fail() is true on formatting errors or if stream isn't open
-            << " fail()=" << std::boolalpha
-            << stream.fail()
-            // bad() is true on unrecoverable read/write errors
-            << " bad()=" << std::boolalpha << stream.bad() << std::endl;
-}
-
 std::istream& LocalDataStreams::get_stat_stream() {
   return create_stream_from_file(stat, "/proc/stat");
 }

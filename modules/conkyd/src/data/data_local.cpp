@@ -19,10 +19,14 @@ std::ifstream& LocalDataStreams::create_stream_from_file(
 
 std::stringstream& LocalDataStreams::create_stream_from_command(
     std::stringstream& stream, const char* cmd) {
+  return create_stream_from_command(stream, cmd, static_cast<std::string>(cmd));
+}
+std::stringstream& LocalDataStreams::create_stream_from_command(
+    std::stringstream& stream, const char* cmd, std::string stream_name) {
   std::string cmd_output = exec_local_cmd(cmd);
 
   stream.str(std::move(cmd_output));
-  rewind(stream);
+  rewind(stream, stream_name);
   return stream;
 }
 

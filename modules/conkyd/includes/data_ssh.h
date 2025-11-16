@@ -40,6 +40,9 @@ struct ProcDataStreams : public DataStreamProvider {
   double get_cpu_temperature() override { return -1.0; }
   std::stringstream& create_stream_from_command(std::stringstream& stream,
                                                 const char* cmd);
+  std::stringstream& create_stream_from_command(std::stringstream& stream,
+                                                const char* cmd,
+                                                std::string stream_name);
 };
 std::string trim(const std::string& str);
 uint64_t get_df_data_bytes(const std::string& mount_point, bool get_used);
