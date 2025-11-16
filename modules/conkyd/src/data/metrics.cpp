@@ -15,7 +15,7 @@
 int get_local_metrics(DataStreamProviderPtr& provider,
                       const std::string& config_file,
                       CombinedMetrics& metrics) {
-  std::cerr << "Getting local metrics" << std::endl;
+  //   std::cerr << "Getting local metrics" << std::endl;
   return get_metrics_from_provider(provider, config_file, metrics);
 }
 
@@ -71,7 +71,7 @@ int get_metrics_from_provider(DataStreamProviderPtr& provider,
     return 1;
   }
 
-  std::cerr << "Getting metrics from provider" << std::endl;
+  //   std::cerr << "Getting metrics from provider" << std::endl;
   metrics.polled = read_data(*provider, metrics.system);
   metrics.disks = collect_device_info(*provider, device_paths);
   return 0;

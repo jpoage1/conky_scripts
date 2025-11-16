@@ -24,9 +24,9 @@ int main(int argc, char* argv[]) {
   }
   do {
     for (MetricsContext& task : config.tasks) {
-      std::cerr << "Running task" << std::endl;
+      //   std::cerr << "Running task" << std::endl;
       task.run();
-      std::cerr << "Done running task" << std::endl;
+      //   std::cerr << "Done running task" << std::endl;
     }
 
     // A. Get T1 snapshot
@@ -60,13 +60,13 @@ int main(int argc, char* argv[]) {
     }
 
     config.done();
-    std::cerr << "Done dumping" << std::endl;
+    // std::cerr << "Done dumping" << std::endl;
 
     if (!config.run_mode(RunMode::RUN_ONCE)) {
       std::this_thread::sleep_for(
           config.get_pooling_interval<std::chrono::milliseconds>());
     }
-    std::cerr << "Done sleeping" << std::endl;
+    // std::cerr << "Done sleeping" << std::endl;
   } while (config.run_mode(RunMode::PERSISTENT));
   return 0;
 }

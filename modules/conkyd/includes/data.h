@@ -12,8 +12,9 @@
 #include "corestat.h"
 #include "diskstat.hpp"
 #include "networkstats.hpp"
-#include "processinfo.hpp"
 #include "types.h"
+
+struct ProcessInfo;
 
 struct SystemMetrics {
   std::vector<CoreStats> cores;

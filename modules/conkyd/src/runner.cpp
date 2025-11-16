@@ -25,7 +25,7 @@ void MetricsContext::run() {
     return;
   }
   try {
-    std::cerr << "Calling the metrics callback" << std::endl;
+    // std::cerr << "Calling the metrics callback" << std::endl;
     int return_code = get_metrics_callback(provider, device_file, metrics);
 
     if (return_code == 0) {

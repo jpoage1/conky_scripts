@@ -162,8 +162,9 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
   // --- 3. Call Appropriate Get Function ---
   if (command == "--local") {
     context.source_name = "Local";
-    std::cerr << "Initializing " << context.source_name << " metrics provider"
-              << std::endl;
+    // std::cerr << "Initializing " << context.source_name << " metrics
+    // provider"
+    //           << std::endl;
     context.provider = std::make_unique<LocalDataStreams>();
     auto local_callback = [](DataStreamProviderPtr& provider,
                              const std::string& cfg, CombinedMetrics& m) {

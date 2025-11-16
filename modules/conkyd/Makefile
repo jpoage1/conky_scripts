@@ -34,9 +34,8 @@ SRC_SSH = src/ssh.cpp
 SRC_CORESTAT = src/systeminfo/corestat.cpp
 SRC_CPUINFO = src/systeminfo/cpuinfo.cpp
 SRC_MEMINFO = src/systeminfo/meminfo.cpp
-SRC_PROCESSINFO = src/systeminfo/networkstats.cpp
-SRC_MEM_PROCESSES = src/systeminfo/mem_processes.cpp
-SRC_CPU_PROCESSES = src/systeminfo/cpu_processes.cpp
+SRC_NETWORKSTATS = src/systeminfo/networkstats.cpp
+SRC_PROCESSINFO = src/systeminfo/processinfo.cpp
 SRC_LOAD_AVG = src/systeminfo/load_avg.cpp
 SRC_UPTIME = src/systeminfo/uptime.cpp
 SRC_DISKSTAT = src/systeminfo/diskstat.cpp
@@ -62,8 +61,7 @@ OBJ_CORESTAT = $(OBJ_DIR)/systeminfo/corestat.o
 OBJ_CPUINFO = $(OBJ_DIR)/systeminfo/cpuinfo.o
 OBJ_MEMINFO = $(OBJ_DIR)/systeminfo/meminfo.o
 OBJ_NETWORKSTATS = $(OBJ_DIR)/systeminfo/networkstats.o
-OBJ_MEM_PROCESSES = $(OBJ_DIR)/systeminfo/mem_processes.o
-OBJ_CPU_PROCESSES = $(OBJ_DIR)/systeminfo/cpu_processes.o
+OBJ_PROCESSINFO = $(OBJ_DIR)/systeminfo/processinfo.o
 OBJ_LOAD_AVG = $(OBJ_DIR)/systeminfo/load_avg.o
 OBJ_UPTIME = $(OBJ_DIR)/systeminfo/uptime.o
 OBJ_DISKSTAT = $(OBJ_DIR)/systeminfo/diskstat.o
@@ -83,7 +81,7 @@ OBJ_WIDGETS_WINDOW = $(OBJ_DIR)/widgets_window.o
 # Object file collections
 SYSTEMINFO_OBJ = \
     $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) \
-    $(OBJ_MEM_PROCESSES) $(OBJ_CPU_PROCESSES) $(OBJ_LOAD_AVG) \
+    $(OBJ_PROCESSINFO) $(OBJ_LOAD_AVG) \
    $(OBJ_UPTIME) $(OBJ_DISKSTAT) $(OBJ_SYSINFO) $(OBJ_HWMONITOR)
 
 # Diskstat sources/objects
@@ -161,15 +159,11 @@ $(OBJ_MEMINFO): $(SRC_MEMINFO)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_NETWORKSTATS): $(SRC_PROCESSINFO)
+$(OBJ_NETWORKSTATS): $(SRC_NETWORKSTATS)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJ_MEM_PROCESSES): $(SRC_MEM_PROCESSES)
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(OBJ_CPU_PROCESSES): $(SRC_CPU_PROCESSES)
+$(OBJ_PROCESSINFO): $(SRC_PROCESSINFO)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

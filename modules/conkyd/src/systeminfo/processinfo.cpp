@@ -1,5 +1,5 @@
-// mem_processes.cpp
-#include "mem_processes.hpp"
+// processinfo.cpp
+#include "processinfo.hpp"
 
 std::istream& LocalDataStreams::get_top_mem_processes_stream() {
   // Command: Get PID, RSS (in KiB), and command name.
@@ -26,7 +26,30 @@ std::istream& ProcDataStreams::get_top_mem_processes_stream() {
   return top_mem_procs;
 };
 
-void get_top_processes_mem(std::istream& stream, SystemMetrics& metrics) {
+std::istream& LocalDataStreams::get_top_cpu_processes_stream() {
+  // Command sorted by %cpu
+  const char* cmd =
+      "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | grep -v \" ps$\" | "
+      "head -n 10";
+  std::string cmd_output = exec_local_cmd(cmd);
+
+  top_cpu_procs.str(std::move(cmd_output));
+  rewind(top_cpu_procs, "top_cpu_procs");
+  return top_cpu_procs;
+}
+
+std::istream& ProcDataStreams::get_top_cpu_processes_stream() {
+  std::string top_cpu_data = execute_ssh_command(
+      "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | grep -v \" ps$\" "
+      "| "
+      "head -n 10");
+
+  top_cpu_procs.str(top_cpu_data);
+  rewind(top_cpu_procs, "top_cpu_procs");
+  return top_cpu_procs;
+}
+
+void get_top_processes(std::istream& stream, SystemMetrics& metrics) {
   metrics.top_processes_mem.clear();  // Clear old data
   std::string line;
   double total_mem_kb = (metrics.mem_total_kb > 0)

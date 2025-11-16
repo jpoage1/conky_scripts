@@ -3,7 +3,6 @@
 
 #include <sys/utsname.h>
 
-#include <chrono>
 #include <chrono>  // For seconds
 #include <iomanip>
 #include <map>
@@ -13,12 +12,10 @@
 #include <vector>
 
 #include "corestat.h"
-#include "cpu_processes.hpp"
 #include "cpuinfo.h"
 #include "diskstat.h"
 #include "hwmonitor.hpp"
 #include "load_avg.hpp"
-#include "mem_processes.hpp"
 #include "meminfo.h"
 #include "metrics.hpp"
 #include "networkstats.hpp"
@@ -30,38 +27,37 @@
 PollingTaskList read_data(DataStreamProvider& provider,
                           SystemMetrics& metrics) {
   PollingTaskList polling_tasks;
-  //   std::make_unique<CpuPollingTask>(provider, metrics);
   CpuPollingTaskPtr cpu_tasks =
       std::make_unique<CpuPollingTask>(provider, metrics);
-  //   CpuPollingTask cpu_tasks(provider, metrics);
   polling_tasks.push_back(std::move(cpu_tasks));
-  //   polling_tasks.push_back(
-  //       std::make_unique<NetworkPollingTask>(provider, metrics));
-  //   polling_tasks.push_back(std::make_unique<DiskPollingTask>(provider,
-  //   metrics));
+
+  NetworkPollingTaskPtr network_polling =
+      std::make_unique<NetworkPollingTask>(provider, metrics);
+  polling_tasks.push_back(std::move(network_polling));
+
+  DiskPollingTaskPtr disk_polling =
+      std::make_unique<DiskPollingTask>(provider, metrics);
+  polling_tasks.push_back(std::move(disk_polling));
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
-  //   std::cerr << "Mem Usage" << std::endl;
 
   get_mem_usage(provider.get_meminfo_stream(), metrics.mem_used_kb,
                 metrics.mem_total_kb, metrics.mem_percent);
   get_swap_usage(provider.get_meminfo_stream(), metrics.swap_used_kb,
                  metrics.swap_total_kb, metrics.swap_percent);
 
-  //   std::cerr << "Uptime" << std::endl;
   metrics.uptime = get_uptime(provider.get_uptime_stream());
   metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
 
   get_load_and_process_stats(provider.get_loadavg_stream(), metrics);
-  get_top_processes_mem(provider.get_top_mem_processes_stream(), metrics);
-  get_top_processes_cpu(provider.get_top_cpu_processes_stream(), metrics);
+  get_top_processes(provider.get_top_mem_processes_stream(), metrics);
+  get_top_processes(provider.get_top_cpu_processes_stream(), metrics);
 
   get_system_info(metrics);
   return polling_tasks;
 }
 
 void dump_fstream(std::istream& stream) {
-  //   log_stream_state(stream, "/proc/stat");
   std::stringstream buffer;
   buffer << stream.rdbuf();
   std::cerr << "Dumping buffer: " << std::endl;
@@ -80,25 +76,27 @@ void DataStreamProvider::rewind(std::istream& stream, std::string streamName) {
   // Debug: Check if stream is in a bad state before attempting reset
 
   if (streamName != "") {
-    streamName = "'" + streamName + "'";
+    streamName = "'" + streamName + "' ";
   }
 
-  if (stream.fail()) {
-    std::cerr << "DEBUG: Stream  was in fail state before rewind." << std::endl;
-  } else if (stream.bad()) {
-    std::cerr << "DEBUG: Stream '" << streamName
-              << "' was in bad state before rewind." << std::endl;
+  if (stream.bad()) {
+    std::cerr << "DEBUG: Stream " << streamName
+              << "was in bad state before rewind." << std::endl;
 
     stream.clear();
     stream.seekg(0, std::ios::beg);
 
     // Debug: Confirm stream is usable after reset
     if (stream.fail() || stream.bad()) {
-      std::cerr << "DEBUG: Stream '" << streamName
-                << "' is still in fail/bad state after rewind. FATAL."
+      std::cerr << "DEBUG: Stream " << streamName
+                << " is still in fail/bad state after rewind. FATAL."
                 << std::endl;
     }
   }
+  //   else if (stream.fail()) {
+  //     std::cerr << "NOTICE: Stream  was in fail state before rewind."
+  //               << std::endl;
+  //   }
 }
 void DataStreamProvider::rewind(std::istream& stream) { rewind(stream, ""); }
 

@@ -35,7 +35,7 @@ inline void from_json(const json& j, ProcessInfo& p) {
 }
 
 // 4. All other macros
-// CORRECTED: DeviceInfo macro to match your implementation
+// DeviceInfo
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DeviceInfo, device_path, mount_point,
                                    used_bytes, size_bytes);
 
@@ -48,13 +48,16 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CoreStats, core_id, user_percent,
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(NetworkInterfaceStats, interface_name,
                                    rx_bytes_per_sec, tx_bytes_per_sec);
 
+// DiskIoStats
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DiskIoStats, device_name, read_bytes_per_sec,
+                                   write_bytes_per_sec);
 // SystemMetrics
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     SystemMetrics, cores, cpu_frequency_ghz, cpu_temp_c, mem_used_kb,
     mem_total_kb, mem_percent, swap_used_kb, swap_total_kb, swap_percent,
     uptime, load_avg_1m, load_avg_5m, load_avg_15m, processes_total,
     processes_running, sys_name, node_name, kernel_release, machine_type,
-    network_interfaces, top_processes_mem, top_processes_cpu);
+    network_interfaces, top_processes_mem, top_processes_cpu, disk_io_rates);
 
 // CombinedMetrics
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CombinedMetrics, system, disks);
@@ -63,5 +66,3 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CombinedMetrics, system, disks);
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MetricsContext, source_name, device_file,
                                    metrics, error_message, success,
                                    specific_interfaces);
-
-// --- End Definitions ---
