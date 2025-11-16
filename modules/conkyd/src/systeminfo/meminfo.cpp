@@ -5,15 +5,11 @@
 #include "data_ssh.h"
 
 std::istream& LocalDataStreams::get_meminfo_stream() {
-  reset_stream(meminfo, "/proc/meminfo");
-  return meminfo;
+  return create_stream_from_file(meminfo, "/proc/meminfo");
 }
 
 std::istream& ProcDataStreams::get_meminfo_stream() {
-  std::string meminfo_data = execute_ssh_command("cat /proc/meminfo");
-  meminfo.str(meminfo_data);
-  rewind(meminfo, "meminfo");
-  return meminfo;
+  return create_stream_from_command(meminfo, "cat /proc/meminfo");
 }
 
 void get_mem_usage(std::istream& input_stream, long& used, long& total,

@@ -7,15 +7,11 @@
 #include "metrics.hpp"
 
 std::istream& LocalDataStreams::get_net_dev_stream() {
-  reset_stream(net_dev, "/proc/net/dev");
-  return net_dev;
+  return create_stream_from_file(net_dev, "/proc/net/dev");
 }
 
 std::istream& ProcDataStreams::get_net_dev_stream() {
-  std::string net_dev_data = execute_ssh_command("cat /proc/net/dev");
-  net_dev.str(net_dev_data);
-  rewind(net_dev, "net_dev");
-  return net_dev;
+  return create_stream_from_command(net_dev, "cat /proc/net/dev");
 }
 
 NetworkPollingTask::NetworkPollingTask(DataStreamProvider& _provider,

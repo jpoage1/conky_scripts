@@ -1,5 +1,12 @@
 #include "data_ssh.h"
 
+std::stringstream& ProcDataStreams::create_stream_from_command(
+    std::stringstream& stream, const char* cmd) {
+  std::string data = execute_ssh_command(cmd);
+  stream.str(data);
+  rewind(stream, "uptime");
+  return stream;
+}
 // Helper function to trim leading and trailing whitespace.
 std::string trim(const std::string& str) {
   const auto str_begin = str.find_first_not_of(" \t\n\r\f\v");

@@ -5,15 +5,11 @@
 #include "data_ssh.h"
 
 std::istream& LocalDataStreams::get_cpuinfo_stream() {
-  reset_stream(cpuinfo, "/proc/cpuinfo");
-  return cpuinfo;
+  return create_stream_from_file(cpuinfo, "/proc/cpuinfo");
 }
 
 std::istream& ProcDataStreams::get_cpuinfo_stream() {
-  std::string cpu_data = execute_ssh_command("cat /proc/cpuinfo");
-  cpuinfo.str(cpu_data);
-  rewind(cpuinfo, "cpuinfo");
-  return cpuinfo;
+  return create_stream_from_command(cpuinfo, "cat /proc/cpuinfo");
 }
 
 float get_cpu_freq_mhz(std::istream& input_stream) {

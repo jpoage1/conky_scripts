@@ -23,12 +23,7 @@ struct LocalDataStreams : public DataStreamProvider {
   std::stringstream top_mem_procs;
   std::stringstream top_cpu_procs;
 
-  void reset_stream(std::ifstream& stream, const std::string& path);
-
-  std::string exec_local_cmd(const char* cmd);
-
-  std::optional<std::string> read_sysfs_file(const std::filesystem::path& path);
-
+  /* DataStreamProvider functions */
   std::istream& get_cpuinfo_stream() override;
   std::istream& get_meminfo_stream() override;
   std::istream& get_uptime_stream() override;
@@ -38,10 +33,22 @@ struct LocalDataStreams : public DataStreamProvider {
   std::istream& get_loadavg_stream() override;
   std::istream& get_net_dev_stream() override;
 
-  std::istream& get_top_mem_processes_stream() override;
-  std::istream& get_top_cpu_processes_stream() override;
+  //   std::istream& get_top_mem_processes_stream() override;
+  //   std::istream& get_top_cpu_processes_stream() override;
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
+  std::istream& get_top_mem_processes_avg_stream() override;
+  std::istream& get_top_cpu_processes_avg_stream() override;
+  std::istream& get_top_mem_processes_real_stream() override;
+  std::istream& get_top_cpu_processes_real_stream() override;
 
   double get_cpu_temperature() override;
+
+  /* LocalDataStreams functions */
+  std::ifstream& create_stream_from_file(std::ifstream& stream,
+                                         const std::string& path);
+  std::string exec_local_cmd(const char* cmd);
+  std::optional<std::string> read_sysfs_file(const std::filesystem::path& path);
+  std::stringstream& create_stream_from_command(std::stringstream& stream,
+                                                const char* cmd);
 };

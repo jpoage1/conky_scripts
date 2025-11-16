@@ -14,15 +14,11 @@
 #include "mount_info.h"
 
 std::istream& LocalDataStreams::get_mounts_stream() {
-  reset_stream(mounts, "/proc/mounts");
-  return mounts;
+  return create_stream_from_file(mounts, "/proc/mounts");
 }
 
 std::istream& ProcDataStreams::get_mounts_stream() {
-  std::string mounts_data = execute_ssh_command("cat /proc/mounts");
-  mounts.str(mounts_data);
-  //   rewind(mounts, "mounts");
-  return mounts;
+  return create_stream_from_command(mounts, "cat /proc/mounts");
 }
 
 uint64_t LocalDataStreams::get_used_space_bytes(

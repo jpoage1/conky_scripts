@@ -42,18 +42,29 @@ PollingTaskList read_data(DataStreamProvider& provider,
   metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
 
   get_load_and_process_stats(provider.get_loadavg_stream(), metrics);
-  get_top_processes(provider.get_top_mem_processes_stream(),  // Input stream
-                    metrics.top_processes_mem,                // Output vector
-                    metrics.mem_total_kb,                     // Total memory
-                    ProcessParseType::TopMem                  // Strategy
-  );
 
-  // Call for Top CPU processes
-  get_top_processes(provider.get_top_cpu_processes_stream(),  // Input stream
-                    metrics.top_processes_cpu,                // Output vector
-                    metrics.mem_total_kb,                     // Total memory
-                    ProcessParseType::TopCPU                  // Strategy
+  // Call for Avg Top CPU processes
+  get_top_processes(
+      provider.get_top_mem_processes_avg_stream(),  // Input stream
+      metrics.top_processes_avg_mem,                // Output vector
+      metrics.mem_total_kb                          // Total memory
   );
+  get_top_processes(
+      provider.get_top_cpu_processes_avg_stream(),  // Input stream
+      metrics.top_processes_avg_cpu,                // Output vector
+      metrics.mem_total_kb                          // Total memory
+  );
+  //   // Call for Real Top CPU processes
+  //   get_top_processes(
+  //       provider.get_top_mem_processes_real_stream(),  // Input stream
+  //       metrics.top_processes_real_mem,                // Output vector
+  //       metrics.mem_total_kb                           // Total memory
+  //   );
+  //   get_top_processes(
+  //       provider.get_top_cpu_processes_real_stream(),  // Input stream
+  //       metrics.top_processes_real_cpu,                // Output vector
+  //       metrics.mem_total_kb                           // Total memory
+  //   );
 
   get_system_info(metrics);
   return polling_tasks;
@@ -145,7 +156,7 @@ void print_system_metrics(const SystemMetrics& metrics) {
 
   std::cout << "--- Top Processes (Mem) ---" << std::endl;
   std::cout << "PID\tVmRSS (MiB)\tName" << std::endl;
-  for (const auto& proc : metrics.top_processes_mem) {
+  for (const auto& proc : metrics.top_processes_avg_mem) {
     double vmRssMiB = static_cast<double>(proc.vmRssKb) / 1024.0;
     std::cout << proc.pid << "\t" << std::fixed << std::setprecision(1)
               << vmRssMiB << "\t\t" << proc.name << std::endl;
@@ -154,7 +165,7 @@ void print_system_metrics(const SystemMetrics& metrics) {
   std::cout << "--- Top Processes (CPU) ---" << std::endl;
   std::cout << "PID\t%CPU\t\tName" << std::endl;
   // Iterate over the new vector, accessing the cpu_percent field
-  for (const auto& proc : metrics.top_processes_cpu) {
+  for (const auto& proc : metrics.top_processes_avg_cpu) {
     std::cout << proc.pid << "\t" << std::fixed << std::setprecision(1)
               << proc.cpu_percent << "%\t\t" << proc.name << std::endl;
   }

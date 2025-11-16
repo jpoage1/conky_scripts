@@ -21,14 +21,11 @@ void log_stream_state(std::istream& stream, const std::string& stream_name) {
 }
 
 std::istream& LocalDataStreams::get_stat_stream() {
-  reset_stream(stat, "/proc/stat");
-  return stat;
+  return create_stream_from_file(stat, "/proc/stat");
 }
 
 std::istream& ProcDataStreams::get_stat_stream() {
-  std::string stat_data = execute_ssh_command("cat /proc/stat");
-  stat.str(stat_data);
-  return stat;
+  return create_stream_from_command(stat, "cat /proc/stat");
 }
 
 CpuPollingTask::CpuPollingTask(DataStreamProvider& _provider,

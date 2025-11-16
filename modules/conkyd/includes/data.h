@@ -41,8 +41,10 @@ struct SystemMetrics {
   std::string machine_type;
 
   std::vector<NetworkInterfaceStats> network_interfaces;
-  std::vector<ProcessInfo> top_processes_mem;
-  std::vector<ProcessInfo> top_processes_cpu;
+  std::vector<ProcessInfo> top_processes_avg_mem;
+  std::vector<ProcessInfo> top_processes_avg_cpu;
+  std::vector<ProcessInfo> top_processes_real_mem;
+  std::vector<ProcessInfo> top_processes_real_cpu;
 
   std::vector<DiskIoStats> disk_io_rates;
 };
@@ -61,8 +63,12 @@ class DataStreamProvider {
   virtual std::istream& get_diskstats_stream() = 0;
   virtual std::istream& get_loadavg_stream() = 0;
   virtual std::istream& get_net_dev_stream() = 0;
-  virtual std::istream& get_top_mem_processes_stream() = 0;
-  virtual std::istream& get_top_cpu_processes_stream() = 0;
+  //   virtual std::istream& get_top_mem_processes_stream() = 0;
+  //   virtual std::istream& get_top_cpu_processes_stream() = 0;
+  virtual std::istream& get_top_mem_processes_avg_stream() = 0;
+  virtual std::istream& get_top_cpu_processes_avg_stream() = 0;
+  virtual std::istream& get_top_mem_processes_real_stream() = 0;
+  virtual std::istream& get_top_cpu_processes_real_stream() = 0;
   virtual uint64_t get_used_space_bytes(const std::string& mount_point) = 0;
   virtual uint64_t get_disk_size_bytes(const std::string& mount_point) = 0;
   virtual double get_cpu_temperature() = 0;

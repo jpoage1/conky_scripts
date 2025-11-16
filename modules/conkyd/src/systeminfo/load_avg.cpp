@@ -13,14 +13,10 @@
 #include "data_ssh.h"
 
 std::istream& LocalDataStreams::get_loadavg_stream() {
-  reset_stream(loadavg, "/proc/loadavg");
-  return loadavg;
+  return create_stream_from_file(loadavg, "/proc/loadavg");
 }
 std::istream& ProcDataStreams::get_loadavg_stream() {
-  std::string loadavg_data = execute_ssh_command("cat /proc/loadavg");
-  loadavg.str(loadavg_data);
-  rewind(loadavg, "loadavg");
-  return loadavg;
+  return create_stream_from_command(loadavg, "cat /proc/loadavg");
 }
 
 void get_load_and_process_stats(std::istream& stat_stream,

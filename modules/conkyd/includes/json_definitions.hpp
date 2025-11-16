@@ -57,7 +57,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     mem_total_kb, mem_percent, swap_used_kb, swap_total_kb, swap_percent,
     uptime, load_avg_1m, load_avg_5m, load_avg_15m, processes_total,
     processes_running, sys_name, node_name, kernel_release, machine_type,
-    network_interfaces, top_processes_mem, top_processes_cpu, disk_io_rates);
+    network_interfaces, top_processes_avg_mem, top_processes_avg_cpu,
+    top_processes_real_mem, top_processes_real_cpu, disk_io_rates);
 
 // CombinedMetrics
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CombinedMetrics, system, disks);

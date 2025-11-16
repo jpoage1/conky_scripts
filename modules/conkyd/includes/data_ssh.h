@@ -16,7 +16,7 @@ struct ProcDataStreams : public DataStreamProvider {
   std::stringstream top_mem_procs;
   std::stringstream top_cpu_procs;
 
-  ProcDataStreams() {}
+  /*  DataStreamProvider functions */
 
   std::istream& get_cpuinfo_stream() override;
   std::istream& get_meminfo_stream() override;
@@ -26,13 +26,20 @@ struct ProcDataStreams : public DataStreamProvider {
   std::istream& get_diskstats_stream() override;
   std::istream& get_loadavg_stream() override;
   std::istream& get_net_dev_stream() override;
-  std::istream& get_top_mem_processes_stream() override;
-  std::istream& get_top_cpu_processes_stream() override;
+  //   std::istream& get_top_mem_processes_stream() override;
+  //   std::istream& get_top_cpu_processes_stream() override;
   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
+  std::istream& get_top_mem_processes_avg_stream() override;
+  std::istream& get_top_cpu_processes_avg_stream() override;
+  std::istream& get_top_mem_processes_real_stream() override;
+  std::istream& get_top_cpu_processes_real_stream() override;
 
+  /* ProcDataStreams functions */
+  ProcDataStreams() {}
   double get_cpu_temperature() override { return -1.0; }
+  std::stringstream& create_stream_from_command(std::stringstream& stream,
+                                                const char* cmd);
 };
-
 std::string trim(const std::string& str);
 uint64_t get_df_data_bytes(const std::string& mount_point, bool get_used);

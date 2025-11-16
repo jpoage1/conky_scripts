@@ -1,8 +1,8 @@
 
 #include "data_local.h"
 
-void LocalDataStreams::reset_stream(std::ifstream& stream,
-                                    const std::string& path) {
+std::ifstream& LocalDataStreams::create_stream_from_file(
+    std::ifstream& stream, const std::string& path) {
   if (stream.is_open()) {
     // std::cerr << "Stream is already open" << std::endl;
     stream.close();
@@ -14,6 +14,16 @@ void LocalDataStreams::reset_stream(std::ifstream& stream,
   if (!stream.is_open()) {
     std::cerr << "[Error] Failed to open " << path << std::endl;
   }
+  return stream;
+}
+
+std::stringstream& LocalDataStreams::create_stream_from_command(
+    std::stringstream& stream, const char* cmd) {
+  std::string cmd_output = exec_local_cmd(cmd);
+
+  stream.str(std::move(cmd_output));
+  rewind(stream);
+  return stream;
 }
 
 std::string LocalDataStreams::exec_local_cmd(const char* cmd) {

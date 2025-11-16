@@ -5,15 +5,11 @@
 #include "data_ssh.h"
 
 std::istream& LocalDataStreams::get_diskstats_stream() {
-  reset_stream(diskstats, "/proc/diskstats");
-  return diskstats;
+  return create_stream_from_file(diskstats, "/proc/diskstats");
 }
 
 std::istream& ProcDataStreams::get_diskstats_stream() {
-  std::string diskstats_data = execute_ssh_command("cat /proc/diskstats");
-  diskstats.str(diskstats_data);
-  rewind(diskstats, "diskstats");
-  return diskstats;
+  return create_stream_from_command(diskstats, "cat /proc/diskstats");
 }
 
 DiskPollingTask::DiskPollingTask(DataStreamProvider& _provider,
