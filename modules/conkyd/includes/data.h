@@ -2,17 +2,12 @@
 #pragma once
 #include "corestat.h"
 #include "diskstat.hpp"
+#include "meminfo.h"
 #include "networkstats.hpp"
 #include "pcn.hpp"
 #include "types.h"
 
 struct ProcessInfo;
-
-struct MemInfo {
-  long used_kb;
-  long total_kb;
-  int percent;
-};
 
 struct SystemMetrics {
   std::vector<CoreStats> cores;
@@ -21,13 +16,6 @@ struct SystemMetrics {
   MemInfo meminfo;
   MemInfo swapinfo;
   std::string uptime;
-
-  long mem_used_kb;
-  long mem_total_kb;
-  int mem_percent;
-  long swap_used_kb;
-  long swap_total_kb;
-  int swap_percent;
 
   double load_avg_1m = 0.0;
   double load_avg_5m = 0.0;

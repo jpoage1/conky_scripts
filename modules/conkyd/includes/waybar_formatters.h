@@ -25,4 +25,5 @@ std::string show_devices(const MetricsContext& result,
 
 std::string show_system_metrics(const MetricsContext& result,
                                 const SystemMetrics& system_metrics,
-                                int& total_mem_percent, int& valid_mem_sources);
+                                int& total_meminfo.percent,
+                                int& valid_mem_sources);

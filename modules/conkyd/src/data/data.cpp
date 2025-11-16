@@ -33,10 +33,8 @@ PollingTaskList read_data(DataStreamProvider& provider,
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
 
-  get_mem_usage(provider.get_meminfo_stream(), metrics.mem_used_kb,
-                metrics.mem_total_kb, metrics.mem_percent);
-  get_swap_usage(provider.get_meminfo_stream(), metrics.swap_used_kb,
-                 metrics.swap_total_kb, metrics.swap_percent);
+  get_mem_usage(provider.get_meminfo_stream(), metrics.meminfo,
+                metrics.swapinfo);
 
   metrics.uptime = get_uptime(provider.get_uptime_stream());
   metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
@@ -47,23 +45,23 @@ PollingTaskList read_data(DataStreamProvider& provider,
   get_top_processes(
       provider.get_top_mem_processes_avg_stream(),  // Input stream
       metrics.top_processes_avg_mem,                // Output vector
-      metrics.mem_total_kb                          // Total memory
+      metrics.meminfo.total_kb                      // Total memory
   );
   get_top_processes(
       provider.get_top_cpu_processes_avg_stream(),  // Input stream
       metrics.top_processes_avg_cpu,                // Output vector
-      metrics.mem_total_kb                          // Total memory
+      metrics.meminfo.total_kb                      // Total memory
   );
   //   // Call for Real Top CPU processes
   //   get_top_processes(
   //       provider.get_top_mem_processes_real_stream(),  // Input stream
   //       metrics.top_processes_real_mem,                // Output vector
-  //       metrics.mem_total_kb                           // Total memory
+  //       metrics.meminfo.total_kb                           // Total memory
   //   );
   //   get_top_processes(
   //       provider.get_top_cpu_processes_real_stream(),  // Input stream
   //       metrics.top_processes_real_cpu,                // Output vector
-  //       metrics.mem_total_kb                           // Total memory
+  //       metrics.meminfo.total_kb                           // Total memory
   //   );
 
   get_system_info(metrics);
@@ -147,12 +145,13 @@ void print_system_metrics(const SystemMetrics& metrics) {
 
   std::cout << "Uptime: " << metrics.uptime << std::endl;
 
-  std::cout << "Mem: " << metrics.mem_used_kb << " / " << metrics.mem_total_kb
-            << " kB (" << metrics.mem_percent << "%)" << std::endl;
+  std::cout << "Mem: " << metrics.meminfo.used_kb << " / "
+            << metrics.meminfo.total_kb << " kB (" << metrics.meminfo.percent
+            << "%)" << std::endl;
 
-  std::cout << "Swap: " << metrics.swap_used_kb << " / "
-            << metrics.swap_total_kb << " kB (" << metrics.swap_percent << "%)"
-            << std::endl;
+  std::cout << "Swap: " << metrics.swapinfo.used_kb << " / "
+            << metrics.swapinfo.total_kb << " kB (" << metrics.swapinfo.percent
+            << "%)" << std::endl;
 
   std::cout << "--- Top Processes (Mem) ---" << std::endl;
   std::cout << "PID\tVmRSS (MiB)\tName" << std::endl;

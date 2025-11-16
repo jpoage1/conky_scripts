@@ -186,8 +186,8 @@ void ProcList::update(const std::vector<ProcessInfo>& procs) {
                                                  "%");
 
       child = child->get_next_sibling();
-      dynamic_cast<Gtk::Label*>(child)->set_text(format_num(proc.mem_percent) +
-                                                 "%");
+      dynamic_cast<Gtk::Label*>(child)->set_text(
+          format_num(proc.meminfo.percent) + "%");
 
       row_box->set_visible(true);
     } else {
@@ -528,15 +528,15 @@ MemSwap::MemSwap()
 }
 
 void MemSwap::update(const SystemMetrics& metrics) {
-  m_mem_bar.update(metrics.mem_percent,
-                   Glib::ustring::sprintf("%d%%", metrics.mem_percent));
+  m_mem_bar.update(metrics.meminfo.percent,
+                   Glib::ustring::sprintf("%d%%", metrics.meminfo.percent));
   m_label_mem_details.set_text(Glib::ustring::sprintf(
-      "Used: %ld MB / Total: %ld MB", metrics.mem_used_kb / 1024,
-      metrics.mem_total_kb / 1024));
+      "Used: %ld MB / Total: %ld MB", metrics.meminfo.used_kb / 1024,
+      metrics.meminfo.total_kb / 1024));
 
-  m_swap_bar.update(metrics.swap_percent,
-                    Glib::ustring::sprintf("%d%%", metrics.swap_percent));
+  m_swap_bar.update(metrics.swapinfo.percent,
+                    Glib::ustring::sprintf("%d%%", metrics.swapinfo.percent));
   m_label_swap_details.set_text(Glib::ustring::sprintf(
-      "Used: %ld MB / Total: %ld MB", metrics.swap_used_kb / 1024,
-      metrics.swap_total_kb / 1024));
+      "Used: %ld MB / Total: %ld MB", metrics.swapinfo.used_kb / 1024,
+      metrics.swapinfo.total_kb / 1024));
 }

@@ -25,7 +25,7 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
   json waybar_output;
   std::stringstream tooltip_ss;
   bool any_errors = false;
-  int total_mem_percent = 0;
+  int total_meminfo.percent = 0;
   int valid_mem_sources = 0;
 
   //   const TargetFormat target = TargetFormat::WAYBAR;
@@ -35,7 +35,8 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
       const auto& system_metrics = result.metrics.system;
       const auto& devices = result.metrics.disks;
       tooltip_ss << show_system_metrics(result, system_metrics,
-                                        total_mem_percent, valid_mem_sources)
+                                        total_meminfo.percent,
+                                        valid_mem_sources)
 
                  << show_top_mem_procs(result, system_metrics.top_processes_mem)
                  << show_top_cpu_procs(result, system_metrics.top_processes_cpu)
@@ -74,7 +75,7 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
 
   // --- Set CSS Class ---
   int avg_mem =
-      (valid_mem_sources > 0) ? (total_mem_percent / valid_mem_sources) : 0;
+      (valid_mem_sources > 0) ? (total_meminfo.percent / valid_mem_sources) : 0;
   if (any_errors || avg_mem > 80) {
     waybar_output["class"] = "critical";
   } else if (avg_mem > 60) {
@@ -115,7 +116,7 @@ std::string show_top_mem_procs(const MetricsContext& result,
                  << vmRssMiB
                  // Add Mem % column
                  << std::right << std::setw(mem_perc_col_width - 1)
-                 << proc.mem_percent << "%"
+                 << proc.meminfo.percent << "%"
                  << "  " << proc.name << "\n";
     }
     tooltip_ss << "</tt>\n\n";
@@ -155,7 +156,7 @@ std::string show_top_cpu_procs(const MetricsContext& result,
                  << "%"
                  // Add Mem % column
                  << std::right << std::setw(mem_perc_col_width - 1)
-                 << proc.mem_percent << "%"
+                 << proc.meminfo.percent << "%"
                  << "  " << proc.name << "\n";
     }
     tooltip_ss << "</tt>\n\n";
@@ -280,11 +281,11 @@ std::string show_devices(const MetricsContext& result,
 
 std::string show_system_metrics(const MetricsContext& result,
                                 const SystemMetrics& system_metrics,
-                                int& total_mem_percent,
+                                int& total_meminfo.percent,
                                 int& valid_mem_sources) {
   const TargetFormat target = TargetFormat::WAYBAR;
   std::stringstream tooltip_ss;
-  if (system_metrics.mem_total_kb > 0) {
+  if (system_metrics.meminfo.total_kb > 0) {
     tooltip_ss
         << "<b>System Information (" << result.source_name << ")</b>\n"
         << "<tt>"  // Use tt for consistent spacing if needed
@@ -303,15 +304,16 @@ std::string show_system_metrics(const MetricsContext& result,
         << "CPU Temp: " << std::fixed << std::setprecision(2)
         << system_metrics.cpu_temp_c << " C\n"
         << "Memory: "
-        << format_size(system_metrics.mem_used_kb * 1024).formatted(target)
+        << format_size(system_metrics.meminfo.used_kb * 1024).formatted(target)
         << " / "
-        << format_size(system_metrics.mem_total_kb * 1024).formatted(target)
-        << " (" << system_metrics.mem_percent << "%)\n"
+        << format_size(system_metrics.meminfo.total_kb * 1024).formatted(target)
+        << " (" << system_metrics.meminfo.percent << "%)\n"
         << "Swap: "
-        << format_size(system_metrics.swap_used_kb * 1024).formatted(target)
+        << format_size(system_metrics.swapinfo.used_kb * 1024).formatted(target)
         << " / "
-        << format_size(system_metrics.swap_total_kb * 1024).formatted(target)
-        << " (" << system_metrics.swap_percent << "%)\n";
+        << format_size(system_metrics.swapinfo.total_kb * 1024)
+               .formatted(target)
+        << " (" << system_metrics.swapinfo.percent << "%)\n";
     tooltip_ss << "<tt>";
 
     tooltip_ss << std::fixed << std::setprecision(1);
@@ -334,7 +336,7 @@ std::string show_system_metrics(const MetricsContext& result,
     }
     tooltip_ss << "</tt>\n\n";
 
-    total_mem_percent += system_metrics.mem_percent;
+    total_meminfo.percent += system_metrics.meminfo.percent;
     valid_mem_sources++;
   }
   return tooltip_ss.str();

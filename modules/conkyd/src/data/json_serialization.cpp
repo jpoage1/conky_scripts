@@ -18,7 +18,7 @@ inline void to_json(json& j, const ProcessInfo& p) {
   j = json{{"pid", p.pid},
            {"vmRssKb", p.vmRssKb},
            {"cpu_percent", p.cpu_percent},
-           {"mem_percent", p.mem_percent},
+           {"meminfo.percent", p.meminfo.percent},
            {"name", p.name}};
 }
 
@@ -26,6 +26,6 @@ inline void from_json(const json& j, ProcessInfo& p) {
   j.at("pid").get_to(p.pid);
   j.at("vmRssKb").get_to(p.vmRssKb);
   j.at("cpu_percent").get_to(p.cpu_percent);
-  j.at("mem_percent").get_to(p.mem_percent);
+  j.at("meminfo.percent").get_to(p.meminfo.percent);
   j.at("name").get_to(p.name);
 }

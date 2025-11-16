@@ -1,13 +1,14 @@
+// polling.hpp
 #pragma once
 
-#include "data.h"
-#include "metrics.hpp"
-#include "pcn.h"
+#include "pcn.hpp"
 
-/**
- * @brief An interface for any task that requires two snapshots over
- * time to calculate a rate (e.g., CPU, Network).
- */
+struct DataStreamProvider;
+struct SystemMetrics;
+struct DataStreamProvider;
+struct CpuSnapshot;
+struct NetworkSnapshot;
+struct DiskIoSnapshot;
 class IPollingTask {
  protected:
   DataStreamProvider& provider;
@@ -20,8 +21,11 @@ class IPollingTask {
    * * We use an initializer list (the ': ...') because references
    * MUST be initialized, they cannot be assigned later.
    */
-  IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
-      : provider(_provider), metrics(_metrics) {}
+  IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics);
+
+  //   IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
+  //       : provider(_provider), metrics(_metrics) {}
+
   virtual ~IPollingTask() = default;
   std::string get_name() { return name; }
   /**
@@ -42,3 +46,52 @@ class IPollingTask {
 };
 
 using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
+
+using CpuSnapshotList = std::vector<CpuSnapshot>;
+using NetworkSnapshotMap = std::map<std::string, NetworkSnapshot>;
+using DiskIoSnapshotMap = std::map<std::string, DiskIoSnapshot>;
+
+class CpuPollingTask : public IPollingTask {
+ private:
+  CpuSnapshotList t1_snapshots;
+  CpuSnapshotList t2_snapshots;
+
+ public:
+  CpuPollingTask(DataStreamProvider&, SystemMetrics&);
+  void take_snapshot_1() override;
+  void take_snapshot_2() override;
+  void calculate(double /*time_delta_seconds*/) override;
+  CpuSnapshotList read_data(std::istream&);
+};
+using CpuPollingTaskPtr = std::unique_ptr<CpuPollingTask>;
+
+class NetworkPollingTask : public IPollingTask {
+ private:
+  NetworkSnapshotMap t1_snapshot;
+  NetworkSnapshotMap t2_snapshot;
+
+ public:
+  NetworkPollingTask(DataStreamProvider&, SystemMetrics&);
+  void take_snapshot_1() override;
+  void take_snapshot_2() override;
+  void calculate(double time_delta_seconds) override;
+
+  NetworkSnapshotMap read_data(std::istream&);
+};
+using NetworkPollingTaskPtr = std::unique_ptr<NetworkPollingTask>;
+
+class DiskPollingTask : public IPollingTask {
+ private:
+  DiskIoSnapshotMap t1_snapshots;
+  DiskIoSnapshotMap t2_snapshots;
+
+ public:
+  DiskPollingTask(DataStreamProvider&, SystemMetrics&);
+  void take_snapshot_1() override;
+  void take_snapshot_2() override;
+
+  void calculate(double time_delta_seconds) override;
+
+  DiskIoSnapshotMap read_data(std::istream&);
+};
+using DiskPollingTaskPtr = std::unique_ptr<DiskPollingTask>;

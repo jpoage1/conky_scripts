@@ -10,10 +10,11 @@ const char* top_mem_processes_avg_cmd =
     "ps -eo pid,%cpu,rss,comm --no-headers --sort=-rss | grep -v \" ps$\" | "
     "head "
     "-n 10";
+
 const char* top_cpu_processes_avg_cmd =
     "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | grep -v \" ps$\" | "
     "head -n 10";
-const char* top_mem_processes_real_cmd =
+const char* top_cpu_processes_real_cmd =
     "top -b -n 2 -d 0.9 -o %CPU | "  // 2 iterations, 0.9s apart, sorted by CPU
     "awk 'BEGIN{RS=\"\"} NR==2' | "  // Get only the second iteration's data
     "tail -n +8 | "                  // Skip the 7 header lines

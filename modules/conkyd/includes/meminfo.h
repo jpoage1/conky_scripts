@@ -3,6 +3,10 @@
 #pragma once
 #include "pcn.hpp"
 
-void get_mem_usage(std::istream&, long&, long&, int&);
-
-void get_swap_usage(std::istream&, long&, long&, int&);
+struct MemInfo {
+  long used_kb;
+  long total_kb;
+  int percent;
+};
+void get_mem_usage(std::istream& input_stream, MemInfo& meminfo,
+                   MemInfo& swapinfo);
