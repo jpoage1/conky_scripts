@@ -1,7 +1,4 @@
 
-#include <iostream>
-#include <string>
-#include <vector>
 
 #include "parser.hpp"
 #include "waybar_formatters.h"

@@ -1,10 +1,6 @@
 // parser.cpp
 #include "parser.hpp"
 
-#include <iostream>
-#include <set>
-#include <vector>
-
 #include "data_local.h"
 #include "data_ssh.h"
 #include "runner.hpp"
@@ -219,4 +215,31 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
 
   tasks.push_back(std::move(context));
   return current_index - initial_index;  // Return total consumed args
+}
+
+bool ParsedConfig::run_mode(RunMode mode) const { return _run_mode == mode; }
+bool ParsedConfig::output_mode(OutputMode mode) const {
+  return _output_mode == mode;
+}
+RunMode ParsedConfig::run_mode() const { return _run_mode; }
+OutputMode ParsedConfig::get_output_mode() const { return _output_mode; }
+void ParsedConfig::set_run_mode(RunMode mode) { _run_mode = mode; }
+void ParsedConfig::set_output_mode(OutputMode mode) { _output_mode = mode; }
+void ParsedConfig::done() {
+  switch (_output_mode) {
+    case OutputMode::JSON: {
+      json output_json = tasks;
+      std::cout << output_json.dump() << std::endl;
+      break;
+    }
+    case OutputMode::CONKY: {
+      for (const MetricsContext& task : tasks) {
+        print_metrics(task.metrics);
+      }
+      break;
+    }
+    default:
+      std::cerr << "Invaild output type" << std::endl;
+      exit(1);
+  }
 }

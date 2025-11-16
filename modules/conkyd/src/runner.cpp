@@ -1,10 +1,5 @@
 // runner.cpp
-// runner.cpp
 #include "runner.hpp"
-
-#include <exception>
-#include <functional>
-#include <set>
 
 #include "metrics.hpp"
 #include "types.h"

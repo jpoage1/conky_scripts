@@ -3,9 +3,6 @@
 
 #include <libssh/libssh.h>
 
-#include <iostream>
-#include <sstream>
-
 static ssh_session session = NULL;
 
 int setup_ssh_session() { return setup_ssh_session("192.168.1.200", "conky"); }

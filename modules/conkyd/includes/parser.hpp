@@ -1,18 +1,10 @@
 // parser.hpp
-#include "json_definitions.hpp"
-#include "nlohmann/json.hpp"
-
 #pragma once
-#include <chrono>
-#include <filesystem>
-#include <set>
-#include <string>
-#include <vector>
 
+#include "json_definitions.hpp"
 #include "metrics.hpp"
+#include "pcn.hpp"
 #include "runner.hpp"
-
-using json = nlohmann::json;
 
 enum RunMode {
   RUN_ONCE,
@@ -50,30 +42,13 @@ class ParsedConfig {
     return std::chrono::duration_cast<DurationType>(pooling_interval);
   }
 
-  bool run_mode(RunMode mode) const { return _run_mode == mode; }
-  bool output_mode(OutputMode mode) const { return _output_mode == mode; }
-  RunMode run_mode() const { return _run_mode; }
-  OutputMode get_output_mode() const { return _output_mode; }
-  void set_run_mode(RunMode mode) { _run_mode = mode; }
-  void set_output_mode(OutputMode mode) { _output_mode = mode; }
-  void done() {
-    switch (_output_mode) {
-      case OutputMode::JSON: {
-        json output_json = tasks;
-        std::cout << output_json.dump() << std::endl;
-        break;
-      }
-      case OutputMode::CONKY: {
-        for (const MetricsContext& task : tasks) {
-          print_metrics(task.metrics);
-        }
-        break;
-      }
-      default:
-        std::cerr << "Invaild output type" << std::endl;
-        exit(1);
-    }
-  }
+  bool run_mode(RunMode mode) const;
+  bool output_mode(OutputMode mode) const;
+  RunMode run_mode() const;
+  OutputMode get_output_mode() const;
+  void set_run_mode(RunMode mode);
+  void set_output_mode(OutputMode mode);
+  void done();
 };
 /**
  * @brief Parses command line arguments (argc, argv) to collect metric results.

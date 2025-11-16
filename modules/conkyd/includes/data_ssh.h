@@ -1,10 +1,7 @@
 // data_ssh.h
 #pragma once
-#include <istream>
-#include <sstream>
-#include <string>
-
 #include "data.h"
+#include "pcn.hpp"
 #include "ssh.h"
 
 struct ProcDataStreams : public DataStreamProvider {

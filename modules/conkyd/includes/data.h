@@ -1,32 +1,33 @@
 // data.h
 #pragma once
-#include <cstdint>
-#include <fstream>
-#include <iostream>
-#include <istream>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include "corestat.h"
 #include "diskstat.hpp"
 #include "networkstats.hpp"
+#include "pcn.hpp"
 #include "types.h"
 
 struct ProcessInfo;
+
+struct MemInfo {
+  long used_kb;
+  long total_kb;
+  int percent;
+};
 
 struct SystemMetrics {
   std::vector<CoreStats> cores;
   double cpu_frequency_ghz;
   double cpu_temp_c;
+  MemInfo meminfo;
+  MemInfo swapinfo;
+  std::string uptime;
+
   long mem_used_kb;
   long mem_total_kb;
   int mem_percent;
   long swap_used_kb;
   long swap_total_kb;
   int swap_percent;
-  std::string uptime;
 
   double load_avg_1m = 0.0;
   double load_avg_5m = 0.0;

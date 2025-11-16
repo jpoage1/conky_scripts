@@ -1,7 +1,7 @@
 // meminfo.h
 
 #pragma once
-#include <istream>
+#include "pcn.hpp"
 
 void get_mem_usage(std::istream&, long&, long&, int&);
 

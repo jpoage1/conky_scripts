@@ -1,12 +1,6 @@
 
 #include "diskstat.hpp"
 
-#include <iostream>
-#include <istream>
-#include <map>
-#include <sstream>
-#include <string>
-
 #include "data_local.h"
 #include "data_ssh.h"
 

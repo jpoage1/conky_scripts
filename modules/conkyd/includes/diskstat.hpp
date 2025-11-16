@@ -1,9 +1,6 @@
 // includes/diskstat.hpp
 #pragma once
-#include <cstdint>
-#include <istream>
-#include <map>
-#include <string>
+#include "pcn.hpp"
 
 struct DiskIoSnapshot {
   uint64_t bytes_read = 0;

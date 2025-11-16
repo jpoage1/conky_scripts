@@ -1,18 +1,10 @@
 // json.cpp
-#include "nlohmann/json.hpp"
-
-#include <chrono>  // For seconds
-#include <iostream>
-#include <thread>  // For sleep_for
-#include <vector>
 
 #include "data.h"
 #include "json_definitions.hpp"  // JSON serialization macros
 #include "metrics.hpp"
 #include "parser.hpp"  // Shared parser (handles argc check now)
 #include "runner.hpp"
-
-using json = nlohmann::json;
 
 int main(int argc, char* argv[]) {
   // 1. Call the parser (handles initial checks and processing)

@@ -1,9 +1,7 @@
 // networkstats.hpp
 #pragma once
 
-#include <map>
-#include <string>
-#include <vector>
+#include "pcn.hpp"
 
 struct NetworkSnapshot {
   std::string interface_name;

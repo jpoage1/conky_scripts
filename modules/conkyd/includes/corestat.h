@@ -1,9 +1,7 @@
 // corestat.h
 #pragma once
 
-#include <istream>
-#include <string>
-#include <vector>
+#include "pcn.hpp"
 
 struct CPUCore {
   unsigned long long idle_time;

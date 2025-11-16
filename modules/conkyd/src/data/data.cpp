@@ -3,14 +3,6 @@
 
 #include <sys/utsname.h>
 
-#include <chrono>  // For seconds
-#include <iomanip>
-#include <map>
-#include <memory>  // For std::unique_ptr
-#include <thread>  // For sleep_for
-#include <type_traits>
-#include <vector>
-
 #include "corestat.h"
 #include "cpuinfo.h"
 #include "diskstat.h"
@@ -35,9 +27,9 @@ PollingTaskList read_data(DataStreamProvider& provider,
       std::make_unique<NetworkPollingTask>(provider, metrics);
   polling_tasks.push_back(std::move(network_polling));
 
-  DiskPollingTaskPtr disk_polling =
-      std::make_unique<DiskPollingTask>(provider, metrics);
-  polling_tasks.push_back(std::move(disk_polling));
+  //   DiskPollingTaskPtr disk_polling =
+  //       std::make_unique<DiskPollingTask>(provider, metrics);
+  //   polling_tasks.push_back(std::move(disk_polling));
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
 
@@ -50,8 +42,18 @@ PollingTaskList read_data(DataStreamProvider& provider,
   metrics.cpu_frequency_ghz = get_cpu_freq_ghz(provider.get_cpuinfo_stream());
 
   get_load_and_process_stats(provider.get_loadavg_stream(), metrics);
-  get_top_processes(provider.get_top_mem_processes_stream(), metrics);
-  get_top_processes(provider.get_top_cpu_processes_stream(), metrics);
+  get_top_processes(provider.get_top_mem_processes_stream(),  // Input stream
+                    metrics.top_processes_mem,                // Output vector
+                    metrics.mem_total_kb,                     // Total memory
+                    ProcessParseType::TopMem                  // Strategy
+  );
+
+  // Call for Top CPU processes
+  get_top_processes(provider.get_top_cpu_processes_stream(),  // Input stream
+                    metrics.top_processes_cpu,                // Output vector
+                    metrics.mem_total_kb,                     // Total memory
+                    ProcessParseType::TopCPU                  // Strategy
+  );
 
   get_system_info(metrics);
   return polling_tasks;
@@ -73,8 +75,6 @@ IPollingTask::IPollingTask(DataStreamProvider& _provider,
 }
 
 void DataStreamProvider::rewind(std::istream& stream, std::string streamName) {
-  // Debug: Check if stream is in a bad state before attempting reset
-
   if (streamName != "") {
     streamName = "'" + streamName + "' ";
   }
@@ -82,16 +82,15 @@ void DataStreamProvider::rewind(std::istream& stream, std::string streamName) {
   if (stream.bad()) {
     std::cerr << "DEBUG: Stream " << streamName
               << "was in bad state before rewind." << std::endl;
+  }
+  stream.clear();
+  stream.seekg(0, std::ios::beg);
 
-    stream.clear();
-    stream.seekg(0, std::ios::beg);
-
-    // Debug: Confirm stream is usable after reset
-    if (stream.fail() || stream.bad()) {
-      std::cerr << "DEBUG: Stream " << streamName
-                << " is still in fail/bad state after rewind. FATAL."
-                << std::endl;
-    }
+  // Debug: Confirm stream is usable after reset
+  if (stream.fail() || stream.bad()) {
+    std::cerr << "DEBUG: Stream " << streamName
+              << " is still in fail/bad state after rewind. FATAL."
+              << std::endl;
   }
   //   else if (stream.fail()) {
   //     std::cerr << "NOTICE: Stream  was in fail state before rewind."

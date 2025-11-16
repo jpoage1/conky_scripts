@@ -1,15 +1,6 @@
 // corestat.cpp
 #include "corestat.h"
 
-#include <algorithm>
-#include <chrono>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <vector>
-
 #include "data_local.h"
 #include "data_ssh.h"
 

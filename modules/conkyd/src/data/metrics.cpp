@@ -1,9 +1,6 @@
 // metrics.cpp
 #include "metrics.hpp"
 
-#include <iostream>
-#include <memory>
-
 #include "data.h"
 #include "data_local.h"
 #include "data_ssh.h"

@@ -1,11 +1,8 @@
 #pragma once
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
 
 #include "data.h"
 #include "metrics.hpp"
+#include "pcn.h"
 
 /**
  * @brief An interface for any task that requires two snapshots over

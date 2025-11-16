@@ -1,10 +1,6 @@
 // uptime.cpp
 #include "uptime.hpp"
 
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-
 #include "data_local.h"
 #include "data_ssh.h"
 

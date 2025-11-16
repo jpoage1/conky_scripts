@@ -1,9 +1,6 @@
 // cpuinfo.cpp
 #include "cpuinfo.h"
 
-#include <fstream>
-#include <string>
-
 #include "data_local.h"
 #include "data_ssh.h"
 

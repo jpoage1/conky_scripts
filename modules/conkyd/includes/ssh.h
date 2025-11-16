@@ -2,7 +2,7 @@
 #ifndef SSH_H
 #define SSH_H
 
-#include <string>
+#include "pcn.hpp"
 
 int setup_ssh_session();
 int setup_ssh_session(const std::string host, const std::string user);

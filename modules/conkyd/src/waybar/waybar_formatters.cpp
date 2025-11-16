@@ -2,7 +2,7 @@
 
 #include "waybar_formatters.h"
 
-#include "nlohmann/json.hpp"
+#include "json_definitions.hpp"
 #include "parser.hpp"
 #include "size_format.h"
 #include "waybar_types.h"

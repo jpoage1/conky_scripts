@@ -1,9 +1,7 @@
 // waybar_formatters.hpp
 #pragma once
 
-#include <string>
-#include <vector>
-
+#include "pcn.hpp"
 #include "runner.hpp"
 #include "waybar_types.h"
 

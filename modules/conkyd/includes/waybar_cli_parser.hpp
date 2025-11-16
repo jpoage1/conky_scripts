@@ -1,12 +1,8 @@
 // waybar_cli_parser.hpp
 #pragma once
 
-#include <filesystem>
-#include <set>
-#include <string>
-#include <vector>
-
 #include "metrics.hpp"
+#include "pcn.hpp"
 #include "runner.hpp"
 
 void print_usage(const char* prog_name);
