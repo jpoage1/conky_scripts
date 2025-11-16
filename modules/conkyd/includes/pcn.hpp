@@ -5,7 +5,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <exception>
@@ -23,5 +25,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>  // For sleep_for
+#include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>

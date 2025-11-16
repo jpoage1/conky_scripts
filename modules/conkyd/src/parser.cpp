@@ -1,6 +1,7 @@
 // parser.cpp
 #include "parser.hpp"
 
+#include "conky_output.hpp"
 #include "data_local.h"
 #include "data_ssh.h"
 #include "runner.hpp"

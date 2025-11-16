@@ -2,10 +2,10 @@
 #pragma once
 #include "corestat.h"
 #include "diskstat.hpp"
+#include "format.hpp"
 #include "meminfo.h"
 #include "networkstats.hpp"
 #include "pcn.hpp"
-#include "types.h"
 
 struct ProcessInfo;
 
@@ -181,12 +181,6 @@ using DiskPollingTaskPtr = std::unique_ptr<DiskPollingTask>;
 void read_data(DataStreamProvider&, SystemMetrics&, PollingTaskList&);
 
 PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
-
-void print_system_metrics(const SystemMetrics&);
-void print_metrics(const CombinedMetrics&);
-void print_metrics(const SystemMetrics&);
-
-void print_device_metrics(const std::vector<DeviceInfo>&);
 
 void log_stream_state(const std::istream& stream, const LogLevel log_level,
                       const std::string time, const std::string stream_name);

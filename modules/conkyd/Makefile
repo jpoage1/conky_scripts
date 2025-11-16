@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 \
-  -Isrc/diskstat/include \
   -Isrc/systeminfo \
+  -Isrc/cli \
   -Isrc/processinfo \
   -Isrc/data \
   -Isrc/widgets \
@@ -13,17 +13,12 @@ WIDGETS_CXXFLAGS = -std=c++17 -Wall -Wextra -O2 $(GTK_CFLAGS)
 
 # Directories
 INSTALL_DIR = $(HOME)/.config/conky/bin
-DISKSTAT_DIR = src/diskstat
-DISKSTAT_SRC_DIR = $(DISKSTAT_DIR)/src
-SYSTEMINFO_SRC_DIR = src/systeminfo
 
 
 OBJ_DIR = obj
-DISKSTAT_OBJ_DIR = $(DISKSTAT_DIR)/obj
 SYSTEMINFO_OBJ_DIR = $(OBJ_DIR)/systeminfo
 
 # LIBS
-DISKSTAT_LIB = $(DISKSTAT_DIR)/libdiskstat.a
 SYSTEMINFO_LIB = $(OBJ_DIR)/systeminfo.a
 
 # Source files
@@ -39,12 +34,14 @@ SRC_PROCESSINFO = src/systeminfo/processinfo.cpp
 SRC_LOAD_AVG = src/systeminfo/load_avg.cpp
 SRC_UPTIME = src/systeminfo/uptime.cpp
 SRC_DISKSTAT = src/systeminfo/diskstat.cpp
+SRC_FILESYSTEMS = src/systeminfo/filesystems.cpp
 SRC_SYSINFO = src/systeminfo/sysinfo.cpp
 SRC_HWMONITOR = src/systeminfo/hwmonitor.cpp
 SRC_WAYBAR_TYPES = src/waybar_types.cpp
 SRC_CLI_PARSER = src/parser.cpp
 SRC_RUNNER = src/runner.cpp
-SRC_CONKY_FORMAT = src/diskstat/src/conky_format.cpp
+SRC_CONKY_FORMAT = src/conky/conky_format.cpp
+SRC_CONKY_OUTPUT = src/conky/conky_output.cpp
 SRC_WAYBAR_FORMATTER = src/waybar/waybar_formatters.cpp
 SRC_WAYBAR_MAIN = src/waybar.cpp
 SRC_JSON_MAIN = src/json.cpp
@@ -65,11 +62,13 @@ OBJ_PROCESSINFO = $(OBJ_DIR)/systeminfo/processinfo.o
 OBJ_LOAD_AVG = $(OBJ_DIR)/systeminfo/load_avg.o
 OBJ_UPTIME = $(OBJ_DIR)/systeminfo/uptime.o
 OBJ_DISKSTAT = $(OBJ_DIR)/systeminfo/diskstat.o
+OBJ_FILESYSTEMS = $(OBJ_DIR)/systeminfo/filesystems.o
 OBJ_SYSINFO = $(OBJ_DIR)/systeminfo/sysinfo.o
 OBJ_HWMONITOR = $(OBJ_DIR)/systeminfo/hwmonitor.o
 OBJ_CLI_PARSER = $(OBJ_DIR)/cli_parser.o
 OBJ_RUNNER = $(OBJ_DIR)/runner.o
 OBJ_CONKY_FORMAT = $(OBJ_DIR)/conky_format.o
+OBJ_CONKY_OUTPUT = $(OBJ_DIR)/conky_output.o
 OBJ_WAYBAR_FORMATTER = $(OBJ_DIR)/waybar_formatter.o
 OBJ_WAYBAR_MAIN = $(OBJ_DIR)/waybar.O
 OBJ_WAYBARD = $(OBJ_DIR)/waybar.o
@@ -82,11 +81,7 @@ OBJ_WIDGETS_WINDOW = $(OBJ_DIR)/widgets_window.o
 SYSTEMINFO_OBJ = \
     $(OBJ_CORESTAT) $(OBJ_CPUINFO) $(OBJ_MEMINFO) $(OBJ_NETWORKSTATS) \
     $(OBJ_PROCESSINFO) $(OBJ_LOAD_AVG) \
-   $(OBJ_UPTIME) $(OBJ_DISKSTAT) $(OBJ_SYSINFO) $(OBJ_HWMONITOR)
-
-# Diskstat sources/objects
-DISKSTAT_SRC = $(wildcard $(DISKSTAT_SRC_DIR)/*.cpp)
-DISKSTAT_OBJ = $(patsubst $(DISKSTAT_SRC_DIR)/%.cpp,$(DISKSTAT_OBJ_DIR)/%.o,$(DISKSTAT_SRC))
+   $(OBJ_UPTIME) $(OBJ_DISKSTAT) $(OBJ_FILESYSTEMS) $(OBJ_SYSINFO) $(OBJ_HWMONITOR)
 
 
 # Final binary
@@ -96,26 +91,16 @@ WIDGETS_BIN = widgets.bin
 
 .PHONY: all clean debug waybard json widgets
 
-all: $(DISKSTAT_LIB) $(SYSTEMINFO_LIB) $(WAYBARD_BIN) $(JSON_BIN) $(WIDGETS_BIN)
+all:  $(SYSTEMINFO_LIB) $(WAYBARD_BIN) $(JSON_BIN) $(WIDGETS_BIN)
 
-$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_DISKSTAT) $(OBJ_CLI_PARSER) $(OBJ_RUNNER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_WAYBAR_MAIN) $(DISKSTAT_LIB) $(SYSTEMINFO_LIB)
+$(WAYBARD_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CLI_PARSER) $(OBJ_RUNNER) $(OBJ_WAYBAR_FORMATTER) $(OBJ_WAYBAR_MAIN)  $(SYSTEMINFO_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
 
-$(JSON_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CLI_PARSER) $(OBJ_RUNNER) $(OBJ_DISKSTAT) $(OBJ_JSON_MAIN) $(DISKSTAT_LIB) $(SYSTEMINFO_LIB)
+$(JSON_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CLI_PARSER) $(OBJ_RUNNER) $(OBJ_CONKY_FORMAT) $(OBJ_CONKY_OUTPUT) $(OBJ_JSON_MAIN) $(SYSTEMINFO_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs
 
-$(WIDGETS_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CLI_PARSER) $(OBJ_RUNNER) $(OBJ_DISKSTAT) $(OBJ_WIDGETS_WIDGETS) $(OBJ_WIDGETS_WINDOW) $(OBJ_WIDGETS_MAIN) $(DISKSTAT_LIB) $(SYSTEMINFO_LIB)
+$(WIDGETS_BIN): $(OBJ_DATA) $(OBJ_DATA_LOCAL) $(OBJ_DATA_SSH) $(OBJ_METRICS) $(OBJ_SSH) $(OBJ_CLI_PARSER) $(OBJ_RUNNER) $(OBJ_WIDGETS_WIDGETS) $(OBJ_WIDGETS_WINDOW) $(OBJ_WIDGETS_MAIN)  $(SYSTEMINFO_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $^  -lssh -lstdc++fs  $(GTK_LIBS)
-
-# Build static lib
-$(DISKSTAT_LIB): $(DISKSTAT_OBJ)
-	mkdir -p $(dir $@)
-	ar rcs $@ $^
-
-# Build diskstat object files
-$(DISKSTAT_OBJ_DIR)/%.o: $(DISKSTAT_SRC_DIR)/%.cpp
-	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Build static lib
 $(SYSTEMINFO_LIB): $(SYSTEMINFO_OBJ)
@@ -179,6 +164,10 @@ $(OBJ_DISKSTAT): $(SRC_DISKSTAT)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(OBJ_FILESYSTEMS): $(SRC_FILESYSTEMS)
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 $(OBJ_SYSINFO): $(SRC_SYSINFO)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -196,6 +185,10 @@ $(OBJ_RUNNER): $(SRC_RUNNER)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_CONKY_FORMAT): $(SRC_CONKY_FORMAT)
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_CONKY_OUTPUT): $(SRC_CONKY_OUTPUT)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
@@ -228,12 +221,11 @@ $(OBJ_WIDGETS_WINDOW): src/widgets/window.cpp
 	$(CXX) $(CXXFLAGS) $(GTK_CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(DISKSTAT_OBJ_DIR) $(DISKSTAT_LIB) $(SYSTEMINFO_LIB) $(WAYBARD_BIN) $(WAYBARD2_BIN) $(WIDGETS_BIN)
+	rm -rf $(OBJ_DIR) $(SYSTEMINFO_LIB) $(WAYBARD_BIN) $(WIDGETS_BIN)
 
-install: $(WAYBARD_BIN) $(WAYBARD2_BIN) $(WIDGETS_BIN)
+install: $(WAYBARD_BIN)  $(WIDGETS_BIN)
 	mkdir -p $(INSTALL_DIR)
 	cp $(WAYBARD_BIN) $(INSTALL_DIR)/warbard
-	cp $(WAYBARD2_BIN) $(INSTALL_DIR)/warbard2
 	cp $(JSON_BIN) $(INSTALL_DIR)/json
 	cp $(WIDGETS_BIN) $(INSTALL_DIR)/widgets
 

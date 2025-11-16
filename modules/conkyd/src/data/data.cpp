@@ -5,7 +5,8 @@
 
 #include "corestat.h"
 #include "cpuinfo.h"
-#include "diskstat.h"
+#include "diskstat.hpp"
+#include "filesystems.hpp"
 #include "hwmonitor.hpp"
 #include "load_avg.hpp"
 #include "meminfo.h"
@@ -135,66 +136,3 @@ void DataStreamProvider::rewind(std::istream& stream, std::string stream_name) {
                    stream_name);
 }
 void DataStreamProvider::rewind(std::istream& stream) { rewind(stream, ""); }
-
-void print_device_metrics(const std::vector<DeviceInfo>& devices) {
-  extern std::tuple<std::string, std::function<FuncType>> conky_columns[];
-  extern const size_t CONKY_COLUMNS_COUNT;
-  std::cout.setf(std::ios::unitbuf);
-
-  print_column_headers(conky_columns, CONKY_COLUMNS_COUNT);
-  print_rows(devices, CONKY_COLUMNS_COUNT);
-}
-
-void print_metrics(const CombinedMetrics& metrics) {
-  print_system_metrics(metrics.system);
-  print_device_metrics(metrics.disks);
-}
-void print_metrics(const SystemMetrics& metrics) {
-  print_system_metrics(metrics);
-}
-void print_system_metrics(const SystemMetrics& metrics) {
-  // Set precision for floating point numbers (percentages, temp, freq)
-  std::cout << std::fixed << std::setprecision(1);
-
-  std::cout << "CPU Frequency Ghz: " << metrics.cpu_frequency_ghz << std::endl;
-  std::cout << "CPU Temp C: " << metrics.cpu_temp_c << " C" << std::endl;
-
-  std::cout << "--- CPU Usage ---" << std::endl;
-  // Loop over the vector of CoreStats (which now contains percentages)
-  for (const auto& core : metrics.cores) {
-    std::cout << "  Core " << std::setw(2) << core.core_id << ": "
-              << std::setw(5) << core.total_usage_percent << "% "
-              << "(User: " << std::setw(5) << core.user_percent << "%, "
-              << "Sys: " << std::setw(5) << core.system_percent << "%, "
-              << "IOWait: " << std::setw(5) << core.iowait_percent << "%)"
-              << std::endl;
-  }
-  std::cout << "-----------------" << std::endl;
-
-  std::cout << "Uptime: " << metrics.uptime << std::endl;
-
-  std::cout << "Mem: " << metrics.meminfo.used_kb << " / "
-            << metrics.meminfo.total_kb << " kB (" << metrics.meminfo.percent
-            << "%)" << std::endl;
-
-  std::cout << "Swap: " << metrics.swapinfo.used_kb << " / "
-            << metrics.swapinfo.total_kb << " kB (" << metrics.swapinfo.percent
-            << "%)" << std::endl;
-
-  std::cout << "--- Top Processes (Mem) ---" << std::endl;
-  std::cout << "PID\tVmRSS (MiB)\tName" << std::endl;
-  for (const auto& proc : metrics.top_processes_avg_mem) {
-    double vmRssMiB = static_cast<double>(proc.vmRssKb) / 1024.0;
-    std::cout << proc.pid << "\t" << std::fixed << std::setprecision(1)
-              << vmRssMiB << "\t\t" << proc.name << std::endl;
-  }
-  std::cout << "---------------------------" << std::endl;
-  std::cout << "--- Top Processes (CPU) ---" << std::endl;
-  std::cout << "PID\t%CPU\t\tName" << std::endl;
-  // Iterate over the new vector, accessing the cpu_percent field
-  for (const auto& proc : metrics.top_processes_avg_cpu) {
-    std::cout << proc.pid << "\t" << std::fixed << std::setprecision(1)
-              << proc.cpu_percent << "%\t\t" << proc.name << std::endl;
-  }
-  std::cout << "---------------------------" << std::endl;
-}

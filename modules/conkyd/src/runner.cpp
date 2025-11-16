@@ -2,7 +2,6 @@
 #include "runner.hpp"
 
 #include "metrics.hpp"
-#include "types.h"
 
 void MetricsContext::set_callback(callback _get_metrics_callback) {
   //   provider = std::move(_provider);

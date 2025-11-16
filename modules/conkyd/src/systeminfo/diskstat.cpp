@@ -1,6 +1,7 @@
 
 #include "diskstat.hpp"
 
+#include "conky_format.h"
 #include "data_local.h"
 #include "data_ssh.h"
 
@@ -55,16 +56,12 @@ void DiskPollingTask::calculate(double time_delta_seconds) {
     }
   }
 }
-enum DiskStatSettings {
-  Loopback,
-  MapperDevices,
-  Partitions,
-};
-using DiskStatConfig = std::set<DiskStatSettings>;
+namespace {
 const DiskStatConfig config;
 // my_settings.insert(DiskStatSettings::Loopback);
 // my_settings.insert(DiskStatSettings::MapperDevices);
 // mysettings.insert(DiskStatSettings::Partitions);
+};  // namespace
 DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
   DiskIoSnapshotMap snapshots;
 
@@ -121,4 +118,23 @@ DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
   //             << " devices." << std::endl;
 
   return snapshots;
+}
+
+int read_device_paths(const std::string& file_path,
+                      std::vector<std::string>& lines) {
+  std::ifstream file(file_path);
+  std::string line;
+
+  namespace fs = std::filesystem;
+
+  // Check if the file exists, is a regular file, and is readable
+  if (!fs::exists(file_path) || !fs::is_regular_file(file_path)) {
+    std::cerr << "Unable to load file: " + file_path << std::endl;
+    return 1;
+  }
+
+  while (std::getline(file, line)) {
+    if (!line.empty()) lines.push_back(line);
+  }
+  return 0;
 }

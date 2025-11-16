@@ -4,6 +4,7 @@
 // 1. Include all struct definitions FIRST
 #include "corestat.h"
 #include "data.h"
+#include "filesystems.hpp"
 #include "meminfo.h"
 #include "networkstats.hpp"
 #include "processinfo.hpp"

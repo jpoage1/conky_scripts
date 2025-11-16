@@ -1,7 +1,7 @@
 // waybar_types.hpp
 #pragma once
 
-#include "types.h"
+struct TargetFormat;
 
 struct FormattedSize {
   std::string text;

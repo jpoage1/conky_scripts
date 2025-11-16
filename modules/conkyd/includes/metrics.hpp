@@ -3,7 +3,8 @@
 
 #include "data.h"
 #include "pcn.hpp"
-#include "types.h"
+
+struct CombinedMetrics;
 
 // int get_local_metrics(DataStreamProvider& provider,
 //                       const std::string& config_file, CombinedMetrics&

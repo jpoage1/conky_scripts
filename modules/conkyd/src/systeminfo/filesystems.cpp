@@ -1,16 +1,84 @@
-#include "disk_io.h"
-
-#include <cctype>
-#include <chrono>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <unordered_map>
+#include "filesystems.hpp"
 
 #include "colors.h"
 #include "conky_format.h"
-#include "size_format.h"
-#include "types.h"
+#include "data.h"
+#include "data_local.h"
+#include "data_ssh.h"
+#include "filesystems.hpp"
+
+std::istream& LocalDataStreams::get_mounts_stream() {
+  return create_stream_from_file(mounts, "/proc/mounts");
+}
+
+std::istream& ProcDataStreams::get_mounts_stream() {
+  return create_stream_from_command(mounts, "cat /proc/mounts");
+}
+
+uint64_t LocalDataStreams::get_used_space_bytes(
+    const std::string& mount_point) {
+  struct statvfs stat;
+  if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return 0;
+  return (stat.f_blocks - stat.f_bfree) * stat.f_frsize;
+}
+
+uint64_t LocalDataStreams::get_disk_size_bytes(const std::string& mount_point) {
+  struct statvfs stat;
+  if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return 0;
+  return stat.f_blocks * stat.f_frsize;
+}
+
+std::vector<DeviceInfo> collect_device_info(
+    DataStreamProvider& provider,
+    const std::vector<std::string>& device_paths) {
+  std::vector<DeviceInfo> data;
+  for (const auto& device_path : device_paths) {
+    DeviceInfo info;
+    // DiskIO io = get_disk_io_per_sec(device_path);
+    info.device_path = device_path;
+    info.mount_point =
+        get_mount_point(provider.get_mounts_stream(), device_path);
+    info.used_bytes = provider.get_used_space_bytes(info.mount_point);
+    info.size_bytes = provider.get_disk_size_bytes(info.mount_point);
+    // info.read_bytes_per_sec = io.read_per_sec;
+    // info.write_bytes_per_sec = io.write_per_sec;
+    data.push_back(info);
+  }
+  return data;
+}
+
+std::string get_mount_point(std::istream& mounts_stream,
+                            const std::string& device_path) {
+  std::string device, mount_point, rest;
+
+  // 1. Calculate the canonical path for the device we are looking for once.
+  std::filesystem::path target_path_canonical;
+  try {
+    target_path_canonical = std::filesystem::canonical(device_path);
+  } catch (const std::filesystem::filesystem_error& e) {
+    // If the target device_path doesn't exist, we can't find it.
+    return "";
+  }
+
+  while (mounts_stream >> device >> mount_point) {
+    std::getline(mounts_stream, rest);
+
+    // 2. Use the memory-safe std::filesystem::canonical for comparison.
+    try {
+      std::filesystem::path current_dev_canonical =
+          std::filesystem::canonical(device);
+
+      // Compare the canonical paths.
+      if (current_dev_canonical == target_path_canonical) {
+        return mount_point;
+      }
+    } catch (const std::filesystem::filesystem_error& e) {
+      // Ignore errors for devices like "proc" or "sysfs" that may not resolve.
+      continue;
+    }
+  }
+  return "";
+}
 
 static std::unordered_map<std::string, DeviceStats> stats_map;
 
@@ -19,12 +87,8 @@ static uint64_t current_time_in_ms() {
   return duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
       .count();
 }
-std::string get_read_bytes_per_sec(const std::string &device_path) {
-  std::ifstream diskstats_stream("/proc/diskstats");
-  return get_read_bytes_per_sec(diskstats_stream, device_path);
-}
-std::string get_read_bytes_per_sec(std::istream &diskstats_stream,
-                                   const std::string &device_path) {
+std::string get_read_bytes_per_sec(std::istream& diskstats_stream,
+                                   const std::string& device_path) {
   if (device_path.empty()) {
     return "";
   }
@@ -60,7 +124,7 @@ std::string get_read_bytes_per_sec(std::istream &diskstats_stream,
   }
 
   uint64_t now = current_time_in_ms();
-  auto &stat = stats_map[device_name];
+  auto& stat = stats_map[device_name];
   uint64_t delta_bytes = 0;
   uint64_t delta_ms = 1;
 
@@ -74,12 +138,8 @@ std::string get_read_bytes_per_sec(std::istream &diskstats_stream,
   return format_size((delta_bytes * 1000) / delta_ms).text;
 }
 
-std::string get_write_bytes_per_sec(const std::string &device_path) {
-  std::ifstream diskstats_stream("/proc/diskstats");
-  return get_write_bytes_per_sec(diskstats_stream, device_path);
-}
-std::string get_write_bytes_per_sec(std::istream &diskstats_stream,
-                                    const std::string &device_path) {
+std::string get_write_bytes_per_sec(std::istream& diskstats_stream,
+                                    const std::string& device_path) {
   if (device_path.empty()) {
     return "";
   }
@@ -114,7 +174,7 @@ std::string get_write_bytes_per_sec(std::istream &diskstats_stream,
   }
 
   uint64_t now = current_time_in_ms();
-  auto &stat = stats_map[device_name];
+  auto& stat = stats_map[device_name];
   uint64_t delta_bytes = 0;
   uint64_t delta_ms = 1;
 
@@ -129,18 +189,13 @@ std::string get_write_bytes_per_sec(std::istream &diskstats_stream,
   return format_size((delta_bytes * 1000) / delta_ms).text;
 }
 
-ConkyDiskIO conky_get_disk_io_per_sec(const std::string &device_path) {
-  return {conky_color("${diskio_read " + device_path + "}", "ffaa00"),
-          conky_color("${diskio_write " + device_path + "}", "ffaa00")};
-}
-
-DiskIO get_disk_io_per_sec(const std::string &device_path) {
+DiskIO get_disk_io_per_sec(const std::string& device_path) {
   std::ifstream diskstats("/proc/diskstats");
   return get_disk_io_per_sec(diskstats, device_path);
 }
 
-DiskIO get_disk_io_per_sec(std::istream &diskstats_stream,
-                           const std::string &device_path) {
+DiskIO get_disk_io_per_sec(std::istream& diskstats_stream,
+                           const std::string& device_path) {
   if (device_path.empty()) return {};
 
   std::string device_name =
@@ -173,7 +228,7 @@ DiskIO get_disk_io_per_sec(std::istream &diskstats_stream,
   }
 
   uint64_t now = current_time_in_ms();
-  auto &stat = stats_map[device_name];
+  auto& stat = stats_map[device_name];
   uint64_t delta_read = 0, delta_write = 0;
   uint64_t delta_ms = 1;
 
