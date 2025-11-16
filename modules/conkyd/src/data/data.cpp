@@ -27,9 +27,9 @@ PollingTaskList read_data(DataStreamProvider& provider,
       std::make_unique<NetworkPollingTask>(provider, metrics);
   polling_tasks.push_back(std::move(network_polling));
 
-  //   DiskPollingTaskPtr disk_polling =
-  //       std::make_unique<DiskPollingTask>(provider, metrics);
-  //   polling_tasks.push_back(std::move(disk_polling));
+  DiskPollingTaskPtr disk_polling =
+      std::make_unique<DiskPollingTask>(provider, metrics);
+  polling_tasks.push_back(std::move(disk_polling));
 
   metrics.cpu_temp_c = provider.get_cpu_temperature();
 

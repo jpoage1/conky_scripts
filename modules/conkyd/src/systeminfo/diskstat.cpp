@@ -55,6 +55,16 @@ void DiskPollingTask::calculate(double time_delta_seconds) {
     }
   }
 }
+enum DiskStatSettings {
+  Loopback,
+  MapperDevices,
+  Partitions,
+};
+using DiskStatConfig = std::set<DiskStatSettings>;
+const DiskStatConfig config;
+// my_settings.insert(DiskStatSettings::Loopback);
+// my_settings.insert(DiskStatSettings::MapperDevices);
+// mysettings.insert(DiskStatSettings::Partitions);
 DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
   DiskIoSnapshotMap snapshots;
 
@@ -84,13 +94,26 @@ DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
     //           << "major=" << major << ", "
     //           << "minor=" << minor;
 
-    if (major > 0) {
-      //   std::cerr << " -> ADDING" << std::endl;
-      snapshots[dev_name] = {.bytes_read = sectors_read * 512,
-                             .bytes_written = sectors_written * 512};
-    } else {
-      std::cerr << " -> SKIPPING (major == 0)" << std::endl;
+    // Filter 1: Check Loopback devices
+    if (major == 7 && config.count(DiskStatSettings::Loopback) == 0) {
+      continue;  // Skip if major is 7 and Loopback is NOT in the set
     }
+
+    // Filter 2: Check Device-Mapper
+    if (dev_name.rfind("dm-", 0) == 0 &&
+        config.count(DiskStatSettings::MapperDevices) == 0) {
+      continue;  // Skip if "dm-" and MapperDevices is NOT in the set
+    }
+
+    // Filter 3: Check Partitions
+    if (!dev_name.empty() && std::isdigit(dev_name.back()) &&
+        config.count(DiskStatSettings::Partitions) == 0) {
+      continue;  // Skip if it's a partition and Partitions is NOT in the set
+    }
+
+    //   std::cerr << " -> ADDING" << std::endl;
+    snapshots[dev_name] = {.bytes_read = sectors_read * 512,
+                           .bytes_written = sectors_written * 512};
   }
 
   //   std::cerr << "[DEBUG] read_data: Finished. Collected " <<
