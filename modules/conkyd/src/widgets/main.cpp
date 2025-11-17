@@ -9,7 +9,7 @@
 
 #include "data.h"
 #include "data_local.h"
-#include "types.h"
+#include "filesystems.hpp"
 #include "window.h"
 
 // --- Config for mounts ---
@@ -31,7 +31,7 @@ AllMetrics get_all_metrics(DataStreamProvider& provider,
 
   // 1. Get SystemMetrics
   try {
-    all_data.system = read_data(provider);
+    PollingTaskList polling_tasks = read_data(provider, all_data.system);
   } catch (const std::exception& e) {
     std::cerr << "Error reading system data: " << e.what() << std::endl;
   }
@@ -55,8 +55,7 @@ AllMetrics get_all_metrics(DataStreamProvider& provider,
 // --- Main Application Class ---
 class ConkyApplication : public Gtk::Application {
  protected:  // MODIFIED: Constructor should be protected
-  LocalDataStreams local_streams
-  ConkyApplication()
+  LocalDataStreams local_streams ConkyApplication()
       : Gtk::Application("org.conkyd.gtkmm"),
         m_provider(local_streams)  // Initialize local data provider
   {

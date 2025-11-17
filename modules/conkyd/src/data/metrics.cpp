@@ -5,6 +5,7 @@
 #include "data_local.h"
 #include "data_ssh.h"
 #include "filesystems.hpp"
+#include "ssh.h"
 
 /**
  * @brief Gets metrics from the local filesystem.

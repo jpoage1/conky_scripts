@@ -88,6 +88,19 @@ void log_stream_state(const std::string time, const std::string stream_name,
   std::cerr << "DEBUG: Stream " << stream_name << "was in " << state
             << " state " << time << " rewind." << std::endl;
 }
+void log_stream_state(const std::string time, const std::string stream_name,
+                      const std::string state) {
+  // This function was just a helper. We can approximate its
+  // original behavior by calling the new macros.
+  std::string msg = "Stream " + stream_name + " was in " + state + " state " +
+                    time + " rewind.";
+
+  if (state == "bad" || state == "fail") {
+    LOG_WARNING(msg);  // Will respect global log level
+  } else {
+    LOG_NOTICE(msg);  // Will respect global log level
+  }
+}
 void log_stream_state(const std::istream& stream, const LogLevel log_level,
                       const std::string time, const std::string stream_name) {
   if (log_level == LogLevel::None) return;
@@ -109,7 +122,7 @@ void log_stream_state(const std::istream& stream, const LogLevel log_level,
               << " bad()=" << std::boolalpha << stream.bad() << std::endl;
     return;
   }
-  if (stream.good() && log_level == LogLevel::Notice) {
+  if (stream.good() && log_level == LogLevel::Debug) {
     log_stream_state(time, streamName, "good");
   } else if (stream.bad() && log_level == LogLevel::Warning) {
     log_stream_state(time, streamName, "bad");

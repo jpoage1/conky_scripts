@@ -12,6 +12,11 @@ struct DiskIO {
   std::string write_per_sec;
 };
 
+struct DiskUsage {
+  uint64_t used_bytes = 0;
+  uint64_t size_bytes = 0;
+};
+
 struct DeviceInfo {
   std::string device_path;
   std::string mount_point;
@@ -48,3 +53,5 @@ std::string get_write_bytes_per_sec(std::istream&,
 
 DiskIO get_disk_io_per_sec(const std::string&);
 DiskIO get_disk_io_per_sec(std::istream&, const std::string&);
+
+DiskUsage get_disk_usage(const std::string& mount_point);

@@ -8,6 +8,7 @@
 #include "pcn.hpp"
 
 struct ProcessInfo;
+struct DiskUsage;
 
 enum LogLevel {
   Debug,
@@ -63,8 +64,10 @@ class DataStreamProvider {
   virtual std::istream& get_top_cpu_processes_avg_stream() = 0;
   virtual std::istream& get_top_mem_processes_real_stream() = 0;
   virtual std::istream& get_top_cpu_processes_real_stream() = 0;
-  virtual uint64_t get_used_space_bytes(const std::string& mount_point) = 0;
-  virtual uint64_t get_disk_size_bytes(const std::string& mount_point) = 0;
+  virtual DiskUsage get_disk_usage(const std::string&) = 0;
+  //   virtual uint64_t get_used_space_bytes(const std::string& mount_point) =
+  //   0; virtual uint64_t get_disk_size_bytes(const std::string& mount_point) =
+  //   0;
   virtual double get_cpu_temperature() = 0;
 };
 using DataStreamProviderPtr = std::unique_ptr<DataStreamProvider>;

@@ -2,13 +2,14 @@
 
 #include "waybar_formatters.h"
 
+#include "conky_format.h"
+#include "format.hpp"
 #include "json_definitions.hpp"
 #include "parser.hpp"
-#include "size_format.h"
+#include "pcn.hpp"
 #include "waybar_types.h"
 
 using json = nlohmann::json;
-void generate_waybar_output(const std::vector<MetricsContext>& all_results);
 
 FormattedSize format_size_rate(double bytes_per_sec) {
   // Implement logic similar to format_size, but add "/s" to the text
@@ -25,7 +26,7 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
   json waybar_output;
   std::stringstream tooltip_ss;
   bool any_errors = false;
-  int total_meminfo.percent = 0;
+  int total_mem_percent = 0;
   int valid_mem_sources = 0;
 
   //   const TargetFormat target = TargetFormat::WAYBAR;
@@ -34,17 +35,16 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
     if (result.success) {
       const auto& system_metrics = result.metrics.system;
       const auto& devices = result.metrics.disks;
-      tooltip_ss << show_system_metrics(result, system_metrics,
-                                        total_meminfo.percent,
-                                        valid_mem_sources)
+      tooltip_ss
+          << show_system_metrics(result, system_metrics, total_mem_percent,
+                                 valid_mem_sources)
 
-                 << show_top_mem_procs(result, system_metrics.top_processes_mem)
-                 << show_top_cpu_procs(result, system_metrics.top_processes_cpu)
-                 << show_devices(result, devices)
+          << show_top_mem_procs(result, system_metrics.top_processes_avg_mem)
+          << show_top_cpu_procs(result, system_metrics.top_processes_avg_cpu)
+          << show_devices(result, devices)
 
-                 << show_network_interfaces(result,
-                                            system_metrics.network_interfaces,
-                                            result.specific_interfaces);
+          << show_network_interfaces(result, system_metrics.network_interfaces,
+                                     result.specific_interfaces);
 
     } else {
       // --- This result was an ERROR, print the error message ---
@@ -75,7 +75,7 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
 
   // --- Set CSS Class ---
   int avg_mem =
-      (valid_mem_sources > 0) ? (total_meminfo.percent / valid_mem_sources) : 0;
+      (valid_mem_sources > 0) ? (total_mem_percent / valid_mem_sources) : 0;
   if (any_errors || avg_mem > 80) {
     waybar_output["class"] = "critical";
   } else if (avg_mem > 60) {
@@ -116,7 +116,7 @@ std::string show_top_mem_procs(const MetricsContext& result,
                  << vmRssMiB
                  // Add Mem % column
                  << std::right << std::setw(mem_perc_col_width - 1)
-                 << proc.meminfo.percent << "%"
+                 << proc.mem_percent << "%"
                  << "  " << proc.name << "\n";
     }
     tooltip_ss << "</tt>\n\n";
@@ -156,7 +156,7 @@ std::string show_top_cpu_procs(const MetricsContext& result,
                  << "%"
                  // Add Mem % column
                  << std::right << std::setw(mem_perc_col_width - 1)
-                 << proc.meminfo.percent << "%"
+                 << proc.mem_percent << "%"
                  << "  " << proc.name << "\n";
     }
     tooltip_ss << "</tt>\n\n";
@@ -281,7 +281,7 @@ std::string show_devices(const MetricsContext& result,
 
 std::string show_system_metrics(const MetricsContext& result,
                                 const SystemMetrics& system_metrics,
-                                int& total_meminfo.percent,
+                                int& total_mem_percent,
                                 int& valid_mem_sources) {
   const TargetFormat target = TargetFormat::WAYBAR;
   std::stringstream tooltip_ss;
@@ -336,7 +336,7 @@ std::string show_system_metrics(const MetricsContext& result,
     }
     tooltip_ss << "</tt>\n\n";
 
-    total_meminfo.percent += system_metrics.meminfo.percent;
+    total_mem_percent += system_metrics.meminfo.percent;
     valid_mem_sources++;
   }
   return tooltip_ss.str();

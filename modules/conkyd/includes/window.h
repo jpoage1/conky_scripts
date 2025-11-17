@@ -3,7 +3,6 @@
 #include <gtkmm.h>
 
 #include "data.h"
-#include "types.h"
 #include "widgets.h"
 
 /**

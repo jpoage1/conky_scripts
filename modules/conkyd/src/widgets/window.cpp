@@ -44,7 +44,7 @@ void ConkyWindow::update_all_data(const SystemMetrics& metrics,
   m_network_list.update(metrics.network_interfaces);
   m_mem_swap.update(metrics);
   m_cpu_cores.update(metrics.cores);
-  m_proc_cpu.update(metrics.top_processes_cpu);
-  m_proc_mem.update(metrics.top_processes_mem);
+  m_proc_cpu.update(metrics.top_processes_avg_cpu);
+  m_proc_mem.update(metrics.top_processes_avg_mem);
   m_disk_list.update(disks);
 }

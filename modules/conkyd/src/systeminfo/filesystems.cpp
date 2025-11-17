@@ -6,6 +6,7 @@
 #include "data_local.h"
 #include "data_ssh.h"
 #include "filesystems.hpp"
+#include "ssh.h"
 
 std::istream& LocalDataStreams::get_mounts_stream() {
   return create_stream_from_file(mounts, "/proc/mounts");
@@ -15,18 +16,71 @@ std::istream& ProcDataStreams::get_mounts_stream() {
   return create_stream_from_command(mounts, "cat /proc/mounts");
 }
 
-uint64_t LocalDataStreams::get_used_space_bytes(
-    const std::string& mount_point) {
+DiskUsage LocalDataStreams::get_disk_usage(const std::string& mount_point) {
   struct statvfs stat;
-  if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return 0;
-  return (stat.f_blocks - stat.f_bfree) * stat.f_frsize;
+  DiskUsage usage;
+  if (!mount_point.empty() && statvfs(mount_point.c_str(), &stat) == 0) {
+    usage.used_bytes = (stat.f_blocks - stat.f_bfree) * stat.f_frsize;
+    usage.size_bytes = stat.f_blocks * stat.f_frsize;
+  }
+  return usage;
 }
 
-uint64_t LocalDataStreams::get_disk_size_bytes(const std::string& mount_point) {
-  struct statvfs stat;
-  if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return 0;
-  return stat.f_blocks * stat.f_frsize;
+DiskUsage ProcDataStreams::get_disk_usage(const std::string& mount_point) {
+  DiskUsage usage;
+  // Execute df command and get the output as a single string.
+  std::string df_output = execute_ssh_command("df -B1 " + mount_point);
+
+  // Check if the command was successful. df returns an error if the mount point
+  // is not found.
+  if (df_output.empty()) {
+    std::cerr << "Error: Could not get df output for mount point "
+              << mount_point << std::endl;
+    return usage;
+  }
+
+  std::stringstream df_stream(df_output);
+  std::string line;
+  std::getline(df_stream, line);  // Read and discard the header line.
+
+  std::getline(df_stream, line);  // Read the data line.
+
+  std::stringstream data_stream(line);
+  std::string filesystem, blocks, used, available, capacity, mounted_on;
+
+  // Parse the data line.
+  if (data_stream >> filesystem >> blocks >> used >> available >> capacity >>
+      mounted_on) {
+    // df might return multiple lines if the mount point is a symbolic link.
+    // We'll trust the first data line.
+    try {
+      usage.used_bytes = std::stoull(used);
+      usage.size_bytes = std::stoull(blocks);
+    } catch (const std::exception& e) {
+      std::cerr << "Error parsing numbers from df output: " << e.what()
+                << std::endl;
+      return usage;
+    }
+  }
+
+  std::cerr << "Error: Could not parse df output for mount point "
+            << mount_point << std::endl;
+  return usage;
 }
+
+// uint64_t LocalDataStreams::get_used_space_bytes(
+//     const std::string& mount_point) {
+//   struct statvfs stat;
+//   if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return
+//   0; return (stat.f_blocks - stat.f_bfree) * stat.f_frsize;
+// }
+
+// uint64_t LocalDataStreams::get_disk_size_bytes(const std::string&
+// mount_point) {
+//   struct statvfs stat;
+//   if (mount_point.empty() || statvfs(mount_point.c_str(), &stat) != 0) return
+//   0; return stat.f_blocks * stat.f_frsize;
+// }
 
 std::vector<DeviceInfo> collect_device_info(
     DataStreamProvider& provider,
@@ -38,8 +92,12 @@ std::vector<DeviceInfo> collect_device_info(
     info.device_path = device_path;
     info.mount_point =
         get_mount_point(provider.get_mounts_stream(), device_path);
-    info.used_bytes = provider.get_used_space_bytes(info.mount_point);
-    info.size_bytes = provider.get_disk_size_bytes(info.mount_point);
+    DiskUsage usage;
+    if (info.mount_point != "") {
+      provider.get_disk_usage(info.mount_point);
+      info.used_bytes = usage.used_bytes;
+      info.size_bytes = usage.size_bytes;
+    }
     // info.read_bytes_per_sec = io.read_per_sec;
     // info.write_bytes_per_sec = io.write_per_sec;
     data.push_back(info);

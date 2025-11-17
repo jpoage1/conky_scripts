@@ -2,8 +2,12 @@
 
 #include <glibmm/ustring.h>
 
-#include <iomanip>  // For std::setprecision
-#include <sstream>  // For std::stringstream
+#include "corestat.h"
+#include "cpuinfo.h"
+#include "diskstat.hpp"
+#include "filesystems.hpp"
+#include "networkstats.hpp"
+#include "processinfo.hpp"
 
 // --- Helper to format numbers ---
 template <typename T>
@@ -186,8 +190,8 @@ void ProcList::update(const std::vector<ProcessInfo>& procs) {
                                                  "%");
 
       child = child->get_next_sibling();
-      dynamic_cast<Gtk::Label*>(child)->set_text(
-          format_num(proc.meminfo.percent) + "%");
+      dynamic_cast<Gtk::Label*>(child)->set_text(format_num(proc.mem_percent) +
+                                                 "%");
 
       row_box->set_visible(true);
     } else {
