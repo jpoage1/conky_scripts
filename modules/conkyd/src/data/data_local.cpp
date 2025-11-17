@@ -1,6 +1,6 @@
 
-#include "data_local.h"
-
+#include "data_local.hpp"
+void LocalDataStreams::finally() {}
 std::ifstream& LocalDataStreams::create_stream_from_file(
     std::ifstream& stream, const std::string& path) {
   if (stream.is_open()) {

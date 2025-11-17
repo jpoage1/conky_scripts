@@ -1,8 +1,7 @@
 // conky_format.cpp
-#include "conky_format.h"
+#include "conky_format.hpp"
 
-#include "colors.h"
-#include "conky_format.h"
+#include "colors.hpp"
 #include "filesystems.hpp"
 #include "format.hpp"
 

@@ -2,31 +2,29 @@
 #pragma once
 
 #include "metrics.hpp"
+#include "parser.hpp"
 #include "pcn.hpp"
-
+#include "provider.hpp"
+#include "runner.hpp"
 using callback = std::function<int(DataStreamProviderPtr&, const std::string&,
-                                   CombinedMetrics&)>;
+                                   SystemMetrics&)>;
 
 struct MetricsContext {
   std::string source_name;
   std::string device_file;
-  CombinedMetrics metrics;    // Will be empty on error
-  std::string error_message;  // Will be empty on success
+  //   std::optional<SystemMetrics> metrics;
+  std::string user;
+  std::string host;
+  DataStreamProviders provider;
+  std::string error_message;
   bool success;
-  std::set<std::string> specific_interfaces;
+  std::set<std::string> interfaces;
 
-  DataStreamProviderPtr provider;
+  MetricsContext(MetricsContext&&) noexcept = default;
+  MetricsContext& operator=(MetricsContext&&) noexcept = default;
 
-  callback get_metrics_callback;
+  MetricsContext(const MetricsContext&) = delete;
+  MetricsContext& operator=(const MetricsContext&) = delete;
 
-  //   // Prevent copying (unique_ptr can't be copied anyway)
-  //   MetricsContext(const MetricsContext&) = delete;
-  //   MetricsContext& operator=(const MetricsContext&) = delete;
-
-  //   // Allow moving
-  //   MetricsContext(MetricsContext&&) = default;
-  //   MetricsContext& operator=(MetricsContext&&) = default;
-
-  void set_callback(callback _get_metrics_callback);
-  void run();
+  MetricsContext() = default;
 };

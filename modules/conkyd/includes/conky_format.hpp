@@ -1,6 +1,6 @@
 #pragma once
 
-#include "colors.h"
+#include "colors.hpp"
 #include "format.hpp"
 
 ColoredString conky_color(const std::string&, const std::string&);

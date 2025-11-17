@@ -1,14 +1,21 @@
 // ssh.cpp
-#include "ssh.h"
+#include "ssh.hpp"
 
 #include <libssh/libssh.h>
 
+#include "data_ssh.hpp"
+
 static ssh_session session = NULL;
 
-int setup_ssh_session() { return setup_ssh_session("192.168.1.200", "conky"); }
-int ssh_connection() { return ssh_connection("192.168.1.200", "conky"); }
+int ProcDataStreams::setup_ssh_session() {
+  return setup_ssh_session("192.168.1.200", "conky");
+}
+int ProcDataStreams::ssh_connection() {
+  return ssh_connection("192.168.1.200", "conky");
+}
 
-int setup_ssh_session(const std::string host, const std::string user) {
+int ProcDataStreams::setup_ssh_session(const std::string host,
+                                       const std::string user) {
   if (session != NULL) {
     return 0;  // Session already exists
   }
@@ -42,7 +49,7 @@ int setup_ssh_session(const std::string host, const std::string user) {
   return 0;
 }
 
-std::string execute_ssh_command(const std::string& command) {
+std::string ProcDataStreams::execute_ssh_command(const std::string& command) {
   if (session == NULL) {
     return "";  // Session not initialized
   }
@@ -75,14 +82,15 @@ std::string execute_ssh_command(const std::string& command) {
   return remote_output.str();
 }
 
-void cleanup_ssh_session() {
+void ProcDataStreams::cleanup_ssh_session() {
   if (session != NULL) {
     ssh_disconnect(session);
     ssh_free(session);
     session = NULL;
   }
 }
-int ssh_connection(const std::string host, const std::string user) {
+int ProcDataStreams::ssh_connection(const std::string host,
+                                    const std::string user) {
   ssh_session session;
   session = ssh_new();
   if (session == NULL) {

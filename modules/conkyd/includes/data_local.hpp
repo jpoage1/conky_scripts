@@ -1,6 +1,6 @@
 // data_local.h
 #pragma once
-#include "data.h"
+#include "data.hpp"
 #include "pcn.hpp"
 
 struct PopenDeleter {
@@ -41,6 +41,7 @@ struct LocalDataStreams : public DataStreamProvider {
   std::istream& get_top_cpu_processes_avg_stream() override;
   std::istream& get_top_mem_processes_real_stream() override;
   std::istream& get_top_cpu_processes_real_stream() override;
+  void finally() override;
 
   DiskUsage get_disk_usage(const std::string&) override;
 
@@ -57,3 +58,5 @@ struct LocalDataStreams : public DataStreamProvider {
                                                 const char* cmd,
                                                 std::string stream_name);
 };
+
+using LocalDataStreamsPtr = std::unique_ptr<LocalDataStreams>;

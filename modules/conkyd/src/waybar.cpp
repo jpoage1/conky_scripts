@@ -1,8 +1,8 @@
 
 
 #include "parser.hpp"
-#include "waybar_formatters.h"
-#include "waybar_types.h"
+#include "waybar_formatters.hpp"
+#include "waybar_types.hpp"
 
 int main(int argc, char* argv[]) {
   if (argc < 2) {

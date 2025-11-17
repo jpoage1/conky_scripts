@@ -48,7 +48,7 @@ class ParsedConfig {
   OutputMode get_output_mode() const;
   void set_run_mode(RunMode mode);
   void set_output_mode(OutputMode mode);
-  void done();
+  void done(std::vector<SystemMetrics>& result);
 };
 /**
  * @brief Parses command line arguments (argc, argv) to collect metric results.

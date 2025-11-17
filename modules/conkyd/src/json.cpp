@@ -1,35 +1,39 @@
 // json.cpp
 
-#include "data.h"
+#include "data.hpp"
 #include "json_definitions.hpp"  // JSON serialization macros
 #include "metrics.hpp"
 #include "parser.hpp"  // Shared parser (handles argc check now)
+#include "polling.hpp"
 #include "runner.hpp"
 
 int main(int argc, char* argv[]) {
   // 1. Call the parser (handles initial checks and processing)
   ParsedConfig config = parse_arguments(argc, argv);
+  std::vector<SystemMetrics> tasks;
 
   if (config.tasks.empty()) {
     std::cerr << "Initialization failed, no valid tasks to run." << std::endl;
     return 1;
   }
+  for (MetricsContext& task : config.tasks) {
+    // if (!task.provider) continue;
+    SystemMetrics metrics(task);
+    tasks.push_back(std::move(metrics));
+  }
   do {
-    for (MetricsContext& task : config.tasks) {
+    for (SystemMetrics& task : tasks) {
       //   std::cerr << "Running task" << std::endl;
-      task.run();
+      task.read_data();
       //   std::cerr << "Done running task" << std::endl;
     }
 
     // A. Get T1 snapshot
     auto t1_timestamp = std::chrono::steady_clock::now();
-    for (MetricsContext& task : config.tasks) {
-      if (task.provider) {
-        for (auto& polled_task : task.metrics.polled) {
-          polled_task->take_snapshot_1();
-        }
-      } else {
-        std::cerr << "Provider context is empty" << std::endl;
+    for (SystemMetrics& task : tasks) {
+      for (auto& polling_task : task.polling_tasks) {
+        // std::cerr << "Taking snapshot" << std::endl;
+        polling_task->take_snapshot_1();
       }
     }
     std::this_thread::sleep_for(
@@ -37,21 +41,23 @@ int main(int argc, char* argv[]) {
     // C. Get T2 snapshot
     auto t2_timestamp = std::chrono::steady_clock::now();
 
-    for (MetricsContext& task : config.tasks) {
-      for (auto& polled_task : task.metrics.polled) {
-        polled_task->take_snapshot_2();
-      }
-    }
-
-    // D. Calculate
     std::chrono::duration<double> time_delta = t2_timestamp - t1_timestamp;
-    for (MetricsContext& task : config.tasks) {
-      for (auto& polled_task : task.metrics.polled) {
-        polled_task->calculate(time_delta.count());
+    for (SystemMetrics& task : tasks) {
+      for (auto& polling_task : task.polling_tasks) {
+        polling_task->take_snapshot_2();
+        polling_task->calculate(time_delta.count());
+        polling_task->commit();
       }
+
+      // refresh data after polling
+      task.complete();
+
+      // Cleanup ssh session
+      task.provider->finally();
     }
 
-    config.done();
+    // Print the result or whatever
+    config.done(tasks);
     // std::cerr << "Done dumping" << std::endl;
 
     if (!config.run_mode(RunMode::RUN_ONCE)) {

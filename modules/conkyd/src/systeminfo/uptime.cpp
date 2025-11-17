@@ -1,8 +1,8 @@
 // uptime.cpp
 #include "uptime.hpp"
 
-#include "data_local.h"
-#include "data_ssh.h"
+#include "data_local.hpp"
+#include "data_ssh.hpp"
 
 std::istream& LocalDataStreams::get_uptime_stream() {
   return create_stream_from_file(uptime, "/proc/uptime");

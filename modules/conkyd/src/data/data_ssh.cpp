@@ -1,6 +1,25 @@
-#include "data_ssh.h"
+#include "data_ssh.hpp"
 
-#include "ssh.h"
+#include "ssh.hpp"
+
+ProcDataStreams::ProcDataStreams() {
+  if (setup_ssh_session() != 0) {
+    std::cerr << "Failed to set up default SSH session. Exiting." << std::endl;
+    return;
+  }
+}
+
+/**
+ * @brief Overloaded function to get metrics from a specific SSH server.
+ */
+ProcDataStreams::ProcDataStreams(const std::string& host,
+                                 const std::string& user) {
+  if (setup_ssh_session(host, user) != 0) {
+    std::cerr << "Failed to set up SSH session to " << user << "@" << host
+              << ". Exiting." << std::endl;
+    return;
+  }
+}
 
 std::stringstream& ProcDataStreams::create_stream_from_command(
     std::stringstream& stream, const char* cmd) {
@@ -19,6 +38,8 @@ std::string trim(const std::string& str) {
   const auto str_range = str_end - str_begin + 1;
   return str.substr(str_begin, str_range);
 }
+
+void ProcDataStreams::finally() { cleanup_ssh_session(); }
 
 // uint64_t get_df_data_bytes(const std::string& mount_point, bool get_used) {
 //   // Execute df command and get the output as a single string.

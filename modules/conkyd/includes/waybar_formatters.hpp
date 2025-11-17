@@ -3,7 +3,7 @@
 
 #include "pcn.hpp"
 #include "runner.hpp"
-#include "waybar_types.h"
+#include "waybar_types.hpp"
 
 FormattedSize format_size_rate(double bytes_per_sec);
 void generate_waybar_output(const std::vector<MetricsContext>& all_results);

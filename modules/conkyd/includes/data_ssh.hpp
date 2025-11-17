@@ -1,6 +1,6 @@
 // data_ssh.h
 #pragma once
-#include "data.h"
+#include "data.hpp"
 #include "pcn.hpp"
 struct DiskUsage;
 struct ProcDataStreams : public DataStreamProvider {
@@ -34,15 +34,26 @@ struct ProcDataStreams : public DataStreamProvider {
   std::istream& get_top_mem_processes_real_stream() override;
   std::istream& get_top_cpu_processes_real_stream() override;
   DiskUsage get_disk_usage(const std::string&) override;
+  void finally() override;
 
   /* ProcDataStreams functions */
-  ProcDataStreams() {}
+  ProcDataStreams(const std::string& host, const std::string& user);
+  ProcDataStreams();
   double get_cpu_temperature() override { return -1.0; }
   std::stringstream& create_stream_from_command(std::stringstream& stream,
                                                 const char* cmd);
   std::stringstream& create_stream_from_command(std::stringstream& stream,
                                                 const char* cmd,
                                                 std::string stream_name);
+
+  int setup_ssh_session(const std::string host, const std::string user);
+
+  int ssh_connection(const std::string host, const std::string user);
+
+  std::string execute_ssh_command(const std::string&);
+  void cleanup_ssh_session();
+  int ssh_connection();
+  int setup_ssh_session();
 };
 std::string trim(const std::string& str);
 uint64_t get_df_data_bytes(const std::string& mount_point, bool get_used);

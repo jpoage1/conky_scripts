@@ -2,7 +2,7 @@
 
 #include <gtkmm.h>
 
-#include "data.h"
+#include "data.hpp"
 #include "pcn.hpp"
 struct Deviceinfo;
 // A simple reusable progress bar (eww 'bar')

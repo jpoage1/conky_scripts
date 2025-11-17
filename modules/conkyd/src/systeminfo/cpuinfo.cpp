@@ -1,8 +1,8 @@
 // cpuinfo.cpp
-#include "cpuinfo.h"
+#include "cpuinfo.hpp"
 
-#include "data_local.h"
-#include "data_ssh.h"
+#include "data_local.hpp"
+#include "data_ssh.hpp"
 
 std::istream& LocalDataStreams::get_cpuinfo_stream() {
   return create_stream_from_file(cpuinfo, "/proc/cpuinfo");

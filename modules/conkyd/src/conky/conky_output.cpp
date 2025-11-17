@@ -1,7 +1,7 @@
 #include "conky_output.hpp"
 
-#include "conky_format.h"
-#include "data.h"
+#include "conky_format.hpp"
+#include "data.hpp"
 #include "filesystems.hpp"
 #include "format.hpp"
 #include "processinfo.hpp"
@@ -21,10 +21,6 @@ void print_metrics(const std::vector<DeviceInfo>& devices) {
   print_rows(devices, CONKY_COLUMNS_COUNT);
 }
 
-void print_metrics(const CombinedMetrics& metrics) {
-  print_metrics(metrics.system);
-  print_metrics(metrics.disks);
-}
 void print_metrics(const SystemMetrics& metrics) {
   // Set precision for floating point numbers (percentages, temp, freq)
   std::cout << std::fixed << std::setprecision(1);

@@ -1,13 +1,13 @@
 // waybar_formatters.cpp
 
-#include "waybar_formatters.h"
+#include "waybar_formatters.hpp"
 
-#include "conky_format.h"
+#include "conky_format.hpp"
 #include "format.hpp"
 #include "json_definitions.hpp"
 #include "parser.hpp"
 #include "pcn.hpp"
-#include "waybar_types.h"
+#include "waybar_types.hpp"
 
 using json = nlohmann::json;
 
@@ -44,7 +44,7 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
           << show_devices(result, devices)
 
           << show_network_interfaces(result, system_metrics.network_interfaces,
-                                     result.specific_interfaces);
+                                     result.interfaces);
 
     } else {
       // --- This result was an ERROR, print the error message ---
@@ -167,7 +167,7 @@ std::string show_top_cpu_procs(const MetricsContext& result,
 std::string show_network_interfaces(
     const MetricsContext& result,
     const std::vector<NetworkInterfaceStats>& network_interfaces,
-    const std::set<std::string>& specific_interfaces) {
+    const std::set<std::string>& interfaces) {
   std::stringstream tooltip_ss;
   if (!network_interfaces.empty()) {
     tooltip_ss << "<b>Network Usage (" << result.source_name << ")</b>\n";
@@ -175,9 +175,9 @@ std::string show_network_interfaces(
 
     // --- FILTERING STEP ---
     std::vector<NetworkInterfaceStats> filtered_interfaces;
-    if (!specific_interfaces.empty()) {
+    if (!interfaces.empty()) {
       for (const auto& net_stat : network_interfaces) {
-        if (specific_interfaces.count(net_stat.interface_name)) {
+        if (interfaces.count(net_stat.interface_name)) {
           filtered_interfaces.push_back(net_stat);
         }
       }

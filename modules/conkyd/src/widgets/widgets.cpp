@@ -1,9 +1,9 @@
-#include "widgets.h"
+#include "widgets.hpp"
 
 #include <glibmm/ustring.h>
 
-#include "corestat.h"
-#include "cpuinfo.h"
+#include "corestat.hpp"
+#include "cpuinfo.hpp"
 #include "diskstat.hpp"
 #include "filesystems.hpp"
 #include "networkstats.hpp"

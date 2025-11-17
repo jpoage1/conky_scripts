@@ -1,14 +1,13 @@
-// polling.hpp
+// polling_task.h
 #pragma once
 
-#include "pcn.hpp"
+#include "metrics.hpp"
+#include "provider.hpp"
 
-struct DataStreamProvider;
-struct SystemMetrics;
-struct DataStreamProvider;
-struct CpuSnapshot;
-struct NetworkSnapshot;
-struct DiskIoSnapshot;
+using CpuSnapshotList = std::vector<CpuSnapshot>;
+using NetworkSnapshotMap = std::map<std::string, NetworkSnapshot>;
+using DiskIoSnapshotMap = std::map<std::string, DiskIoSnapshot>;
+
 class IPollingTask {
  protected:
   DataStreamProvider& provider;
@@ -43,14 +42,8 @@ class IPollingTask {
    * calculation and save the result into the metrics object.
    */
   virtual void calculate(double time_delta_seconds) = 0;
+  virtual void commit() = 0;
 };
-
-using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
-
-using CpuSnapshotList = std::vector<CpuSnapshot>;
-using NetworkSnapshotMap = std::map<std::string, NetworkSnapshot>;
-using DiskIoSnapshotMap = std::map<std::string, DiskIoSnapshot>;
-
 class CpuPollingTask : public IPollingTask {
  private:
   CpuSnapshotList t1_snapshots;
@@ -61,6 +54,7 @@ class CpuPollingTask : public IPollingTask {
   void take_snapshot_1() override;
   void take_snapshot_2() override;
   void calculate(double /*time_delta_seconds*/) override;
+  void commit() override {};
   CpuSnapshotList read_data(std::istream&);
 };
 using CpuPollingTaskPtr = std::unique_ptr<CpuPollingTask>;
@@ -75,6 +69,7 @@ class NetworkPollingTask : public IPollingTask {
   void take_snapshot_1() override;
   void take_snapshot_2() override;
   void calculate(double time_delta_seconds) override;
+  void commit() override {};
 
   NetworkSnapshotMap read_data(std::istream&);
 };
@@ -91,6 +86,7 @@ class DiskPollingTask : public IPollingTask {
   void take_snapshot_2() override;
 
   void calculate(double time_delta_seconds) override;
+  void commit() override;
 
   DiskIoSnapshotMap read_data(std::istream&);
 };

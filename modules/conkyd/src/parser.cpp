@@ -2,9 +2,13 @@
 #include "parser.hpp"
 
 #include "conky_output.hpp"
-#include "data_local.h"
-#include "data_ssh.h"
+#include "data_local.hpp"
+#include "data_ssh.hpp"
+#include "polling.hpp"
 #include "runner.hpp"
+
+//
+#include "json_definitions.hpp"
 
 ParsedConfig parse_arguments(int argc, char* argv[]) {
   ParsedConfig config;
@@ -159,15 +163,7 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
   // --- 3. Call Appropriate Get Function ---
   if (command == "--local") {
     context.source_name = "Local";
-    // std::cerr << "Initializing " << context.source_name << " metrics
-    // provider"
-    //           << std::endl;
-    context.provider = std::make_unique<LocalDataStreams>();
-    auto local_callback = [](DataStreamProviderPtr& provider,
-                             const std::string& cfg, CombinedMetrics& m) {
-      return get_local_metrics(provider, cfg, m);
-    };
-    context.set_callback(local_callback);
+    context.provider = DataStreamProviders::LocalDataStream;
   } else if (command == "--ssh") {
     // Check for specific host/user
     if (current_index + 1 < args.size() &&
@@ -176,34 +172,21 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
       std::string host = args[current_index];
       std::string user = args[current_index + 1];
       context.source_name = user + "@" + host;
-      std::cerr << "Initializing " << context.source_name << " metrics provider"
-                << std::endl;
-      context.provider = std::make_unique<ProcDataStreams>();
-      auto server_callback = [host, user](DataStreamProviderPtr& provider,
-                                          const std::string& cfg,
-                                          CombinedMetrics& m) {
-        return get_server_metrics(provider, cfg, m, host, user);
-      };
-      context.set_callback(server_callback);
+
+      context.provider = DataStreamProviders::ProcDataStream;
+      context.host = host;
+      context.user = user;
       current_index += 2;  // Consume host + user
     } else {
       // Default SSH host
       context.source_name = "Default SSH";
-      std::cerr << "Initializing " << context.source_name << " metrics provider"
-                << std::endl;
-      context.provider = std::make_unique<ProcDataStreams>();
-      auto server_callback = [](DataStreamProviderPtr& provider,
-                                const std::string& cfg, CombinedMetrics& m) {
-        return get_server_metrics(provider, cfg, m);
-      };
-      context.set_callback(server_callback);
+      context.provider = DataStreamProviders::ProcDataStream;
     }
   }
   // --- 4. Check for --interfaces ---
   if (current_index < args.size() && args[current_index] == "--interfaces") {
     if (current_index + 1 < args.size()) {
-      context.specific_interfaces =
-          parse_interface_list(args[current_index + 1]);
+      context.interfaces = parse_interface_list(args[current_index + 1]);
       current_index += 2;  // Consume --interfaces and its value
     } else {
       // Handle error: --interfaces flag without a value
@@ -226,16 +209,16 @@ RunMode ParsedConfig::run_mode() const { return _run_mode; }
 OutputMode ParsedConfig::get_output_mode() const { return _output_mode; }
 void ParsedConfig::set_run_mode(RunMode mode) { _run_mode = mode; }
 void ParsedConfig::set_output_mode(OutputMode mode) { _output_mode = mode; }
-void ParsedConfig::done() {
+void ParsedConfig::done(std::vector<SystemMetrics>& result) {
   switch (_output_mode) {
     case OutputMode::JSON: {
-      json output_json = tasks;
+      json output_json = result;
       std::cout << output_json.dump() << std::endl;
       break;
     }
     case OutputMode::CONKY: {
-      for (const MetricsContext& task : tasks) {
-        print_metrics(task.metrics);
+      for (const SystemMetrics& metrics : result) {
+        print_metrics(metrics);
       }
       break;
     }

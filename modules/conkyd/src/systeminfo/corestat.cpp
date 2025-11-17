@@ -1,8 +1,9 @@
 // corestat.cpp
-#include "corestat.h"
+#include "corestat.hpp"
 
-#include "data_local.h"
-#include "data_ssh.h"
+#include "data_local.hpp"
+#include "data_ssh.hpp"
+#include "polling.hpp"
 
 std::istream& LocalDataStreams::get_stat_stream() {
   return create_stream_from_file(stat, "/proc/stat");

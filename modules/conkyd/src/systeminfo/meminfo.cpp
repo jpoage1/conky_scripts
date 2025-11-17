@@ -1,8 +1,8 @@
 // meminfo.cpp
-#include "meminfo.h"
+#include "meminfo.hpp"
 
-#include "data_local.h"
-#include "data_ssh.h"
+#include "data_local.hpp"
+#include "data_ssh.hpp"
 
 std::istream& LocalDataStreams::get_meminfo_stream() {
   return create_stream_from_file(meminfo, "/proc/meminfo");
