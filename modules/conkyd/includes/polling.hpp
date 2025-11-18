@@ -20,13 +20,16 @@ class IPollingTask {
    * * We use an initializer list (the ': ...') because references
    * MUST be initialized, they cannot be assigned later.
    */
-  IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics);
+  IPollingTask(DataStreamProvider& provider, SystemMetrics& metrics,
+               MetricsContext&);
+  //   : provider(provider), metrics(metrics) {};
 
   //   IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
   //       : provider(_provider), metrics(_metrics) {}
 
   virtual ~IPollingTask() = default;
   std::string get_name() { return name; }
+  virtual void configure() = 0;
   /**
    * @brief Take the "Time 1" (T1) snapshot and store it internally.
    */
@@ -50,7 +53,8 @@ class CpuPollingTask : public IPollingTask {
   CpuSnapshotList t2_snapshots;
 
  public:
-  CpuPollingTask(DataStreamProvider&, SystemMetrics&);
+  CpuPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
+  void configure() override {};
   void take_snapshot_1() override;
   void take_snapshot_2() override;
   void calculate(double /*time_delta_seconds*/) override;
@@ -65,7 +69,8 @@ class NetworkPollingTask : public IPollingTask {
   NetworkSnapshotMap t2_snapshot;
 
  public:
-  NetworkPollingTask(DataStreamProvider&, SystemMetrics&);
+  NetworkPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
+  void configure() override {};
   void take_snapshot_1() override;
   void take_snapshot_2() override;
   void calculate(double time_delta_seconds) override;
@@ -79,9 +84,17 @@ class DiskPollingTask : public IPollingTask {
  private:
   DiskIoSnapshotMap t1_snapshots;
   DiskIoSnapshotMap t2_snapshots;
+  // A set of the kernel device names we actually care about (e.g., "dm-0",
+  // "sda1")
+  std::set<std::string> target_kernel_names;
+  // A map to link logical paths to kernel names (e.g., "/dev/vg0/lv0" ->
+  // "dm-0")
+  std::map<std::string, DeviceInfo*> kernel_to_device_map;
+  DevicePaths load_device_paths(const std::string& config_file);
 
  public:
-  DiskPollingTask(DataStreamProvider&, SystemMetrics&);
+  DiskPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
+  void configure() override;
   void take_snapshot_1() override;
   void take_snapshot_2() override;
 

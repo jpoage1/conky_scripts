@@ -15,9 +15,10 @@ std::istream& ProcDataStreams::get_net_dev_stream() {
   return create_stream_from_command(net_dev, "cat /proc/net/dev");
 }
 
-NetworkPollingTask::NetworkPollingTask(DataStreamProvider& _provider,
-                                       SystemMetrics& _metrics)
-    : IPollingTask(_provider, _metrics) {
+NetworkPollingTask::NetworkPollingTask(DataStreamProvider& provider,
+                                       SystemMetrics& metrics,
+                                       MetricsContext& context)
+    : IPollingTask(provider, metrics, context) {
   name = "Network polling";
 }
 

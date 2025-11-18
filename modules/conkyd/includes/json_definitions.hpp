@@ -37,9 +37,15 @@ inline void from_json(const json& j, ProcessInfo& p) {
 }
 
 // DeviceInfo
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DeviceInfo, device_path, mount_point,
-                                   used_bytes, size_bytes, read_bytes_per_sec,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DiskUsage, used_bytes, size_bytes);
+
+// DiskIOStats
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DiskIoStats, read_bytes_per_sec,
                                    write_bytes_per_sec);
+
+// DeviceInfo
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DeviceInfo, device_path, mount_point, usage,
+                                   io);
 
 // CoreStats
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CoreStats, core_id, user_percent,
@@ -50,8 +56,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CoreStats, core_id, user_percent,
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(NetworkInterfaceStats, interface_name,
                                    rx_bytes_per_sec, tx_bytes_per_sec);
 
-// DiskIoStats
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DiskIoStats, device_name, read_bytes_per_sec,
+// HdIoStats
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HdIoStats, device_name, read_bytes_per_sec,
                                    write_bytes_per_sec);
 
 // MemInfo
@@ -82,12 +88,12 @@ inline void to_json(json& j, const SystemMetrics& s) {
       {"top_processes_avg_cpu", s.top_processes_avg_cpu},
       {"top_processes_real_mem", s.top_processes_real_mem},
       {"top_processes_real_cpu", s.top_processes_real_cpu},
-      {"disk_io_rates", s.disk_io_rates}
       // Note: polling_tasks is intentionally omitted
   };
-  j["disk_io_rates"] = json::array();
-  for (const auto& pair : s.disk_io_rates) {
-    j["disk_io_rates"].push_back(
+  j["disk_io"] = json::array();
+  for (const auto& pair : s.disk_io) {
+    // std::cerr << "Serializing " << pair.second.device_name << std::endl;
+    j["disk_io"].push_back(
         pair.second);  // pair.second is the DiskIoStats object
   }
 }
@@ -114,6 +120,6 @@ inline void from_json(const json& j, SystemMetrics& s) {
   j.at("top_processes_avg_cpu").get_to(s.top_processes_avg_cpu);
   j.at("top_processes_real_mem").get_to(s.top_processes_real_mem);
   j.at("top_processes_real_cpu").get_to(s.top_processes_real_cpu);
-  j.at("disk_io_rates").get_to(s.disk_io_rates);
+  j.at("disk_io").get_to(s.disk_io);
   // Note: polling_tasks is intentionally omitted
 }

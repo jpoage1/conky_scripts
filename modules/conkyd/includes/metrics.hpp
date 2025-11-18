@@ -18,12 +18,12 @@ struct ProcDataStreams;
 struct MetricsContext;
 
 using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
-
+using DevicePaths = std::vector<std::string>;
 struct SystemMetrics {
   std::unique_ptr<DataStreamProvider> provider;
-  std::vector<std::string> device_paths;
   PollingTaskList polling_tasks;
   std::vector<DeviceInfo> disks;
+  std::map<std::string, HdIoStats> disk_io;
   std::vector<CoreStats> cores;
   double cpu_frequency_ghz;
   double cpu_temp_c;
@@ -48,13 +48,12 @@ struct SystemMetrics {
   std::vector<ProcessInfo> top_processes_real_mem;
   std::vector<ProcessInfo> top_processes_real_cpu;
 
-  std::map<std::string, DiskIoStats> disk_io_rates;
   SystemMetrics();
   SystemMetrics(MetricsContext& context);
 
   int read_data();
   void complete();
-  bool load_device_paths(const std::string& config_file);
+  DevicePaths load_device_paths(const std::string& config_file);
   int get_metrics_from_provider();
   SystemMetrics(SystemMetrics&&) noexcept = default;
   SystemMetrics& operator=(SystemMetrics&&) noexcept = default;

@@ -13,9 +13,9 @@ std::istream& ProcDataStreams::get_stat_stream() {
   return create_stream_from_command(stat, "cat /proc/stat");
 }
 
-CpuPollingTask::CpuPollingTask(DataStreamProvider& _provider,
-                               SystemMetrics& _metrics)
-    : IPollingTask(_provider, _metrics) {
+CpuPollingTask::CpuPollingTask(DataStreamProvider& provider,
+                               SystemMetrics& metrics, MetricsContext& context)
+    : IPollingTask(provider, metrics, context) {
   //   std::cerr << "Child constructor called" << std::endl;
   //   dump_fstream(provider.get_stat_stream());
   //   std::cerr << "End of child constructor call" << std::endl;

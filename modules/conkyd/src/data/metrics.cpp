@@ -35,50 +35,20 @@ SystemMetrics::SystemMetrics(MetricsContext& context) {
       }
     } break;
   }
-  load_device_paths(context.device_file);
-}
-
-bool SystemMetrics::load_device_paths(const std::string& config_file) {
-  // Clear any existing paths
-  this->device_paths.clear();
-
-  namespace fs = std::filesystem;
-
-  // Check if the file exists, is a regular file, and is readable
-  if (!fs::exists(config_file) || !fs::is_regular_file(config_file)) {
-    std::cerr << "Unable to load device path file: " + config_file << std::endl;
-    return false;  // Return false on failure
-  }
-
-  std::ifstream file(config_file);
-  if (!file.is_open()) {
-    std::cerr << "Unable to open device path file: " + config_file << std::endl;
-    return false;
-  }
-
-  std::string line;
-  while (std::getline(file, line)) {
-    if (!line.empty()) {
-      // Add directly to the member variable
-      this->device_paths.push_back(line);
-    }
-  }
-  return true;  // Return true on success
-}
-
-int SystemMetrics::read_data() {
   CpuPollingTaskPtr cpu_tasks =
-      std::make_unique<CpuPollingTask>(*provider, *this);
+      std::make_unique<CpuPollingTask>(*provider, *this, context);
   polling_tasks.push_back(std::move(cpu_tasks));
 
   NetworkPollingTaskPtr network_polling =
-      std::make_unique<NetworkPollingTask>(*provider, *this);
+      std::make_unique<NetworkPollingTask>(*provider, *this, context);
   polling_tasks.push_back(std::move(network_polling));
 
   DiskPollingTaskPtr disk_polling =
-      std::make_unique<DiskPollingTask>(*provider, *this);
+      std::make_unique<DiskPollingTask>(*provider, *this, context);
   polling_tasks.push_back(std::move(disk_polling));
+}
 
+int SystemMetrics::read_data() {
   cpu_temp_c = provider->get_cpu_temperature();
 
   get_mem_usage(provider->get_meminfo_stream(), meminfo, swapinfo);
