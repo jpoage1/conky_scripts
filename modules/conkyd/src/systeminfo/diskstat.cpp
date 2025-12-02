@@ -95,6 +95,8 @@ void DiskPollingTask::calculate(double time_delta_seconds) {
   //             << ", disk_io size = " << metrics.disk_io.size()
   //             << ", &disk_io = " << &metrics.disk_io << std::endl;
 
+  metrics.disk_io.clear();
+
   if (time_delta_seconds <= 0) return;
 
   // 1. Reset I/O stats for config-file devices

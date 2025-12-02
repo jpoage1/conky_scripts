@@ -52,18 +52,18 @@ int main(int argc, char* argv[]) {
       for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
         polling_task->take_snapshot_2();
         polling_task->calculate(time_delta.count());
-        polling_task->commit();
+        // polling_task->commit(); // unused/dead code
         // std::cerr << "AFTER COMMIT: disk_io size: " << task.disk_io.size()
         //           << std::endl;
       }
 
       // refresh data after polling
-      task.complete();
+      //   task.complete(); // unused/dead code
       //   std::cerr << "AFTER COMPLETE: disk_io size: " << task.disk_io.size()
       //             << std::endl;
 
       // Cleanup ssh session
-      task.provider->finally();
+      task.provider->finally();  // unused/dead code
       //   std::cerr << "AFTER FINALLY: disk_io size: " << task.disk_io.size()
       //             << std::endl;
     }

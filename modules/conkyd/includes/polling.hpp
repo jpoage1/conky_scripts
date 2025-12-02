@@ -8,6 +8,23 @@ using CpuSnapshotList = std::vector<CpuSnapshot>;
 using NetworkSnapshotMap = std::map<std::string, NetworkSnapshot>;
 using DiskIoSnapshotMap = std::map<std::string, DiskIoSnapshot>;
 
+struct ProcessSnapshot {
+  long pid;
+  long vmRssKb;
+  long cumulative_cpu_jiffies;  // The raw reading from /proc/[pid]/stat
+  std::string name;
+};
+
+using ProcessSnapshotList = std::vector<ProcessSnapshot>;
+
+struct ProcessRawSnapshot {
+  long vmRssKb;
+  long cumulative_cpu_jiffies;
+  std::string name;
+};
+
+using ProcessSnapshotMap = std::map<long, ProcessRawSnapshot>;  // Key = PID
+
 class IPollingTask {
  protected:
   DataStreamProvider& provider;
@@ -104,3 +121,26 @@ class DiskPollingTask : public IPollingTask {
   DiskIoSnapshotMap read_data(std::istream&);
 };
 using DiskPollingTaskPtr = std::unique_ptr<DiskPollingTask>;
+class ProcessPollingTask : public IPollingTask {
+ private:
+  // Note: Unlike others, the full process list is processed internally and not
+  // explicitly stored as T1/T2 The state (jiffies) is managed by the static map
+  // in get_process_cpu_usage(). We use this list to hold the raw data read from
+  // /proc before processing.
+  ProcessSnapshotMap t1_snapshots;
+  ProcessSnapshotMap t2_snapshots;
+
+ public:
+  ProcessPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
+  void configure() override {};
+  void take_snapshot_1() override;
+  void take_snapshot_2() override;
+  void calculate(double time_delta_seconds)
+      override;  // time_delta_seconds is not strictly needed here
+  void commit() override {};
+
+  // This internal helper reads the /proc directory and returns the raw snapshot
+  // list
+  ProcessSnapshotMap read_data();
+};
+using ProcessPollingTaskPtr = std::unique_ptr<ProcessPollingTask>;
