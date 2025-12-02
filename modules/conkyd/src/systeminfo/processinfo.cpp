@@ -226,10 +226,12 @@ long get_process_cumulative_cpu_jiffies(long pid) {
 ProcessSnapshotMap ProcessPollingTask::read_data() {
   return provider.get_process_snapshots();
 }
-
 void ProcessPollingTask::calculate(double time_delta_seconds) {
-  (void)time_delta_seconds;  // Explicit unused suppression
+  (void)time_delta_seconds;
+
+  // 1. Clear both destination vectors
   metrics.top_processes_avg_mem.clear();
+  metrics.top_processes_avg_cpu.clear();
 
   if (time_delta_seconds <= 0.0) return;
 
@@ -237,6 +239,13 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
   double total_jiffies_available =
       static_cast<double>(CLK_TCK) * time_delta_seconds;
 
+  // We need a temporary list to hold all calculated processes before
+  // sorting/splitting
+  std::vector<ProcessInfo> all_procs;
+  // Reserve space to avoid reallocations (estimation: 300 processes)
+  all_procs.reserve(t2_snapshots.size());
+
+  // 2. Calculate stats for ALL processes
   for (const auto& [pid, current_snap] : t2_snapshots) {
     auto prev_it = t1_snapshots.find(pid);
     if (prev_it != t1_snapshots.end()) {
@@ -247,40 +256,65 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
       info.name = current_snap.name;
       info.vmRssKb = current_snap.vmRssKb;
 
+      // CPU Calculation
       long jiffies_delta =
           current_snap.cumulative_cpu_time - prev_snap.cumulative_cpu_time;
-
-      // Shared math logic handles both providers
       if (jiffies_delta >= 0 && total_jiffies_available > 0) {
-        info.cpu_percent =
+        double usage =
             (static_cast<double>(jiffies_delta) / total_jiffies_available) *
             100.0;
-        info.cpu_percent = std::min(info.cpu_percent, 100.0);
+        info.cpu_percent = std::min(usage, 100.0);
       } else {
         info.cpu_percent = 0.0;
       }
 
-      // ... memory calculation and push_back ...
+      // Memory Calculation
       if (metrics.meminfo.total_kb > 0) {
         info.mem_percent =
             (static_cast<double>(info.vmRssKb) / metrics.meminfo.total_kb) *
             100.0;
       }
 
-      metrics.top_processes_avg_mem.push_back(std::move(info));
+      all_procs.push_back(std::move(info));
     }
   }
 
-  // Final sort (matching old ps behavior)
-  std::sort(metrics.top_processes_avg_mem.begin(),
-            metrics.top_processes_avg_mem.end(),
-            [](const ProcessInfo& a, const ProcessInfo& b) {
-              return b.cpu_percent < a.cpu_percent;  // Sort by CPU descending
-            });
+  // 3. Populate Memory List (Sort by RSS Descending)
+  // We perform a partial sort to get just the top 10, which is faster than full
+  // sort
+  if (all_procs.size() > 10) {
+    std::partial_sort(all_procs.begin(), all_procs.begin() + 10,
+                      all_procs.end(),
+                      [](const ProcessInfo& a, const ProcessInfo& b) {
+                        return a.vmRssKb > b.vmRssKb;
+                      });
+    // Copy top 10 to metrics
+    metrics.top_processes_avg_mem.assign(all_procs.begin(),
+                                         all_procs.begin() + 10);
+  } else {
+    std::sort(all_procs.begin(), all_procs.end(),
+              [](const ProcessInfo& a, const ProcessInfo& b) {
+                return a.vmRssKb > b.vmRssKb;
+              });
+    metrics.top_processes_avg_mem = all_procs;
+  }
 
-  // Resize to top 10
-  if (metrics.top_processes_avg_mem.size() > 10) {
-    metrics.top_processes_avg_mem.resize(10);
+  // 4. Populate CPU List (Sort by CPU Descending)
+  // Re-sort the same master list for CPU
+  if (all_procs.size() > 10) {
+    std::partial_sort(all_procs.begin(), all_procs.begin() + 10,
+                      all_procs.end(),
+                      [](const ProcessInfo& a, const ProcessInfo& b) {
+                        return a.cpu_percent > b.cpu_percent;
+                      });
+    metrics.top_processes_avg_cpu.assign(all_procs.begin(),
+                                         all_procs.begin() + 10);
+  } else {
+    std::sort(all_procs.begin(), all_procs.end(),
+              [](const ProcessInfo& a, const ProcessInfo& b) {
+                return a.cpu_percent > b.cpu_percent;
+              });
+    metrics.top_processes_avg_cpu = all_procs;
   }
 }
 double get_process_cpu_usage(long pid) {
@@ -434,3 +468,12 @@ ProcessSnapshotMap ProcDataStreams::get_process_snapshots() {
   }
   return snapshots;
 }
+ProcessPollingTask::ProcessPollingTask(DataStreamProvider& provider,
+                                       SystemMetrics& metrics,
+                                       MetricsContext& context)
+    : IPollingTask(provider, metrics, context) {
+  name = "Process polling";
+}
+void ProcessPollingTask::take_snapshot_1() { t1_snapshots = read_data(); }
+
+void ProcessPollingTask::take_snapshot_2() { t2_snapshots = read_data(); }

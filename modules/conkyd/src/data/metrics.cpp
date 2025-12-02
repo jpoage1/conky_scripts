@@ -44,14 +44,13 @@ SystemMetrics::SystemMetrics(MetricsContext& context) {
 
   polling_tasks.emplace_back(
       std::make_unique<DiskPollingTask>(*provider, *this, context));
+  polling_tasks.emplace_back(
+      std::make_unique<ProcessPollingTask>(*provider, *this, context));
 }
 
 int SystemMetrics::read_data() {
   top_processes_avg_mem.clear();
   top_processes_avg_cpu.clear();
-  // top_processes_real_mem.clear();
-  // top_processes_real_cpu.clear();
-  //   network_interfaces.clear();
   cores.clear();
   disk_io.clear();
   disks.clear();
@@ -64,26 +63,6 @@ int SystemMetrics::read_data() {
   cpu_frequency_ghz = get_cpu_freq_ghz(provider->get_cpuinfo_stream());
 
   get_load_and_process_stats(provider->get_loadavg_stream(), *this);
-
-  // Call for Avg Top CPU processes
-  //   get_top_processes(
-  //       provider->get_top_mem_processes_avg_stream(),  // Input stream
-  //       top_processes_avg_mem,                         // Output vector
-  //       meminfo.total_kb                               // Total memory
-  //   );
-  //   get_top_processes(
-  //       provider->get_top_cpu_processes_avg_stream(),  // Input stream
-  //       top_processes_avg_cpu,                         // Output vector
-  //       meminfo.total_kb                               // Total memory
-  //   );
-
-  // For Memory Sorted
-  get_top_processes(top_processes_avg_mem, meminfo.total_kb,
-                    true);  // true for sort_by_mem
-
-  // For CPU Sorted
-  get_top_processes(top_processes_avg_cpu, meminfo.total_kb,
-                    false);  // false for sort_by_cpu
 
   //   // Call for Real Top CPU processes
   //   get_top_processes(
