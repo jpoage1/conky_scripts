@@ -3,6 +3,7 @@
 #include "data.hpp"
 #include "pcn.hpp"
 struct DiskUsage;
+
 struct ProcDataStreams : public DataStreamProvider {
   std::stringstream cpuinfo;
   std::stringstream meminfo;
@@ -25,6 +26,7 @@ struct ProcDataStreams : public DataStreamProvider {
   std::istream& get_diskstats_stream() override;
   std::istream& get_loadavg_stream() override;
   std::istream& get_net_dev_stream() override;
+  ProcessSnapshotMap get_process_snapshots() override;
   //   std::istream& get_top_mem_processes_stream() override;
   //   std::istream& get_top_cpu_processes_stream() override;
   //   uint64_t get_used_space_bytes(const std::string& mount_point) override;

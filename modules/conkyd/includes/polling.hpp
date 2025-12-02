@@ -17,9 +17,14 @@ struct ProcessSnapshot {
 
 using ProcessSnapshotList = std::vector<ProcessSnapshot>;
 
+// struct ProcessRawSnapshot {
+//   long vmRssKb;
+//   long cumulative_cpu_jiffies;
+//   std::string name;
+// };
 struct ProcessRawSnapshot {
-  long vmRssKb;
-  long cumulative_cpu_jiffies;
+  long vmRssKb;              // Memory in KiB
+  long cumulative_cpu_time;  // Jiffies (Local) or Seconds (SSH)
   std::string name;
 };
 

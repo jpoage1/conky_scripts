@@ -1,7 +1,9 @@
 // processinfo.cpp
 #include "processinfo.hpp"
 
+#include "data_local.hpp"
 #include "polling.hpp"
+
 namespace {
 
 // Command: Get PID, RSS (in KiB), and command name.
@@ -221,60 +223,20 @@ long get_process_cumulative_cpu_jiffies(long pid) {
 
   return 0;
 }
-// ProcessPollingTask.cpp
-
 ProcessSnapshotMap ProcessPollingTask::read_data() {
-  namespace fs = std::filesystem;
-  ProcessSnapshotMap snapshots;
-
-  // NOTE: This relies on the 'read_proc_status_field' and
-  // 'get_process_cumulative_cpu_jiffies' helpers being available.
-
-  for (const auto& entry : fs::directory_iterator("/proc")) {
-    // 1. Filter for directories named only by digits (PIDs)
-    const std::string pid_str = entry.path().filename().string();
-    if (!entry.is_directory() ||
-        !std::all_of(pid_str.begin(), pid_str.end(), ::isdigit)) {
-      continue;
-    }
-
-    long pid = std::stol(pid_str);
-
-    // 2. Read the necessary raw data fields
-    ProcessRawSnapshot raw_snap;
-
-    // Read memory (VmRSS)
-    raw_snap.vmRssKb = read_proc_status_field(entry.path().string(), "VmRSS");
-
-    // Read raw CPU time (jiffies)
-    raw_snap.cumulative_cpu_jiffies = get_process_cumulative_cpu_jiffies(pid);
-
-    // Read command name
-    std::ifstream comm_file(entry.path() / "comm");
-    std::getline(comm_file, raw_snap.name);
-
-    if (raw_snap.vmRssKb > 0) {  // Only track active processes
-      snapshots[pid] = raw_snap;
-    }
-  }
-  return snapshots;
+  return provider.get_process_snapshots();
 }
-// ProcessPollingTask.cpp
 
 void ProcessPollingTask::calculate(double time_delta_seconds) {
-  // CRITICAL: Clear output vector before filling to prevent accumulation
+  (void)time_delta_seconds;  // Explicit unused suppression
   metrics.top_processes_avg_mem.clear();
 
   if (time_delta_seconds <= 0.0) return;
 
-  // Use a factor to convert jiffies delta to a percentage
-  // CLK_TCK must be retrieved once, e.g., via sysconf(_SC_CLK_TCK)
   static const long CLK_TCK = sysconf(_SC_CLK_TCK);
-  double jiffies_per_sec = CLK_TCK * time_delta_seconds;
+  double total_jiffies_available =
+      static_cast<double>(CLK_TCK) * time_delta_seconds;
 
-  if (jiffies_per_sec <= 0) return;
-
-  // Iterate over the T2 snapshot and compare against T1
   for (const auto& [pid, current_snap] : t2_snapshots) {
     auto prev_it = t1_snapshots.find(pid);
     if (prev_it != t1_snapshots.end()) {
@@ -283,25 +245,27 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
       ProcessInfo info;
       info.pid = pid;
       info.name = current_snap.name;
-      info.vmRssKb = current_snap.vmRssKb;  // Instantaneous metric
+      info.vmRssKb = current_snap.vmRssKb;
 
-      // Calculate Jiffies Delta
-      long jiffies_delta = current_snap.cumulative_cpu_jiffies -
-                           prev_snap.cumulative_cpu_jiffies;
+      long jiffies_delta =
+          current_snap.cumulative_cpu_time - prev_snap.cumulative_cpu_time;
 
-      // Calculate CPU Percentage
-      if (jiffies_delta >= 0) {
-        double usage =
-            (static_cast<double>(jiffies_delta) / jiffies_per_sec) * 100.0;
-        info.cpu_percent = std::min(usage, 100.0);
+      // Shared math logic handles both providers
+      if (jiffies_delta >= 0 && total_jiffies_available > 0) {
+        info.cpu_percent =
+            (static_cast<double>(jiffies_delta) / total_jiffies_available) *
+            100.0;
+        info.cpu_percent = std::min(info.cpu_percent, 100.0);
       } else {
         info.cpu_percent = 0.0;
       }
 
-      // Calculate Memory Percentage
-      info.mem_percent =
-          (static_cast<double>(info.vmRssKb) / metrics.meminfo.total_kb) *
-          100.0;
+      // ... memory calculation and push_back ...
+      if (metrics.meminfo.total_kb > 0) {
+        info.mem_percent =
+            (static_cast<double>(info.vmRssKb) / metrics.meminfo.total_kb) *
+            100.0;
+      }
 
       metrics.top_processes_avg_mem.push_back(std::move(info));
     }
@@ -361,4 +325,112 @@ double get_process_cpu_usage(long pid) {
       100.0;
 
   return std::min(usage_percent, 100.0);
+}
+
+#include <unistd.h>
+long read_proc_vmrss(const std::string& pid_dir) {
+  std::ifstream status_file(pid_dir + "/status");
+  std::string line;
+  while (std::getline(status_file, line)) {
+    if (line.compare(0, 6, "VmRSS:") == 0) {
+      std::stringstream ss(line);
+      std::string label, unit;
+      long value = 0;
+      ss >> label >> value;
+      return value;
+    }
+  }
+  return 0;
+}
+
+// Helper to read /proc/[pid]/stat for Jiffies
+long read_proc_jiffies(long pid) {
+  std::string path = "/proc/" + std::to_string(pid) + "/stat";
+  std::ifstream stat_file(path);
+  if (!stat_file.is_open()) return 0;
+
+  std::string line;
+  std::getline(stat_file, line);
+  std::stringstream ss(line);
+
+  // Skip 13 fields to get to utime (14) and stime (15)
+  std::string garbage;
+  for (int i = 0; i < 13; ++i) ss >> garbage;
+
+  long utime, stime;
+  if (ss >> utime >> stime) return utime + stime;
+  return 0;
+}
+
+ProcessSnapshotMap LocalDataStreams::get_process_snapshots() {
+  namespace fs = std::filesystem;
+  ProcessSnapshotMap snapshots;
+
+  for (const auto& entry : fs::directory_iterator("/proc")) {
+    const std::string pid_str = entry.path().filename().string();
+
+    // Fast check: is it a PID directory?
+    if (!entry.is_directory() || !isdigit(pid_str[0])) continue;
+
+    long pid = 0;
+    try {
+      pid = std::stol(pid_str);
+    } catch (...) {
+      continue;
+    }
+
+    ProcessRawSnapshot snap;
+    snap.vmRssKb = read_proc_vmrss(entry.path().string());
+
+    // Optimization: Don't read CPU/Name if memory is 0 (kernel threads often
+    // have 0 RSS)
+    if (snap.vmRssKb > 0) {
+      snap.cumulative_cpu_time = read_proc_jiffies(pid);
+
+      std::ifstream comm_file(entry.path() / "comm");
+      std::getline(comm_file, snap.name);
+      if (!snap.name.empty() && snap.name.back() == '\n') snap.name.pop_back();
+
+      snapshots[pid] = snap;
+    }
+  }
+  return snapshots;
+}
+ProcessSnapshotMap ProcDataStreams::get_process_snapshots() {
+  ProcessSnapshotMap snapshots;
+
+  // Command: Get PID, RSS(kb), Cumulative CPU Time(seconds), Command Name
+  // 'times' gives cumulative user+system time in seconds on some
+  // implementations, or we can use 'cputime'. We use 'times' which is usually
+  // accumulator. Note: We multiply seconds by CLK_TCK (usually 100) to fake
+  // "Jiffies" for consistency.
+  std::string cmd = "ps -eo pid,rss,times,comm --no-headers";
+
+  std::string output = execute_ssh_command(cmd.c_str());
+  std::stringstream ss(output);
+  std::string line;
+
+  while (std::getline(ss, line)) {
+    std::stringstream lss(line);
+    long pid;
+    ProcessRawSnapshot snap;
+    long cpu_seconds = 0;
+
+    if (lss >> pid >> snap.vmRssKb >> cpu_seconds) {
+      // Fake the Jiffies: Seconds * 100.
+      // This ensures the math in the Task (which divides by HZ) works for
+      // both.
+      snap.cumulative_cpu_time = cpu_seconds * 100;
+
+      // Remainder of line is command
+      std::getline(lss, snap.name);
+
+      // Trim leading space from name
+      size_t first = snap.name.find_first_not_of(" ");
+      if (first != std::string::npos) snap.name = snap.name.substr(first);
+
+      snapshots[pid] = snap;
+    }
+  }
+  return snapshots;
 }

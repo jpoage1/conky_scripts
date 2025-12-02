@@ -3,7 +3,8 @@
 #include "pcn.hpp"
 
 struct DiskUsage;
-
+struct ProcessRawSnapshot;
+using ProcessSnapshotMap = std::map<long, ProcessRawSnapshot>;
 enum DataStreamProviders {
   LocalDataStream,
   ProcDataStream,
@@ -22,6 +23,7 @@ class DataStreamProvider {
   virtual std::istream& get_diskstats_stream() = 0;
   virtual std::istream& get_loadavg_stream() = 0;
   virtual std::istream& get_net_dev_stream() = 0;
+  virtual ProcessSnapshotMap get_process_snapshots() = 0;
   //   virtual std::istream& get_top_mem_processes_stream() = 0;
   //   virtual std::istream& get_top_cpu_processes_stream() = 0;
   virtual std::istream& get_top_mem_processes_avg_stream() = 0;
