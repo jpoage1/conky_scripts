@@ -29,6 +29,10 @@ void NetworkPollingTask::take_snapshot_1() {
 void NetworkPollingTask::take_snapshot_2() {
   t2_snapshot = read_data(provider.get_net_dev_stream());
 }
+void NetworkPollingTask::commit() {
+  t1_snapshot =
+      t2_snapshot;  // Note: singular 'snapshot' based on your previous code
+}
 
 NetworkSnapshotMap NetworkPollingTask::read_data(std::istream& net_dev_stream) {
   NetworkSnapshotMap snapshots;

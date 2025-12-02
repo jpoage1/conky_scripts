@@ -477,3 +477,8 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& provider,
 void ProcessPollingTask::take_snapshot_1() { t1_snapshots = read_data(); }
 
 void ProcessPollingTask::take_snapshot_2() { t2_snapshots = read_data(); }
+void ProcessPollingTask::commit() {
+  // Efficiently move T2 data to T1.
+  // This clears T2 and prepares T1 for the next loop instantly.
+  t1_snapshots = std::move(t2_snapshots);
+}

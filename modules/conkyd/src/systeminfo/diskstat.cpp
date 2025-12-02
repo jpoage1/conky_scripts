@@ -89,7 +89,8 @@ void DiskPollingTask::take_snapshot_2() {
   t2_snapshots = read_data(provider.get_diskstats_stream());
 }
 
-void DiskPollingTask::commit() {}
+void DiskPollingTask::commit() { t1_snapshots = t2_snapshots; }
+
 void DiskPollingTask::calculate(double time_delta_seconds) {
   //   std::cerr << "CALCULATE START: &metrics = " << &metrics
   //             << ", disk_io size = " << metrics.disk_io.size()

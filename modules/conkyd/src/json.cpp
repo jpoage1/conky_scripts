@@ -23,6 +23,21 @@ int main(int argc, char* argv[]) {
     // tasks.push_back(std::move(metrics));
     tasks.emplace_back(task);
   }
+  for (SystemMetrics& task : tasks) {
+    //   std::cerr << "Running task" << std::endl;
+    task.read_data();
+
+    //   std::cerr << "Done running task" << std::endl;
+  }
+
+  // A. Get T1 snapshot
+  auto t1_timestamp = std::chrono::steady_clock::now();
+  for (SystemMetrics& task : tasks) {
+    for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
+      // std::cerr << "Taking snapshot" << std::endl;
+      polling_task->take_snapshot_1();
+    }
+  }
   do {
     for (SystemMetrics& task : tasks) {
       //   std::cerr << "Running task" << std::endl;
@@ -31,14 +46,6 @@ int main(int argc, char* argv[]) {
       //   std::cerr << "Done running task" << std::endl;
     }
 
-    // A. Get T1 snapshot
-    auto t1_timestamp = std::chrono::steady_clock::now();
-    for (SystemMetrics& task : tasks) {
-      for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
-        // std::cerr << "Taking snapshot" << std::endl;
-        polling_task->take_snapshot_1();
-      }
-    }
     std::this_thread::sleep_for(
         config.get_pooling_interval<std::chrono::milliseconds>());
     // C. Get T2 snapshot

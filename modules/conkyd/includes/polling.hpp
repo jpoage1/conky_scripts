@@ -80,7 +80,7 @@ class CpuPollingTask : public IPollingTask {
   void take_snapshot_1() override;
   void take_snapshot_2() override;
   void calculate(double /*time_delta_seconds*/) override;
-  void commit() override {};
+  void commit() override;
   CpuSnapshotList read_data(std::istream&);
 };
 using CpuPollingTaskPtr = std::unique_ptr<CpuPollingTask>;
@@ -96,7 +96,7 @@ class NetworkPollingTask : public IPollingTask {
   void take_snapshot_1() override;
   void take_snapshot_2() override;
   void calculate(double time_delta_seconds) override;
-  void commit() override {};
+  void commit() override;
 
   NetworkSnapshotMap read_data(std::istream&);
 };
@@ -142,7 +142,7 @@ class ProcessPollingTask : public IPollingTask {
   void take_snapshot_2() override;
   void calculate(double time_delta_seconds)
       override;  // time_delta_seconds is not strictly needed here
-  void commit() override {};
+  void commit() override;
 
   // This internal helper reads the /proc directory and returns the raw snapshot
   // list

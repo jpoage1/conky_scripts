@@ -70,6 +70,8 @@ void CpuPollingTask::take_snapshot_2() {
   t2_snapshots = read_data(provider.get_stat_stream());
 }
 
+void CpuPollingTask::commit() { t1_snapshots = t2_snapshots; }
+
 CpuSnapshotList CpuPollingTask::read_data(std::istream& input_stream) {
   CpuSnapshotList snapshots;
   std::string line;
