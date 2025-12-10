@@ -19,7 +19,31 @@ struct MetricsContext;
 
 using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
 using DevicePaths = std::vector<std::string>;
-struct SystemMetrics {
+
+struct MetricSettings {
+  bool enable_sysinfo = true;
+  bool enable_load_and_process_stats = true;
+  bool enable_uptime = true;
+  bool enable_memory = true;
+  bool enable_cpu_temp = true;
+
+  bool enable_cpuinfo = true;
+  bool enable_network_stats = true;
+  bool enable_diskstat = true;
+
+  bool enable_avg_processinfo_cpu = true;
+  bool enable_avg_processinfo_mem = true;
+  bool enable_realtime_processinfo_cpu = true;
+  bool enable_realtime_processinfo_mem = true;
+  bool enable_processinfo() {
+    return enable_avg_processinfo_cpu || enable_avg_processinfo_mem ||
+           enable_realtime_processinfo_cpu || enable_realtime_processinfo_mem;
+  }
+};
+
+class SystemMetrics {
+ public:
+  std::vector<std::function<void()>> task_pipeline;
   std::unique_ptr<DataStreamProvider> provider;
   PollingTaskList polling_tasks;
   std::vector<DeviceInfo> disks;
@@ -60,6 +84,10 @@ struct SystemMetrics {
 
   SystemMetrics(const SystemMetrics&) = delete;
   SystemMetrics& operator=(const SystemMetrics&) = delete;
+
+  void configure_polling_pipeline(MetricsContext& context);
+  void create_pipeline(MetricsContext& context);
+  void configure_provider(MetricsContext& context);
 };
 // int get_local_metrics(DataStreamProvider& provider,
 //                       const std::string& config_file, SystemMetrics&

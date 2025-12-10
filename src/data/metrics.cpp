@@ -18,7 +18,7 @@
 
 void SystemMetrics::complete() {}
 
-SystemMetrics::SystemMetrics(MetricsContext& context) {
+void SystemMetrics::configure_provider(MetricsContext& context) {
   std::unique_ptr<DataStreamProvider> _provider;
   switch (context.provider) {
     case DataStreamProviders::LocalDataStream: {
@@ -35,35 +35,94 @@ SystemMetrics::SystemMetrics(MetricsContext& context) {
     } break;
   }
   provider = std::move(_provider);
+}
 
-  polling_tasks.emplace_back(
-      std::make_unique<CpuPollingTask>(*provider, *this, context));
+SystemMetrics::SystemMetrics(MetricsContext& context) {
+  configure_provider(context);
+  create_pipeline(context);
+  configure_polling_pipeline(context);
+}
+void SystemMetrics::create_pipeline(MetricsContext& context) {
+  auto settings = context.settings;
 
-  polling_tasks.emplace_back(
-      std::make_unique<NetworkPollingTask>(*provider, *this, context));
+  // Task: CPU Temp
+  if (settings.enable_cpu_temp) {
+    task_pipeline.emplace_back(
+        [this]() { cpu_temp_c = provider->get_cpu_temperature(); });
+  }
 
-  polling_tasks.emplace_back(
-      std::make_unique<DiskPollingTask>(*provider, *this, context));
-  polling_tasks.emplace_back(
-      std::make_unique<ProcessPollingTask>(*provider, *this, context));
+  // Task: Memory
+  if (settings.enable_memory) {
+    task_pipeline.emplace_back([this]() {
+      get_mem_usage(provider->get_meminfo_stream(), meminfo, swapinfo);
+    });
+  }
+
+  // Task: Uptime & Freq
+  if (settings.enable_uptime) {
+    task_pipeline.emplace_back([this]() {
+      uptime = get_uptime(provider->get_uptime_stream());
+      cpu_frequency_ghz = get_cpu_freq_ghz(provider->get_cpuinfo_stream());
+    });
+  }
+
+  // Task: Load Avg & Processes
+  if (settings.enable_load_and_process_stats) {
+    task_pipeline.emplace_back([this]() {
+      get_load_and_process_stats(provider->get_loadavg_stream(), *this);
+    });
+  }
+
+  // Task: System Info
+  if (settings.enable_sysinfo) {
+    task_pipeline.emplace_back([this]() { get_system_info(*this); });
+  }
 }
 
 int SystemMetrics::read_data() {
-  top_processes_avg_mem.clear();
-  top_processes_avg_cpu.clear();
-  cores.clear();
-  disk_io.clear();
-  disks.clear();
-
-  cpu_temp_c = provider->get_cpu_temperature();
-
-  get_mem_usage(provider->get_meminfo_stream(), meminfo, swapinfo);
-
-  uptime = get_uptime(provider->get_uptime_stream());
-  cpu_frequency_ghz = get_cpu_freq_ghz(provider->get_cpuinfo_stream());
-
-  get_load_and_process_stats(provider->get_loadavg_stream(), *this);
-
-  get_system_info(*this);
+  // The loop is now dumb; it just executes whatever was configured.
+  for (const auto& task : task_pipeline) {
+    task();
+  }
   return 0;
 }
+
+void SystemMetrics::configure_polling_pipeline(MetricsContext& context) {
+  auto settings = context.settings;
+
+  if (settings.enable_cpuinfo)
+    polling_tasks.emplace_back(
+        std::make_unique<CpuPollingTask>(*provider, *this, context));
+
+  if (settings.enable_network_stats)
+    polling_tasks.emplace_back(
+        std::make_unique<NetworkPollingTask>(*provider, *this, context));
+
+  if (settings.enable_diskstat)
+    polling_tasks.emplace_back(
+        std::make_unique<DiskPollingTask>(*provider, *this, context));
+
+  if (settings.enable_processinfo())
+    polling_tasks.emplace_back(
+        std::make_unique<ProcessPollingTask>(*provider, *this, context));
+}
+
+// int SystemMetrics::read_data() {
+//   top_processes_avg_mem.clear();
+//   top_processes_avg_cpu.clear();
+//   cores.clear();
+//   disk_io.clear();
+//   disks.clear();
+
+//   cpu_temp_c = provider->get_cpu_temperature();
+
+//   get_mem_usage(provider->get_meminfo_stream(), meminfo, swapinfo);
+
+//   uptime = get_uptime(provider->get_uptime_stream());
+//   cpu_frequency_ghz = get_cpu_freq_ghz(provider->get_cpuinfo_stream());
+
+//   get_load_and_process_stats(provider->get_loadavg_stream(), *this);
+
+//   get_system_info(*this);
+//   return 0;
+// }

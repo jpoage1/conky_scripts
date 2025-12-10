@@ -21,13 +21,12 @@ int main(int argc, char* argv[]) {
     // if (!task.provider) continue;
     // SystemMetrics metrics(task);
     // tasks.push_back(std::move(metrics));
-    tasks.emplace_back(task);
-  }
-  for (SystemMetrics& task : tasks) {
-    //   std::cerr << "Running task" << std::endl;
-    task.read_data();
-
-    //   std::cerr << "Done running task" << std::endl;
+    SystemMetrics& new_task = tasks.emplace_back(task);
+    if (new_task.read_data() != 0) {
+      std::cerr << "Warning: Failed to read initial data for task."
+                << std::endl;
+      // Optional: tasks.pop_back(); // Remove failed task if strict
+    }
   }
 
   // A. Get T1 snapshot

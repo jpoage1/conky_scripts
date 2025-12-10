@@ -2,6 +2,7 @@
 #pragma once
 
 #include "metrics.hpp"
+#include "processinfo.hpp"
 #include "provider.hpp"
 
 using CpuSnapshotList = std::vector<CpuSnapshot>;
@@ -17,15 +18,12 @@ struct ProcessSnapshot {
 
 using ProcessSnapshotList = std::vector<ProcessSnapshot>;
 
-// struct ProcessRawSnapshot {
-//   long vmRssKb;
-//   long cumulative_cpu_jiffies;
-//   std::string name;
-// };
 struct ProcessRawSnapshot {
-  long vmRssKb;              // Memory in KiB
-  long cumulative_cpu_time;  // Jiffies (Local) or Seconds (SSH)
   std::string name;
+  long vmRssKb = 0;
+  long cumulative_cpu_time = 0;  // Jiffies (Local) or Seconds*100 (SSH)
+  unsigned long long start_time =
+      0;  // Field 22 (Jiffies) or Elapsed Seconds (SSH)
 };
 
 using ProcessSnapshotMap = std::map<long, ProcessRawSnapshot>;  // Key = PID
@@ -130,6 +128,9 @@ class ProcessPollingTask : public IPollingTask {
  private:
   ProcessSnapshotMap t1_snapshots;
   ProcessSnapshotMap t2_snapshots;
+  std::vector<std::function<void(std::vector<ProcessInfo>&)>> output_pipeline;
+  void populate_top_10(std::vector<ProcessInfo>& source,
+                       std::vector<ProcessInfo>& dest, SortMode mode);
 
  public:
   ProcessPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);

@@ -5,6 +5,7 @@
 
 #include "data_local.hpp"
 #include "polling.hpp"
+#include "runner.hpp"
 
 namespace {
 
@@ -70,6 +71,45 @@ long read_proc_jiffies(long pid) {
   if (ss >> utime >> stime) return utime + stime;
   return 0;
 }
+// Returns pair: {cumulative_jiffies, start_time_jiffies}
+std::pair<long, unsigned long long> read_proc_stat_values(long pid) {
+  std::string path = "/proc/" + std::to_string(pid) + "/stat";
+  std::ifstream stat_file(path);
+  if (!stat_file.is_open()) return {0, 0};
+
+  std::string line;
+  std::getline(stat_file, line);
+
+  // Fast-forward past the command name (which is in parens) to handle spaces
+  size_t last_paren = line.find_last_of(')');
+  if (last_paren == std::string::npos) return {0, 0};
+
+  std::stringstream data_ss(line.substr(last_paren + 1));
+  std::string garbage;
+
+  // Skip fields 3-13 to get to utime(14)
+  for (int i = 0; i < 11; ++i) data_ss >> garbage;
+
+  long utime, stime;
+  data_ss >> utime >> stime;  // Fields 14, 15
+
+  // Skip fields 16-21 to get to starttime(22)
+  for (int i = 0; i < 6; ++i) data_ss >> garbage;
+
+  unsigned long long starttime;
+  data_ss >> starttime;  // Field 22
+
+  return {utime + stime, starttime};
+}
+long get_system_uptime_jiffies() {
+  std::ifstream uptime_file("/proc/uptime");
+  double uptime_seconds;
+  if (uptime_file >> uptime_seconds) {
+    static const long CLK_TCK = sysconf(_SC_CLK_TCK);
+    return static_cast<long>(uptime_seconds * CLK_TCK);
+  }
+  return 0;
+}
 
 // --- DATA PROVIDERS ---
 
@@ -97,7 +137,9 @@ ProcessSnapshotMap LocalDataStreams::get_process_snapshots() {
     // Optimization: Don't read CPU/Name if memory is 0 (kernel threads often
     // have 0 RSS)
     if (snap.vmRssKb > 0) {
-      snap.cumulative_cpu_time = read_proc_jiffies(pid);
+      auto stat_vals = read_proc_stat_values(pid);
+      snap.cumulative_cpu_time = stat_vals.first;
+      snap.start_time = stat_vals.second;
 
       std::ifstream comm_file(entry.path() / "comm");
       std::getline(comm_file, snap.name);
@@ -118,7 +160,7 @@ ProcessSnapshotMap ProcDataStreams::get_process_snapshots() {
   // implementations, or we can use 'cputime'. We use 'times' which is usually
   // accumulator. Note: We multiply seconds by CLK_TCK (usually 100) to fake
   // "Jiffies" for consistency.
-  std::string cmd = "ps -eo pid,rss,times,comm --no-headers";
+  std::string cmd = "ps -eo pid,rss,times,etimes,comm --no-headers";
 
   std::string output = execute_ssh_command(cmd.c_str());
   std::stringstream ss(output);
@@ -129,12 +171,14 @@ ProcessSnapshotMap ProcDataStreams::get_process_snapshots() {
     long pid;
     ProcessRawSnapshot snap;
     long cpu_seconds = 0;
+    long elapsed_seconds = 0;
 
     if (lss >> pid >> snap.vmRssKb >> cpu_seconds) {
       // Fake the Jiffies: Seconds * 100.
       // This ensures the math in the Task (which divides by HZ) works for
       // both.
       snap.cumulative_cpu_time = cpu_seconds * 100;
+      snap.start_time = elapsed_seconds;
 
       // Remainder of line is command
       std::getline(lss, snap.name);
@@ -150,14 +194,64 @@ ProcessSnapshotMap ProcDataStreams::get_process_snapshots() {
 }
 
 // --- POLLING TASK LOGIC ---
-
-ProcessPollingTask::ProcessPollingTask(DataStreamProvider& provider,
-                                       SystemMetrics& metrics,
+ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
                                        MetricsContext& context)
-    : IPollingTask(provider, metrics, context) {
-  name = "Process polling";
-}
+    : IPollingTask(p, m, context) {
+  auto settings = context.settings;
 
+  // 1. CPU Configuration
+  if (settings.enable_realtime_processinfo_cpu ||
+      settings.enable_avg_processinfo_cpu) {
+    bool need_real = settings.enable_realtime_processinfo_cpu;
+    bool need_avg = settings.enable_avg_processinfo_cpu;
+
+    output_pipeline.emplace_back(
+        [this, need_real, need_avg](std::vector<ProcessInfo>& data) {
+          if (need_real) {
+            // Sort by Realtime CPU
+            this->populate_top_10(data, this->metrics.top_processes_real_cpu,
+                                  SortMode::CPU_REAL);
+
+            if (need_avg) {
+              // If we have both, usually we want the list to match the Realtime
+              // list, just with Avg data filled in. So we copy.
+              this->metrics.top_processes_avg_cpu =
+                  this->metrics.top_processes_real_cpu;
+            }
+          } else {
+            // Only Avg requested: Sort specifically by Lifetime Average
+            this->populate_top_10(data, this->metrics.top_processes_avg_cpu,
+                                  SortMode::CPU_AVG);
+          }
+        });
+  }
+
+  // 2. Memory Configuration
+  if (settings.enable_realtime_processinfo_mem ||
+      settings.enable_avg_processinfo_mem) {
+    bool need_real = settings.enable_realtime_processinfo_mem;
+    bool need_avg = settings.enable_avg_processinfo_mem;
+
+    output_pipeline.emplace_back(
+        [this, need_real, need_avg](std::vector<ProcessInfo>& data) {
+          // Always sort by Memory (RSS)
+          this->populate_top_10(data, this->metrics.top_processes_real_mem,
+                                SortMode::MEM);
+
+          if (need_avg) {
+            this->metrics.top_processes_avg_mem =
+                this->metrics.top_processes_real_mem;
+          }
+          // If real is disabled but avg is enabled, we still use the REAL list
+          // because "Average Memory" isn't really a distinct thing (it's just
+          // current usage).
+          if (!need_real && need_avg) {
+            this->metrics.top_processes_avg_mem =
+                this->metrics.top_processes_real_mem;
+          }
+        });
+  }
+}
 void ProcessPollingTask::take_snapshot_1() { t1_snapshots = read_data(); }
 void ProcessPollingTask::take_snapshot_2() { t2_snapshots = read_data(); }
 
@@ -171,6 +265,34 @@ void ProcessPollingTask::commit() {
   t1_snapshots = std::move(t2_snapshots);
 }
 
+// Helper lambda for sorting and assigning top 10
+void ProcessPollingTask::populate_top_10(std::vector<ProcessInfo>& source,
+                                         std::vector<ProcessInfo>& dest,
+                                         SortMode mode) {
+  dest.reserve(10);
+
+  // Define the comparator based on the mode
+  auto sorter = [mode](const ProcessInfo& a, const ProcessInfo& b) {
+    switch (mode) {
+      case SortMode::MEM:
+        return a.vmRssKb > b.vmRssKb;
+      case SortMode::CPU_REAL:
+        return a.cpu_percent > b.cpu_percent;
+      case SortMode::CPU_AVG:
+        return a.cpu_avg_percent > b.cpu_avg_percent;
+    }
+    return false;
+  };
+
+  if (source.size() > 10) {
+    std::partial_sort(source.begin(), source.begin() + 10, source.end(),
+                      sorter);
+    dest.assign(source.begin(), source.begin() + 10);
+  } else {
+    std::sort(source.begin(), source.end(), sorter);
+    dest = source;
+  }
+}
 void ProcessPollingTask::calculate(double time_delta_seconds) {
   // 1. Clear all destination vectors
   metrics.top_processes_avg_mem.clear();
@@ -183,6 +305,8 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
   static const long CLK_TCK = sysconf(_SC_CLK_TCK);
   double total_jiffies_available =
       static_cast<double>(CLK_TCK) * time_delta_seconds;
+
+  long system_uptime_jiffies = get_system_uptime_jiffies();
 
   std::vector<ProcessInfo> all_procs;
   all_procs.reserve(t2_snapshots.size());
@@ -211,6 +335,27 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
       } else {
         info.cpu_percent = 0.0;
       }
+      // A safe heuristic:
+      double lifetime_usage = 0.0;
+
+      // Local Logic: current_snap.start_time is Jiffies
+      if (system_uptime_jiffies > 0 && current_snap.start_time > 100000) {
+        double elapsed_jiffies =
+            system_uptime_jiffies - current_snap.start_time;
+        if (elapsed_jiffies > 0) {
+          lifetime_usage =
+              (current_snap.cumulative_cpu_time / elapsed_jiffies) * 100.0;
+        }
+      }
+      // SSH Logic: current_snap.start_time is Elapsed Seconds (via etimes)
+      else if (current_snap.start_time > 0) {
+        // cumulative_cpu_time is (Seconds * 100), start_time is Seconds
+        // Convert back to pure seconds for ratio
+        double cpu_sec = current_snap.cumulative_cpu_time / 100.0;
+        lifetime_usage = (cpu_sec / (double)current_snap.start_time) * 100.0;
+      }
+
+      info.cpu_avg_percent = std::min(lifetime_usage, 100.0);
 
       // --- Memory Calculation ---
       if (metrics.meminfo.total_kb > 0) {
@@ -223,52 +368,7 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
     }
   }
 
-  // Helper lambda for sorting and assigning top 10
-  auto populate_top_10 = [](std::vector<ProcessInfo>& source,
-                            std::vector<ProcessInfo>& dest, bool sort_by_mem) {
-    dest.reserve(10);
-    if (sort_by_mem) {
-      // Sort by Memory (RSS)
-      if (source.size() > 10) {
-        std::partial_sort(source.begin(), source.begin() + 10, source.end(),
-                          [](const ProcessInfo& a, const ProcessInfo& b) {
-                            return a.vmRssKb > b.vmRssKb;
-                          });
-        dest.assign(source.begin(), source.begin() + 10);
-      } else {
-        std::sort(source.begin(), source.end(),
-                  [](const ProcessInfo& a, const ProcessInfo& b) {
-                    return a.vmRssKb > b.vmRssKb;
-                  });
-        dest = source;
-      }
-    } else {
-      // Sort by CPU
-      if (source.size() > 10) {
-        std::partial_sort(source.begin(), source.begin() + 10, source.end(),
-                          [](const ProcessInfo& a, const ProcessInfo& b) {
-                            return a.cpu_percent > b.cpu_percent;
-                          });
-        dest.assign(source.begin(), source.begin() + 10);
-      } else {
-        std::sort(source.begin(), source.end(),
-                  [](const ProcessInfo& a, const ProcessInfo& b) {
-                    return a.cpu_percent > b.cpu_percent;
-                  });
-        dest = source;
-      }
-    }
-  };
-
-  // 3. Populate Vectors
-  // Memory: Real and Avg are usually identical (Current RSS)
-  populate_top_10(all_procs, metrics.top_processes_real_mem, true);
-  metrics.top_processes_avg_mem = metrics.top_processes_real_mem;
-
-  // CPU: This math produces REAL (Live) stats, so we assign to _real_cpu
-  populate_top_10(all_procs, metrics.top_processes_real_cpu, false);
-
-  // Note: metrics.top_processes_avg_cpu (Lifetime Average) cannot be
-  // calculated here without Process Start Time (from /proc/[pid]/stat field 22)
-  // and System Uptime. For now, it remains empty or you can alias it to Real.
+  for (const auto& task : output_pipeline) {
+    task(all_procs);
+  }
 }

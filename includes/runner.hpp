@@ -10,6 +10,8 @@ using callback = std::function<int(DataStreamProviderPtr&, const std::string&,
                                    SystemMetrics&)>;
 
 struct MetricsContext {
+  MetricSettings settings;
+
   std::string source_name;
   std::string device_file;
   //   std::optional<SystemMetrics> metrics;
