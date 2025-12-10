@@ -17,13 +17,15 @@ class JsonSerializer {
  public:
   // Constructor builds the pipeline ONCE based on settings
   JsonSerializer(const MetricSettings& settings) {
-    // 1. Static Metadata (Always included)
-    pipeline.emplace_back([](nlohmann::json& j, const SystemMetrics& s) {
-      j["sys_name"] = s.sys_name;
-      j["node_name"] = s.node_name;
-      j["kernel_release"] = s.kernel_release;
-      j["machine_type"] = s.machine_type;
-    });
+    // 1. Static Metadata
+    if (settings.enable_sysinfo) {
+      pipeline.emplace_back([](nlohmann::json& j, const SystemMetrics& s) {
+        j["sys_name"] = s.sys_name;
+        j["node_name"] = s.node_name;
+        j["kernel_release"] = s.kernel_release;
+        j["machine_type"] = s.machine_type;
+      });
+    }
 
     // 2. Conditional Fields
     if (settings.enable_uptime) {

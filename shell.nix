@@ -24,7 +24,7 @@ pkgs.mkShell {
   shellHook = ''
     
     alias build-target="cmake --build build --target"
-    alias install-component="cmake --install . --component"
+    alias install-component="cmake --install ./build/ --component"
 
     alias waybard="time ./build/waybard ~/.config/conky/file-systems.txt"
     alias json="time ./build/json ~/.config/conky/file-systems.txt"
