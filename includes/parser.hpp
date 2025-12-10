@@ -6,6 +6,9 @@
 #include "pcn.hpp"
 #include "runner.hpp"
 
+// The generic signature for ANY output strategy
+using OutputPipeline = std::function<void(const std::vector<SystemMetrics>&)>;
+
 enum RunMode {
   RUN_ONCE,
   PERSISTENT,
@@ -19,6 +22,7 @@ class ParsedConfig {
   std::chrono::nanoseconds pooling_interval = std::chrono::milliseconds(500);
   OutputMode _output_mode = JSON;
   RunMode _run_mode = RUN_ONCE;
+  OutputPipeline active_pipeline;
 
  public:
   std::vector<MetricsContext> tasks;
@@ -48,6 +52,7 @@ class ParsedConfig {
   OutputMode get_output_mode() const;
   void set_run_mode(RunMode mode);
   void set_output_mode(OutputMode mode);
+  void configure_renderer();
   void done(std::vector<SystemMetrics>& result);
 };
 /**
@@ -68,3 +73,7 @@ std::set<std::string> parse_interface_list(const std::string& list_str);
 
 int process_command(const std::vector<std::string>& args, size_t& current_index,
                     std::vector<MetricsContext>& all_results);
+
+// Factory functions: They take settings and return a runnable function
+OutputPipeline configure_json_pipeline(const MetricSettings& settings);
+OutputPipeline configure_conky_pipeline(const MetricSettings& settings);

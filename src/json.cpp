@@ -10,6 +10,7 @@
 int main(int argc, char* argv[]) {
   // 1. Call the parser (handles initial checks and processing)
   ParsedConfig config = parse_arguments(argc, argv);
+  config.configure_renderer();
   std::vector<SystemMetrics> tasks;
 
   if (config.tasks.empty()) {

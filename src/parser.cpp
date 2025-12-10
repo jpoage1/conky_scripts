@@ -4,6 +4,7 @@
 #include "conky_output.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
+#include "json_serializer.hpp"
 #include "polling.hpp"
 #include "runner.hpp"
 
@@ -209,21 +210,69 @@ RunMode ParsedConfig::run_mode() const { return _run_mode; }
 OutputMode ParsedConfig::get_output_mode() const { return _output_mode; }
 void ParsedConfig::set_run_mode(RunMode mode) { _run_mode = mode; }
 void ParsedConfig::set_output_mode(OutputMode mode) { _output_mode = mode; }
-void ParsedConfig::done(std::vector<SystemMetrics>& result) {
-  switch (_output_mode) {
-    case OutputMode::JSON: {
-      json output_json = result;
-      std::cout << output_json.dump() << std::endl;
-      break;
-    }
-    case OutputMode::CONKY: {
-      for (const SystemMetrics& metrics : result) {
-        print_metrics(metrics);
+void ParsedConfig::configure_renderer() {
+  for (MetricsContext& task : tasks)
+    // 1. Select and Configure the pipeline ONCE
+    switch (_output_mode) {
+      case OutputMode::JSON: {
+        this->active_pipeline = configure_json_pipeline(task.settings);
+        break;
       }
-      break;
+      case OutputMode::CONKY: {
+        this->active_pipeline = configure_conky_pipeline(task.settings);
+        break;
+      }
+      default:
+        std::cerr << "Invalid output type" << std::endl;
+        exit(1);
     }
-    default:
-      std::cerr << "Invaild output type" << std::endl;
-      exit(1);
+}
+
+void ParsedConfig::done(std::vector<SystemMetrics>& result) {
+  // 2. Simply execute it.
+  // The 'active_pipeline' already knows what to do and holds the necessary
+  // settings/serializer.
+  if (this->active_pipeline) {
+    this->active_pipeline(result);
   }
+}
+
+// --- JSON FACTORY ---
+OutputPipeline configure_json_pipeline(const MetricSettings& settings) {
+  // 1. Create the Serializer with the specific settings
+  // We use a shared_ptr so the lambda can capture it cheaply and keep it alive
+  auto serializer = std::make_shared<JsonSerializer>(settings);
+
+  // 2. Return the executable function
+  return [serializer](const std::vector<SystemMetrics>& result) {
+    nlohmann::json output_json = nlohmann::json::array();
+
+    // The serializer logic is already baked in; no 'if' checks needed here
+    for (const auto& metrics : result) {
+      output_json.push_back(serializer->serialize(metrics));
+    }
+
+    std::cout << output_json.dump() << std::endl;
+  };
+}
+
+// --- CONKY FACTORY ---
+OutputPipeline configure_conky_pipeline(const MetricSettings& settings) {
+  // 1. Capture settings by value for the lambda
+  // (Or build a helper vector of print-functions like we did for JSON)
+  return [settings](const std::vector<SystemMetrics>& result) {
+    for (const SystemMetrics& metrics : result) {
+      print_metrics(metrics);
+    }
+    // for (const auto& m : result) {
+    //   // This runs the loop, but using the captured settings
+    //   if (settings.enable_sysinfo) {
+    //     std::cout << "Node: " << m.node_name << std::endl;
+    //   }
+    //   if (settings.enable_cpu_temp) {
+    //     std::cout << "Temp: " << m.cpu_temp_c << "C" << std::endl;
+    //   }
+    //   // ... etc ...
+    // }
+  };
 }
