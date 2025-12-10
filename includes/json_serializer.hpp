@@ -33,6 +33,22 @@ class JsonSerializer {
       });
     }
 
+    if (settings.enable_load_and_process_stats) {
+      pipeline.emplace_back([](nlohmann::json& j, const SystemMetrics& s) {
+        j["load_avg_1m"] = s.load_avg_1m;
+        j["load_avg_5m"] = s.load_avg_5m;
+        j["load_avg_15m"] = s.load_avg_15m;
+        j["processes_total"] = s.processes_total;
+        j["processes_running"] = s.processes_running;
+      });
+    }
+
+    if (settings.enable_network_stats) {
+      pipeline.emplace_back([](nlohmann::json& j, const SystemMetrics& s) {
+        j["network_interfaces"] = s.network_interfaces;
+      });
+    }
+
     if (settings.enable_memory) {
       pipeline.emplace_back([](nlohmann::json& j, const SystemMetrics& s) {
         j["meminfo"] = s.meminfo;

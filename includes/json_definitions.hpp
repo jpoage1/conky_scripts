@@ -4,7 +4,7 @@
 // 1. Include all struct definitions FIRST
 #include "corestat.hpp"
 #include "data.hpp"
-#include "diskstat.hpp"  // Added this based on your first file
+#include "diskstat.hpp"
 #include "filesystems.hpp"
 #include "meminfo.hpp"
 #include "networkstats.hpp"

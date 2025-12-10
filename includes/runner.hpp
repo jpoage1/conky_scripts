@@ -14,7 +14,7 @@ struct MetricsContext {
 
   std::string source_name;
   std::string device_file;
-  //   std::optional<SystemMetrics> metrics;
+
   std::string user;
   std::string host;
   DataStreamProviders provider;
