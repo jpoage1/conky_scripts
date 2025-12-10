@@ -80,3 +80,4 @@ target_include_directories(widgets PRIVATE ${GTKMM_INCLUDE_DIRS})
 
 # --- Install ---
 install(TARGETS waybard json widgets RUNTIME DESTINATION bin)
+install(TARGETS json COMPONENT json RUNTIME DESTINATION bin)
