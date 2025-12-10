@@ -128,10 +128,6 @@ class DiskPollingTask : public IPollingTask {
 using DiskPollingTaskPtr = std::unique_ptr<DiskPollingTask>;
 class ProcessPollingTask : public IPollingTask {
  private:
-  // Note: Unlike others, the full process list is processed internally and not
-  // explicitly stored as T1/T2 The state (jiffies) is managed by the static map
-  // in get_process_cpu_usage(). We use this list to hold the raw data read from
-  // /proc before processing.
   ProcessSnapshotMap t1_snapshots;
   ProcessSnapshotMap t2_snapshots;
 

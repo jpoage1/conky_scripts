@@ -1,6 +1,8 @@
 // processinfo.cpp
 #include "processinfo.hpp"
 
+#include <unistd.h>
+
 #include "data_local.hpp"
 #include "polling.hpp"
 
@@ -31,340 +33,10 @@ const char* top_mem_processes_real_cmd =
     "head -n 10 | "
     "awk '{print $1, $9, $6, $12}'";
 };  // namespace
-std::istream& LocalDataStreams::get_top_mem_processes_avg_stream() {
-  return create_stream_from_command(top_mem_procs, top_mem_processes_avg_cmd);
-}
-std::istream& ProcDataStreams::get_top_mem_processes_avg_stream() {
-  return create_stream_from_command(top_mem_procs, top_mem_processes_avg_cmd);
-};
-std::istream& LocalDataStreams::get_top_cpu_processes_avg_stream() {
-  return create_stream_from_command(top_mem_procs, top_cpu_processes_avg_cmd);
-}
-std::istream& ProcDataStreams::get_top_cpu_processes_avg_stream() {
-  return create_stream_from_command(top_mem_procs, top_cpu_processes_avg_cmd);
-}
 
-/* Real Time */
+// --- HELPER FUNCTIONS ---
 
-std::istream& LocalDataStreams::get_top_mem_processes_real_stream() {
-  return create_stream_from_command(top_mem_procs, top_mem_processes_real_cmd);
-}
-std::istream& ProcDataStreams::get_top_mem_processes_real_stream() {
-  return create_stream_from_command(top_mem_procs, top_mem_processes_real_cmd);
-};
-std::istream& LocalDataStreams::get_top_cpu_processes_real_stream() {
-  return create_stream_from_command(top_mem_procs, top_cpu_processes_real_cmd);
-}
-std::istream& ProcDataStreams::get_top_cpu_processes_real_stream() {
-  return create_stream_from_command(top_mem_procs, top_cpu_processes_real_cmd);
-}
-
-void get_top_processes(std::istream& stream,
-                       std::vector<ProcessInfo>& output_list,
-                       long mem_total_kb) {
-  output_list.clear();  // Clear the destination vector
-  std::string line;
-  double total_mem_kb =
-      (mem_total_kb > 0) ? static_cast<double>(mem_total_kb) : 1.0;
-
-  while (std::getline(stream, line)) {
-    if (line.empty()) continue;
-
-    std::stringstream ss(line);
-    ProcessInfo proc;
-
-    if (ss >> proc.pid >> proc.cpu_percent >> proc.vmRssKb) {
-      //  Perform common calculations and parsing
-      proc.mem_percent =
-          (static_cast<double>(proc.vmRssKb) / total_mem_kb) * 100.0;
-
-      // The rest of the line is the command name
-      std::getline(ss, proc.name);
-
-      // trim leading whitespace
-      size_t first = proc.name.find_first_not_of(" \t");
-      if (std::string::npos != first) {
-        proc.name = proc.name.substr(first);
-      } else {
-        proc.name = "unknown";
-      }
-
-      output_list.push_back(proc);
-    }
-  }
-}
-
-void get_top_processes(std::vector<ProcessInfo>& output_list, long mem_total_kb,
-                       bool sort_by_mem) {
-  namespace fs = std::filesystem;
-  output_list.clear();
-
-  double total_mem_kb =
-      (mem_total_kb > 0) ? static_cast<double>(mem_total_kb) : 1.0;
-
-  for (const auto& entry : fs::directory_iterator("/proc")) {
-    if (!entry.is_directory()) continue;
-
-    const std::string pid_str = entry.path().filename().string();
-    if (std::all_of(pid_str.begin(), pid_str.end(), ::isdigit)) {
-      // 1. Read /proc/[pid]/status for RSS (memory) and name (cmdline)
-      long pid = std::stol(pid_str);
-      long vmRssKb = read_proc_status_field(entry.path().string(),
-                                            "VmRSS");  // Read VmRSS directly
-
-      if (vmRssKb <= 0) continue;  // Skip kernel threads or unreadable entries
-
-      ProcessInfo proc;
-      proc.pid = pid;
-      proc.vmRssKb = vmRssKb;
-
-      // 2. Calculate Memory Percent
-      proc.mem_percent = (static_cast<double>(vmRssKb) / total_mem_kb) * 100.0;
-
-      // 3. Get CPU Usage (Requires snapshotting/calculation - assumed
-      // implemented elsewhere)
-      proc.cpu_percent = get_process_cpu_usage(pid);
-
-      // 4. Get Name (Simplified: Read command line or /proc/[pid]/comm)
-      std::ifstream cmdline_file(entry.path() / "comm");
-      std::getline(cmdline_file, proc.name);
-
-      if (proc.name.empty()) {
-        proc.name = "unknown";
-      } else {
-        // Remove trailing newline
-        if (proc.name.back() == '\n') proc.name.pop_back();
-      }
-
-      output_list.push_back(std::move(proc));
-    }
-  }
-
-  // 5. Final In-Memory Sorting and Head (Top 10)
-  if (sort_by_mem) {
-    std::sort(output_list.begin(), output_list.end(),
-              [](const ProcessInfo& a, const ProcessInfo& b) {
-                return a.vmRssKb > b.vmRssKb;
-              });
-  } else {
-    std::sort(output_list.begin(), output_list.end(),
-              [](const ProcessInfo& a, const ProcessInfo& b) {
-                return a.cpu_percent > b.cpu_percent;
-              });
-  }
-
-  // Keep only the top 10 results
-  if (output_list.size() > 10) {
-    output_list.resize(10);
-  }
-}
-/**
- * @brief Reads a single numeric value (e.g., VmRSS in KiB) from a line in
- * /proc/[PID]/status.
- * * @param pid_dir The full path to the process directory (e.g., "/proc/1234").
- * @param field_name The specific field to search for (e.g., "VmRSS").
- * @return long The value found, typically in KiB. Returns 0 on error or if not
- * found.
- */
-long read_proc_status_field(const std::string& pid_dir,
-                            const std::string& field_name) {
-  std::ifstream status_file(pid_dir + "/status");
-  if (!status_file.is_open()) {
-    return 0;
-  }
-
-  std::string line;
-  // We search for "VmRSS:", etc.
-  const std::string target_label = field_name + ":";
-
-  while (std::getline(status_file, line)) {
-    if (line.size() >= target_label.size() &&
-        line.compare(0, target_label.size(), target_label) == 0) {
-      // Found the target line. Use stringstream to parse value and unit.
-      std::stringstream ss(line);
-      std::string label;
-      long value = 0;
-      std::string unit;
-
-      // Extracts the label ("VmRSS:"), the value (e.g., 1234), and the unit
-      // ("kB")
-      if (ss >> label >> value >> unit) {
-        return value;
-      }
-    }
-  }
-
-  return 0;
-}
-long get_process_cumulative_cpu_jiffies(long pid) {
-  std::string path = "/proc/" + std::to_string(pid) + "/stat";
-  std::ifstream stat_file(path);
-  if (!stat_file.is_open()) {
-    return 0;
-  }
-
-  std::string line;
-  std::getline(stat_file, line);
-  std::stringstream ss(line);
-
-  // /proc/stat structure requires skipping the first 13 fields (PID, comm,
-  // state, etc.).
-  std::string throwaway;
-  for (int i = 0; i < 13; ++i) {
-    ss >> throwaway;
-  }
-
-  long utime, stime;
-
-  // Fields 14 (utime) and 15 (stime) contain CPU time in Jiffies.
-  if (ss >> utime >> stime) {
-    return utime + stime;
-  }
-
-  return 0;
-}
-ProcessSnapshotMap ProcessPollingTask::read_data() {
-  return provider.get_process_snapshots();
-}
-void ProcessPollingTask::calculate(double time_delta_seconds) {
-  (void)time_delta_seconds;
-
-  // 1. Clear both destination vectors
-  metrics.top_processes_avg_mem.clear();
-  metrics.top_processes_avg_cpu.clear();
-
-  if (time_delta_seconds <= 0.0) return;
-
-  static const long CLK_TCK = sysconf(_SC_CLK_TCK);
-  double total_jiffies_available =
-      static_cast<double>(CLK_TCK) * time_delta_seconds;
-
-  // We need a temporary list to hold all calculated processes before
-  // sorting/splitting
-  std::vector<ProcessInfo> all_procs;
-  // Reserve space to avoid reallocations (estimation: 300 processes)
-  all_procs.reserve(t2_snapshots.size());
-
-  // 2. Calculate stats for ALL processes
-  for (const auto& [pid, current_snap] : t2_snapshots) {
-    auto prev_it = t1_snapshots.find(pid);
-    if (prev_it != t1_snapshots.end()) {
-      const auto& prev_snap = prev_it->second;
-
-      ProcessInfo info;
-      info.pid = pid;
-      info.name = current_snap.name;
-      info.vmRssKb = current_snap.vmRssKb;
-
-      // CPU Calculation
-      long jiffies_delta =
-          current_snap.cumulative_cpu_time - prev_snap.cumulative_cpu_time;
-      if (jiffies_delta >= 0 && total_jiffies_available > 0) {
-        double usage =
-            (static_cast<double>(jiffies_delta) / total_jiffies_available) *
-            100.0;
-        info.cpu_percent = std::min(usage, 100.0);
-      } else {
-        info.cpu_percent = 0.0;
-      }
-
-      // Memory Calculation
-      if (metrics.meminfo.total_kb > 0) {
-        info.mem_percent =
-            (static_cast<double>(info.vmRssKb) / metrics.meminfo.total_kb) *
-            100.0;
-      }
-
-      all_procs.push_back(std::move(info));
-    }
-  }
-
-  metrics.top_processes_avg_mem.reserve(10);
-  metrics.top_processes_avg_cpu.reserve(10);
-
-  // 3. Populate Memory List (Sort by RSS Descending)
-  // We perform a partial sort to get just the top 10, which is faster than full
-  // sort
-  if (all_procs.size() > 10) {
-    std::partial_sort(all_procs.begin(), all_procs.begin() + 10,
-                      all_procs.end(),
-                      [](const ProcessInfo& a, const ProcessInfo& b) {
-                        return a.vmRssKb > b.vmRssKb;
-                      });
-    // Copy top 10 to metrics
-    metrics.top_processes_avg_mem.assign(all_procs.begin(),
-                                         all_procs.begin() + 10);
-  } else {
-    std::sort(all_procs.begin(), all_procs.end(),
-              [](const ProcessInfo& a, const ProcessInfo& b) {
-                return a.vmRssKb > b.vmRssKb;
-              });
-    metrics.top_processes_avg_mem = all_procs;
-  }
-
-  // 4. Populate CPU List (Sort by CPU Descending)
-  // Re-sort the same master list for CPU
-  if (all_procs.size() > 10) {
-    std::partial_sort(all_procs.begin(), all_procs.begin() + 10,
-                      all_procs.end(),
-                      [](const ProcessInfo& a, const ProcessInfo& b) {
-                        return a.cpu_percent > b.cpu_percent;
-                      });
-    metrics.top_processes_avg_cpu.assign(all_procs.begin(),
-                                         all_procs.begin() + 10);
-  } else {
-    std::sort(all_procs.begin(), all_procs.end(),
-              [](const ProcessInfo& a, const ProcessInfo& b) {
-                return a.cpu_percent > b.cpu_percent;
-              });
-    metrics.top_processes_avg_cpu = all_procs;
-  }
-}
-double get_process_cpu_usage(long pid) {
-  // Static map holds the last known CPU time and timestamp (T1) for all PIDs.
-  static std::map<long, CpuState> previous_cpu_state;
-  // Jiffies per second (system clock rate). Assumes this is constant.
-  static const long CLK_TCK = sysconf(_SC_CLK_TCK);
-
-  // T2 Snapshot (Current) - Relies on the user-provided jiffies reader
-  long current_jiffies = get_process_cumulative_cpu_jiffies(pid);
-  auto current_timestamp = std::chrono::steady_clock::now();
-
-  // Check for previous T1 state
-  auto it = previous_cpu_state.find(pid);
-
-  if (it == previous_cpu_state.end()) {
-    // First execution: Initialize T1 state and return 0 usage.
-    previous_cpu_state[pid] = {current_jiffies, current_timestamp};
-    return 0.0;
-  }
-
-  // T1 Snapshot (Previous)
-  long last_jiffies = it->second.jiffies;
-  auto last_timestamp = it->second.timestamp;
-
-  // Calculate deltas
-  long jiffies_delta = current_jiffies - last_jiffies;
-  auto time_delta = current_timestamp - last_timestamp;
-  double wall_time_seconds = std::chrono::duration<double>(time_delta).count();
-
-  // Update T1 state for the next call
-  it->second = {current_jiffies, current_timestamp};
-
-  // Guard against errors (division by zero, negative time)
-  if (wall_time_seconds <= 0 || jiffies_delta < 0 || CLK_TCK <= 0) {
-    return 0.0;
-  }
-
-  // CPU % calculation
-  double usage_percent =
-      (static_cast<double>(jiffies_delta) / (wall_time_seconds * CLK_TCK)) *
-      100.0;
-
-  return std::min(usage_percent, 100.0);
-}
-
-#include <unistd.h>
+// Reads VmRSS from /proc/[pid]/status
 long read_proc_vmrss(const std::string& pid_dir) {
   std::ifstream status_file(pid_dir + "/status");
   std::string line;
@@ -399,6 +71,9 @@ long read_proc_jiffies(long pid) {
   return 0;
 }
 
+// --- DATA PROVIDERS ---
+
+// 1. LOCAL: High-performance direct /proc parsing
 ProcessSnapshotMap LocalDataStreams::get_process_snapshots() {
   namespace fs = std::filesystem;
   ProcessSnapshotMap snapshots;
@@ -433,6 +108,8 @@ ProcessSnapshotMap LocalDataStreams::get_process_snapshots() {
   }
   return snapshots;
 }
+
+// 2. REMOTE (SSH): Fallback using 'ps' command to reduce network overhead
 ProcessSnapshotMap ProcDataStreams::get_process_snapshots() {
   ProcessSnapshotMap snapshots;
 
@@ -471,17 +148,127 @@ ProcessSnapshotMap ProcDataStreams::get_process_snapshots() {
   }
   return snapshots;
 }
+
+// --- POLLING TASK LOGIC ---
+
 ProcessPollingTask::ProcessPollingTask(DataStreamProvider& provider,
                                        SystemMetrics& metrics,
                                        MetricsContext& context)
     : IPollingTask(provider, metrics, context) {
   name = "Process polling";
 }
-void ProcessPollingTask::take_snapshot_1() { t1_snapshots = read_data(); }
 
+void ProcessPollingTask::take_snapshot_1() { t1_snapshots = read_data(); }
 void ProcessPollingTask::take_snapshot_2() { t2_snapshots = read_data(); }
+
+ProcessSnapshotMap ProcessPollingTask::read_data() {
+  return provider.get_process_snapshots();
+}
+
 void ProcessPollingTask::commit() {
   // Efficiently move T2 data to T1.
   // This clears T2 and prepares T1 for the next loop instantly.
   t1_snapshots = std::move(t2_snapshots);
+}
+
+void ProcessPollingTask::calculate(double time_delta_seconds) {
+  // 1. Clear all destination vectors
+  metrics.top_processes_avg_mem.clear();
+  metrics.top_processes_avg_cpu.clear();
+  metrics.top_processes_real_mem.clear();
+  metrics.top_processes_real_cpu.clear();
+
+  if (time_delta_seconds <= 0.0) return;
+
+  static const long CLK_TCK = sysconf(_SC_CLK_TCK);
+  double total_jiffies_available =
+      static_cast<double>(CLK_TCK) * time_delta_seconds;
+
+  std::vector<ProcessInfo> all_procs;
+  all_procs.reserve(t2_snapshots.size());
+
+  // 2. Calculate Real-Time Delta for ALL processes
+  for (const auto& [pid, current_snap] : t2_snapshots) {
+    auto prev_it = t1_snapshots.find(pid);
+    if (prev_it != t1_snapshots.end()) {
+      const auto& prev_snap = prev_it->second;
+
+      ProcessInfo info;
+      info.pid = pid;
+      info.name = current_snap.name;
+      info.vmRssKb = current_snap.vmRssKb;
+
+      // --- CPU Calculation (Real-Time / Interval) ---
+      // This calculates usage strictly for the window between Snapshot 1 and 2
+      long jiffies_delta =
+          current_snap.cumulative_cpu_time - prev_snap.cumulative_cpu_time;
+
+      if (jiffies_delta >= 0 && total_jiffies_available > 0) {
+        double usage =
+            (static_cast<double>(jiffies_delta) / total_jiffies_available) *
+            100.0;
+        info.cpu_percent = std::min(usage, 100.0);
+      } else {
+        info.cpu_percent = 0.0;
+      }
+
+      // --- Memory Calculation ---
+      if (metrics.meminfo.total_kb > 0) {
+        info.mem_percent =
+            (static_cast<double>(info.vmRssKb) / metrics.meminfo.total_kb) *
+            100.0;
+      }
+
+      all_procs.push_back(std::move(info));
+    }
+  }
+
+  // Helper lambda for sorting and assigning top 10
+  auto populate_top_10 = [](std::vector<ProcessInfo>& source,
+                            std::vector<ProcessInfo>& dest, bool sort_by_mem) {
+    dest.reserve(10);
+    if (sort_by_mem) {
+      // Sort by Memory (RSS)
+      if (source.size() > 10) {
+        std::partial_sort(source.begin(), source.begin() + 10, source.end(),
+                          [](const ProcessInfo& a, const ProcessInfo& b) {
+                            return a.vmRssKb > b.vmRssKb;
+                          });
+        dest.assign(source.begin(), source.begin() + 10);
+      } else {
+        std::sort(source.begin(), source.end(),
+                  [](const ProcessInfo& a, const ProcessInfo& b) {
+                    return a.vmRssKb > b.vmRssKb;
+                  });
+        dest = source;
+      }
+    } else {
+      // Sort by CPU
+      if (source.size() > 10) {
+        std::partial_sort(source.begin(), source.begin() + 10, source.end(),
+                          [](const ProcessInfo& a, const ProcessInfo& b) {
+                            return a.cpu_percent > b.cpu_percent;
+                          });
+        dest.assign(source.begin(), source.begin() + 10);
+      } else {
+        std::sort(source.begin(), source.end(),
+                  [](const ProcessInfo& a, const ProcessInfo& b) {
+                    return a.cpu_percent > b.cpu_percent;
+                  });
+        dest = source;
+      }
+    }
+  };
+
+  // 3. Populate Vectors
+  // Memory: Real and Avg are usually identical (Current RSS)
+  populate_top_10(all_procs, metrics.top_processes_real_mem, true);
+  metrics.top_processes_avg_mem = metrics.top_processes_real_mem;
+
+  // CPU: This math produces REAL (Live) stats, so we assign to _real_cpu
+  populate_top_10(all_procs, metrics.top_processes_real_cpu, false);
+
+  // Note: metrics.top_processes_avg_cpu (Lifetime Average) cannot be
+  // calculated here without Process Start Time (from /proc/[pid]/stat field 22)
+  // and System Uptime. For now, it remains empty or you can alias it to Real.
 }

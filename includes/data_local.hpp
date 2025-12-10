@@ -38,10 +38,6 @@ struct LocalDataStreams : public DataStreamProvider {
   //   std::istream& get_top_cpu_processes_stream() override;
   //   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   //   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
-  std::istream& get_top_mem_processes_avg_stream() override;
-  std::istream& get_top_cpu_processes_avg_stream() override;
-  std::istream& get_top_mem_processes_real_stream() override;
-  std::istream& get_top_cpu_processes_real_stream() override;
   void finally() override;
 
   DiskUsage get_disk_usage(const std::string&) override;

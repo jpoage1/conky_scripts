@@ -64,20 +64,6 @@ int SystemMetrics::read_data() {
 
   get_load_and_process_stats(provider->get_loadavg_stream(), *this);
 
-  //   // Call for Real Top CPU processes
-  //   get_top_processes(
-  //       provider->get_top_mem_processes_real_stream(),  // Input stream
-  //       metrics.top_processes_real_mem,                // Output vector
-  //       metrics.meminfo.total_kb                           // Total
-  //       memory
-  //   );
-  //   get_top_processes(
-  //       provider->get_top_cpu_processes_real_stream(),  // Input stream
-  //       metrics.top_processes_real_cpu,                // Output vector
-  //       metrics.meminfo.total_kb                           // Total
-  //       memory
-  //   );
-
   get_system_info(*this);
   return 0;
 }

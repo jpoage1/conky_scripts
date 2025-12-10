@@ -1,9 +1,9 @@
 // json.cpp
 
 #include "data.hpp"
-#include "json_definitions.hpp"  // JSON serialization macros
+#include "json_definitions.hpp"
 #include "metrics.hpp"
-#include "parser.hpp"  // Shared parser (handles argc check now)
+#include "parser.hpp"
 #include "polling.hpp"
 #include "runner.hpp"
 
