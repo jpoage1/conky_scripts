@@ -22,13 +22,17 @@ pkgs.mkShell {
 
   # Shell-specific settings
   shellHook = ''
-    alias waybard="time ./waybard.bin ~/.config/conky/file-systems.txt"
-    alias json="time ./json.bin ~/.config/conky/file-systems.txt"
+    
+    alias build-target="cmake --build build --target"
+    alias waybard="time ./build/waybard ~/.config/conky/file-systems.txt"
+    alias json="time ./build/json ~/.config/conky/file-systems.txt"
+
     echo "Entering a Nix development shell for conkyd..."
     echo "C++ compiler available: $(which g++)"
     echo "Build system available: $(which cmake)"
     echo "pkg-config available: $(which pkg-config)"
     echo "libssh headers and library are now available for your project."
+
     unset NIX_ENFORCE_NO_NATIVE
   '';
 }

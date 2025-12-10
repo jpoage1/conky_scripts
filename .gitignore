@@ -1,15 +1,25 @@
-.history/
-*.o
-*.a
-*.bin
-obj/
-a.out
-vgcore.*
-*.bak
-CMakeCache.txt
-cmake_install.cmake
+# Build Directory (Primary CMake output)
+build/
+
+# In-source build safeguards
 CMakeFiles/
 CMakeCache.txt
-test.cpp
-CMakeLists.txt
+cmake_install.cmake
+install_manifest.txt
+Makefile
+compile_commands.json
+
+# Binary Artifacts
+*.bin
+*.a
+*.o
+a.out
+
+# Editor / Tooling
+.history/
 my.code-workspace
+vgcore.*
+*.bak
+
+# Misc
+test.cpp
