@@ -15,6 +15,7 @@ pkgs.mkShell {
     nlohmann_json
     gtkmm4
     pkg-config
+    spdlog
     # openssl
   ];
 
@@ -28,5 +29,6 @@ pkgs.mkShell {
     echo "Build system available: $(which cmake)"
     echo "pkg-config available: $(which pkg-config)"
     echo "libssh headers and library are now available for your project."
+    unset NIX_ENFORCE_NO_NATIVE
   '';
 }

@@ -1,3 +1,14 @@
 .history/
 *.o
 *.a
+*.bin
+obj/
+a.out
+vgcore.*
+*.bak
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles/
+CMakeCache.txt
+test.cpp
+CMakeLists.txt

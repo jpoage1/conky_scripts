@@ -279,6 +279,9 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
     }
   }
 
+  metrics.top_processes_avg_mem.reserve(10);
+  metrics.top_processes_avg_cpu.reserve(10);
+
   // 3. Populate Memory List (Sort by RSS Descending)
   // We perform a partial sort to get just the top 10, which is faster than full
   // sort
