@@ -70,6 +70,7 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
     device_paths.insert(device_paths.end(), loaded.begin(), loaded.end());
   }
 
+  metrics.disks.reserve(metrics.disks.size() + device_paths.size());
   // 2. Iterate the paths we JUST loaded
   for (const std::string& logical_path : device_paths) {
     try {
@@ -124,6 +125,7 @@ void DiskPollingTask::calculate(double time_delta_seconds) {
     info_ptr->io.read_bytes_per_sec = 0;
     info_ptr->io.write_bytes_per_sec = 0;
   }
+  std::cerr << "Disk Calculate: T2 Size = " << t2_snapshots.size() << std::endl;
 
   // 3. Calculate stats for all devices
   for (auto const& [dev_name, t2_snap] : t2_snapshots) {
@@ -150,12 +152,19 @@ void DiskPollingTask::calculate(double time_delta_seconds) {
       DeviceInfo* info_ptr = info_it->second;
       info_ptr->io.read_bytes_per_sec = read_bps;
       info_ptr->io.write_bytes_per_sec = write_bps;
-    } else {
+    } else {  // Inside the loop
+              // Ensure we aren't writing infinite entries
+      if (metrics.disk_io.size() > 100) {
+        std::cerr << "CRITICAL: DiskIO map growing too large! Aborting."
+                  << std::endl;
+        return;
+      }
       // It's not from the config. Add it to the generic HdIoStats map.
       HdIoStats& io = metrics.disk_io[dev_name];
       io.device_name = dev_name;
       io.read_bytes_per_sec = read_bps;
       io.write_bytes_per_sec = write_bps;
+
       //   std::cerr << "Found disk `" << io.device_name << "'" << std::endl;
       //   std::cerr << "CALCULATE: Added to disk_io map: " << dev_name
       //             << " (read: " << read_bps << ", write: " << write_bps

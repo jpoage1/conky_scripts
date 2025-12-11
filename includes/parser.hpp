@@ -8,7 +8,7 @@
 #include "runner.hpp"
 
 // The generic signature for ANY output strategy
-using OutputPipeline = std::function<void(const std::vector<SystemMetrics>&)>;
+using OutputPipeline = std::function<void(const std::list<SystemMetrics>&)>;
 
 enum RunMode {
   RUN_ONCE,
@@ -59,11 +59,11 @@ class ParsedConfig {
   void configure_renderer();
   void sleep();
 
-  int initialize(std::vector<SystemMetrics>& tasks,
+  int initialize(std::list<SystemMetrics>& tasks,
                  std::chrono::time_point<std::chrono::steady_clock>& timestamp);
 
-  int initialize(std::vector<SystemMetrics>& tasks);
-  void done(std::vector<SystemMetrics>& result);
+  int initialize(std::list<SystemMetrics>& tasks);
+  void done(std::list<SystemMetrics>& result);
 };
 /**
  * @brief Parses command line arguments (argc, argv) to collect metric results.

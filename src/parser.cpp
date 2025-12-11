@@ -5,6 +5,7 @@
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 #include "json_serializer.hpp"
+#include "log.hpp"
 #include "polling.hpp"
 #include "runner.hpp"
 
@@ -304,7 +305,7 @@ void ParsedConfig::configure_renderer() {
 }
 
 int ParsedConfig::initialize(
-    std::vector<SystemMetrics>& tasks,
+    std::list<SystemMetrics>& tasks,
     std::chrono::time_point<std::chrono::steady_clock>& timestamp) {
   this->configure_renderer();
 
@@ -315,6 +316,8 @@ int ParsedConfig::initialize(
   /* Perform these steps only once */
   for (MetricsContext& task : this->tasks) {
     SystemMetrics& new_task = tasks.emplace_back(task);
+    std::cerr << "Initialize context " << &task << " New task " << &new_task
+              << std::endl;
     if (new_task.read_data() != 0) {
       std::cerr << "Warning: Failed to read initial data for task."
                 << std::endl;
@@ -324,19 +327,24 @@ int ParsedConfig::initialize(
 
   sleep_until = std::chrono::steady_clock::now();
   timestamp = sleep_until;
+
   for (SystemMetrics& task : tasks) {
     for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
-      SPDLOG_DEBUG("Taking snapshot");
+      std::cerr << "Initialize Task " << &task << " Polling task "
+                << &polling_task << std::endl;
       polling_task->take_snapshot_1();
     }
   }
   return 0;
 }
-void ParsedConfig::done(std::vector<SystemMetrics>& result) {
+void ParsedConfig::done(std::list<SystemMetrics>& result) {
   // 2. Simply execute it.
   // The 'active_pipeline' already knows what to do and holds the necessary
   // settings/serializer.
+
   if (this->active_pipeline) {
+    std::cerr << "Active pipeline  " << &this->active_pipeline << " result "
+              << &result << std::endl;
     this->active_pipeline(result);
   }
 }
@@ -348,11 +356,13 @@ OutputPipeline configure_json_pipeline(const MetricSettings& settings) {
   auto serializer = std::make_shared<JsonSerializer>(settings);
 
   // 2. Return the executable function
-  return [serializer](const std::vector<SystemMetrics>& result) {
+  return [serializer](const std::list<SystemMetrics>& result) {
     nlohmann::json output_json = nlohmann::json::array();
 
     // The serializer logic is already baked in; no 'if' checks needed here
     for (const auto& metrics : result) {
+      std::cerr << "configure_json_pipeline lambda Metrics " << &metrics
+                << std::endl;
       output_json.push_back(serializer->serialize(metrics));
     }
 
@@ -364,8 +374,10 @@ OutputPipeline configure_json_pipeline(const MetricSettings& settings) {
 OutputPipeline configure_conky_pipeline(const MetricSettings& settings) {
   // 1. Capture settings by value for the lambda
   // (Or build a helper vector of print-functions like we did for JSON)
-  return [settings](const std::vector<SystemMetrics>& result) {
+  return [settings](const std::list<SystemMetrics>& result) {
     for (const SystemMetrics& metrics : result) {
+      std::cerr << "configure_conky_pipeline lambda Metrics " << &metrics
+                << std::endl;
       print_metrics(metrics);
     }
     // for (const auto& m : result) {

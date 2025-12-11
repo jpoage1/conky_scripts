@@ -16,7 +16,8 @@ find_package(Lua REQUIRED)
 find_package(spdlog REQUIRED)
 
 # --- Compiler Flags ---
-add_compile_options(-Wall -Wextra -O3 -march=native)
+add_compile_options(-Wall -Wextra -O3 -march=native -fsanitize=address)
+add_link_options(-fsanitize=address)
 
 # --- Includes ---
 include_directories(

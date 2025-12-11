@@ -207,6 +207,8 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
 
     output_pipeline.emplace_back(
         [this, need_real, need_avg](std::vector<ProcessInfo>& data) {
+          std::cerr << "ProcessPollingTask lambda this " << this << " metrics "
+                    << &this->metrics << std::endl;
           if (need_real) {
             // Sort by Realtime CPU
             this->populate_top_10(data, this->metrics.top_processes_real_cpu,
@@ -223,7 +225,11 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
             this->populate_top_10(data, this->metrics.top_processes_avg_cpu,
                                   SortMode::CPU_AVG);
           }
+          std::cerr << "CPU Lambda: Exiting scope." << std::endl;
         });
+    // In Constructor
+    std::cerr << "Pipeline vector address: " << &output_pipeline
+              << " Size: " << output_pipeline.size() << std::endl;
   }
 
   // 2. Memory Configuration
@@ -234,6 +240,8 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
 
     output_pipeline.emplace_back(
         [this, need_real, need_avg](std::vector<ProcessInfo>& data) {
+          std::cerr << "ProcessPollingTask lambda this " << this << " metrics "
+                    << &this->metrics << std::endl;
           // Always sort by Memory (RSS)
           this->populate_top_10(data, this->metrics.top_processes_real_mem,
                                 SortMode::MEM);
@@ -242,13 +250,16 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
             this->metrics.top_processes_avg_mem =
                 this->metrics.top_processes_real_mem;
           }
+
           // If real is disabled but avg is enabled, we still use the REAL list
           // because "Average Memory" isn't really a distinct thing (it's just
           // current usage).
           if (!need_real && need_avg) {
+            std::cerr << "pipeline (alt path)" << std::endl;
             this->metrics.top_processes_avg_mem =
                 this->metrics.top_processes_real_mem;
           }
+          std::cerr << "Memory Lambda: Exiting scope." << std::endl;
         });
   }
 }
@@ -269,6 +280,7 @@ void ProcessPollingTask::commit() {
 void ProcessPollingTask::populate_top_10(std::vector<ProcessInfo>& source,
                                          std::vector<ProcessInfo>& dest,
                                          SortMode mode) {
+  std::cerr << "  Sort: Start. Size: " << source.size() << std::endl;
   dest.reserve(10);
 
   // Define the comparator based on the mode
@@ -292,6 +304,7 @@ void ProcessPollingTask::populate_top_10(std::vector<ProcessInfo>& source,
     std::sort(source.begin(), source.end(), sorter);
     dest = source;
   }
+  std::cerr << "  Sort: Finished." << std::endl;
 }
 void ProcessPollingTask::calculate(double time_delta_seconds) {
   // 1. Clear all destination vectors
@@ -299,6 +312,8 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
   metrics.top_processes_avg_cpu.clear();
   metrics.top_processes_real_mem.clear();
   metrics.top_processes_real_cpu.clear();
+  std::cerr << "Pipeline vector address: " << &output_pipeline
+            << " Size: " << output_pipeline.size() << std::endl;
 
   if (time_delta_seconds <= 0.0) return;
 
@@ -367,8 +382,19 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
       all_procs.push_back(std::move(info));
     }
   }
+  std::cerr << "Starting pipeline execution. Steps: " << output_pipeline.size()
+            << std::endl;
 
+  int step_index = 0;
   for (const auto& task : output_pipeline) {
+    std::cerr << " [Step " << step_index << "] Invoking task..." << std::endl;
+
+    // EXECUTE
     task(all_procs);
+
+    std::cerr << " [Step " << step_index << "] Task finished." << std::endl;
+    step_index++;
   }
+
+  std::cerr << "Pipeline complete." << std::endl;
 }
