@@ -106,23 +106,3 @@ void SystemMetrics::configure_polling_pipeline(MetricsContext& context) {
     polling_tasks.emplace_back(
         std::make_unique<ProcessPollingTask>(*provider, *this, context));
 }
-
-// int SystemMetrics::read_data() {
-//   top_processes_avg_mem.clear();
-//   top_processes_avg_cpu.clear();
-//   cores.clear();
-//   disk_io.clear();
-//   disks.clear();
-
-//   cpu_temp_c = provider->get_cpu_temperature();
-
-//   get_mem_usage(provider->get_meminfo_stream(), meminfo, swapinfo);
-
-//   uptime = get_uptime(provider->get_uptime_stream());
-//   cpu_frequency_ghz = get_cpu_freq_ghz(provider->get_cpuinfo_stream());
-
-//   get_load_and_process_stats(provider->get_loadavg_stream(), *this);
-
-//   get_system_info(*this);
-//   return 0;
-// }

@@ -48,8 +48,14 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
                                  SystemMetrics& metrics,
                                  MetricsContext& context)
     : IPollingTask(provider, metrics, context) {
-  // 1. Load paths from the config file
-  DevicePaths device_paths = load_device_paths(context.device_file);
+  DevicePaths device_paths;
+  device_paths.insert(device_paths.end(), context.filesystems.begin(),
+                      context.filesystems.end());
+
+  if (!context.device_file.empty()) {
+    std::vector<std::string> loaded = load_device_paths(context.device_file);
+    device_paths.insert(device_paths.end(), loaded.begin(), loaded.end());
+  }
 
   // 2. Iterate the paths we JUST loaded
   for (const std::string& logical_path : device_paths) {

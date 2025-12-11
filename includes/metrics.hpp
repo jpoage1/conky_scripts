@@ -77,7 +77,6 @@ class SystemMetrics {
 
   int read_data();
   void complete();
-  DevicePaths load_device_paths(const std::string& config_file);
   int get_metrics_from_provider();
   SystemMetrics(SystemMetrics&&) noexcept = default;
   SystemMetrics& operator=(SystemMetrics&&) noexcept = default;

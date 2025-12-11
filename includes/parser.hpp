@@ -2,6 +2,7 @@
 #pragma once
 
 #include "json_definitions.hpp"
+#include "lua_parser.hpp"
 #include "metrics.hpp"
 #include "pcn.hpp"
 #include "runner.hpp"
@@ -52,6 +53,8 @@ class ParsedConfig {
   OutputMode get_output_mode() const;
   void set_run_mode(RunMode mode);
   void set_output_mode(OutputMode mode);
+  void set_output_mode(std::string mode);
+  void set_run_mode(std::string mode);
   void configure_renderer();
   void done(std::vector<SystemMetrics>& result);
 };

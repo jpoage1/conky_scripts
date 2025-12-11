@@ -13,14 +13,18 @@ struct MetricsContext {
   MetricSettings settings;
 
   std::string source_name;
-  std::string device_file;
+  std::string device_file = "";
 
   std::string user;
   std::string host;
+  std::string port;
+  std::string key;
   DataStreamProviders provider;
   std::string error_message;
   bool success;
   std::set<std::string> interfaces;
+  std::vector<std::string> filesystems;
+  std::vector<std::string> io_devices;
 
   MetricsContext(MetricsContext&&) noexcept = default;
   MetricsContext& operator=(MetricsContext&&) noexcept = default;

@@ -45,11 +45,11 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
     }
     // Handle Persistent Flag
     else if (command == "--persistent") {
-      config.set_run_mode(PERSISTENT);
+      config.set_run_mode(RunMode::PERSISTENT);
       i++;  // Consume this flag and continue parsing
     }
     // Handle Explicit Commands
-    else if (command == "--local" || command == "--ssh") {
+    else if (command == "--local" || command == "--ssh" || command == "--lua") {
       consumed = process_command(args_full, i, config.tasks);
       // Ensure loop advances if process_command fails/returns 0 or doesn't
       // update 'i'
@@ -61,6 +61,7 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
       //    i += consumed;
       // }
     }
+
     // Handle Unknown
     else {
       MetricsContext context;
@@ -135,6 +136,7 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
                     std::vector<MetricsContext>& tasks) {
   MetricsContext context;
   std::string command = args[current_index];
+  std::cerr << "Processing command: " << command << std::endl;
   size_t initial_index = current_index;
 
   // --- 1. Parse Config File ---
@@ -157,6 +159,11 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
         (command == "--local") ? "Local (Error)" : "SSH (Error)";
     tasks.push_back(std::move(context));
     return current_index - initial_index;  // Return consumed args
+  } else if (command == "--lua") {
+    std::cerr << "Loading lua config" << std::endl;
+    context = load_lua_config(config_file);
+    tasks.push_back(std::move(context));
+    return current_index - initial_index;
   } else {
     context.device_file = config_file;
   }
@@ -210,6 +217,25 @@ RunMode ParsedConfig::run_mode() const { return _run_mode; }
 OutputMode ParsedConfig::get_output_mode() const { return _output_mode; }
 void ParsedConfig::set_run_mode(RunMode mode) { _run_mode = mode; }
 void ParsedConfig::set_output_mode(OutputMode mode) { _output_mode = mode; }
+
+void ParsedConfig::set_output_mode(std::string mode) {
+  if (mode == "json") {
+    _output_mode = OutputMode::JSON;
+  } else if (mode == "conky") {
+    _output_mode = OutputMode::CONKY;
+  } else {
+    std ::cerr << "Error: invalid output mode `" << mode << "`" << std::endl;
+  }
+}
+void ParsedConfig::set_run_mode(std::string mode) {
+  if (mode == "persistent") {
+    _run_mode = RunMode::PERSISTENT;
+  } else if (mode == "run_once") {
+    _run_mode = RunMode::RUN_ONCE;
+  } else {
+    std ::cerr << "Error: invalid run mode `" << mode << "`" << std::endl;
+  }
+}
 void ParsedConfig::configure_renderer() {
   for (MetricsContext& task : tasks)
     // 1. Select and Configure the pipeline ONCE

@@ -16,6 +16,9 @@ pkgs.mkShell {
     gtkmm4
     pkg-config
     spdlog
+
+    lua
+    sol2
     # openssl
   ];
 
@@ -28,6 +31,7 @@ pkgs.mkShell {
 
     alias waybard="time ./build/waybard ~/.config/conky/file-systems.txt"
     alias json="time ./build/json ~/.config/conky/file-systems.txt"
+    alias lua="time ./build/json --lua ~/.config/conky/config.lua"
 
     echo "Entering a Nix development shell for conkyd..."
     echo "C++ compiler available: $(which g++)"
