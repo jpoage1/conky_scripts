@@ -24,6 +24,50 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
   std::vector<std::string> args_in(argv + 1,
                                    argv + argc);  // args_in is argv[1] onwards
 
+  // ---------------------------------------------------------
+  // PRIORITY CHECK: --config (Exclusive Mode)
+  // ---------------------------------------------------------
+  // If --config is present, we ignore all other flags and load only that file.
+
+  for (size_t i = 0; i < args_in.size(); ++i) {
+    if (args_in[i] == "--config") {
+      if (i + 1 < args_in.size()) {
+        // 1. Check for duplicates
+        int config_count = 0;
+        for (const auto& arg : args_in) {
+          if (arg == "--config") config_count++;
+        }
+
+        if (config_count > 1) {
+          std::cerr << "Warning: Multiple --config flags detected. Only the "
+                       "first one is being consumed."
+                    << std::endl;
+        }
+        // 2. Check for other ignored flags (e.g. --local mixed with --config)
+        else if (args_in.size() > 2) {
+          std::cerr << "Warning: --config flag detected. All other flags are "
+                       "being ignored."
+                    << std::endl;
+        }
+
+        std::string filename = args_in[i + 1];
+        std::cerr << "Loading global config: " << filename << std::endl;
+
+        config = load_lua_config(filename);
+
+        // Stop parsing immediately
+        return config;
+      } else {
+        std::cerr << "Error: --config requires a filename." << std::endl;
+        return config;  // Return empty/invalid
+      }
+    }
+  }
+
+  // ---------------------------------------------------------
+  // CLI MODE
+  // ---------------------------------------------------------
+  // If we reach here, no --config was passed. Parse other flags normally.
   std::vector<std::string> args_full;
   args_full.push_back(prog_name);  // argv[0] equivalent
   args_full.insert(args_full.end(), args_in.begin(), args_in.end());
@@ -47,19 +91,7 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
     else if (command == "--persistent") {
       config.set_run_mode(RunMode::PERSISTENT);
       i++;  // Consume this flag and continue parsing
-    } else if (command == "--config") {
-      if (i + 1 < args_full.size()) {
-        std::string filename = args_full[i + 1];
-
-        config = load_lua_config(filename);
-
-        i += 2;  // Consume flag and filename
-      } else {
-        std::cerr << "Error: --config requires a filename." << std::endl;
-        i++;
-      }
-    }
-    // Handle Explicit Commands
+    }  // Handle Explicit Commands
     else if (command == "--local" || command == "--ssh" ||
              command == "--settings") {
       consumed = process_command(args_full, i, config.tasks);
