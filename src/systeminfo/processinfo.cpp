@@ -204,11 +204,12 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
       settings.enable_avg_processinfo_cpu) {
     bool need_real = settings.enable_realtime_processinfo_cpu;
     bool need_avg = settings.enable_avg_processinfo_cpu;
+    DEBUG_PTR("Pipeline vector", output_pipeline);
 
     output_pipeline.emplace_back(
         [this, need_real, need_avg](std::vector<ProcessInfo>& data) {
-          std::cerr << "ProcessPollingTask lambda this " << this << " metrics "
-                    << &this->metrics << std::endl;
+          DEBUG_PTR("ProcessPollingTask lambda this", this);
+          DEBUG_PTR("ProcessPollingTask lambda metrics", metrics);
           if (need_real) {
             // Sort by Realtime CPU
             this->populate_top_10(data, this->metrics.top_processes_real_cpu,
@@ -225,11 +226,8 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
             this->populate_top_10(data, this->metrics.top_processes_avg_cpu,
                                   SortMode::CPU_AVG);
           }
-          std::cerr << "CPU Lambda: Exiting scope." << std::endl;
+          SPDLOG_DEBUG("CPU Lambda: Exiting scope.");
         });
-    // In Constructor
-    std::cerr << "Pipeline vector address: " << &output_pipeline
-              << " Size: " << output_pipeline.size() << std::endl;
   }
 
   // 2. Memory Configuration
@@ -240,8 +238,8 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
 
     output_pipeline.emplace_back(
         [this, need_real, need_avg](std::vector<ProcessInfo>& data) {
-          std::cerr << "ProcessPollingTask lambda this " << this << " metrics "
-                    << &this->metrics << std::endl;
+          DEBUG_PTR("ProcessPollingTask lambda this", this);
+          DEBUG_PTR("ProcessPollingTask lambda metrics", metrics);
           // Always sort by Memory (RSS)
           this->populate_top_10(data, this->metrics.top_processes_real_mem,
                                 SortMode::MEM);
@@ -255,11 +253,11 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
           // because "Average Memory" isn't really a distinct thing (it's just
           // current usage).
           if (!need_real && need_avg) {
-            std::cerr << "pipeline (alt path)" << std::endl;
+            SPDLOG_DEBUG("pipeline (alt path)");
             this->metrics.top_processes_avg_mem =
                 this->metrics.top_processes_real_mem;
           }
-          std::cerr << "Memory Lambda: Exiting scope." << std::endl;
+          SPDLOG_DEBUG("Memory Lambda: Exiting scope.");
         });
   }
 }
@@ -280,7 +278,7 @@ void ProcessPollingTask::commit() {
 void ProcessPollingTask::populate_top_10(std::vector<ProcessInfo>& source,
                                          std::vector<ProcessInfo>& dest,
                                          SortMode mode) {
-  std::cerr << "  Sort: Start. Size: " << source.size() << std::endl;
+  SPDLOG_DEBUG("  Sort: Start. Size: {}", source.size());
   dest.reserve(10);
 
   // Define the comparator based on the mode
@@ -304,7 +302,7 @@ void ProcessPollingTask::populate_top_10(std::vector<ProcessInfo>& source,
     std::sort(source.begin(), source.end(), sorter);
     dest = source;
   }
-  std::cerr << "  Sort: Finished." << std::endl;
+  SPDLOG_DEBUG("  Sort: Finished.");
 }
 void ProcessPollingTask::calculate(double time_delta_seconds) {
   // 1. Clear all destination vectors
@@ -312,8 +310,8 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
   metrics.top_processes_avg_cpu.clear();
   metrics.top_processes_real_mem.clear();
   metrics.top_processes_real_cpu.clear();
-  std::cerr << "Pipeline vector address: " << &output_pipeline
-            << " Size: " << output_pipeline.size() << std::endl;
+
+  DEBUG_PTR("Pipeline vector", output_pipeline);
 
   if (time_delta_seconds <= 0.0) return;
 
@@ -382,19 +380,19 @@ void ProcessPollingTask::calculate(double time_delta_seconds) {
       all_procs.push_back(std::move(info));
     }
   }
-  std::cerr << "Starting pipeline execution. Steps: " << output_pipeline.size()
-            << std::endl;
+  SPDLOG_DEBUG("Starting pipeline execution. Steps: {}",
+               output_pipeline.size());
 
   int step_index = 0;
   for (const auto& task : output_pipeline) {
-    std::cerr << " [Step " << step_index << "] Invoking task..." << std::endl;
+    SPDLOG_DEBUG(" [Step {}] Invoking task...", step_index);
 
     // EXECUTE
     task(all_procs);
 
-    std::cerr << " [Step " << step_index << "] Task finished." << std::endl;
+    SPDLOG_DEBUG(" [Step {}] Task finished.", step_index);
     step_index++;
   }
 
-  std::cerr << "Pipeline complete." << std::endl;
+  SPDLOG_DEBUG("Pipeline complete.");
 }

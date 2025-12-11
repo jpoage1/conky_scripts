@@ -16,9 +16,7 @@ std::istream& ProcDataStreams::get_stat_stream() {
 CpuPollingTask::CpuPollingTask(DataStreamProvider& provider,
                                SystemMetrics& metrics, MetricsContext& context)
     : IPollingTask(provider, metrics, context) {
-  //   std::cerr << "Child constructor called" << std::endl;
   //   dump_fstream(provider.get_stat_stream());
-  //   std::cerr << "End of child constructor call" << std::endl;
 }
 
 void CpuPollingTask::calculate(double /*time_delta_seconds*/) {

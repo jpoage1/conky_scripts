@@ -93,26 +93,22 @@ void SystemMetrics::configure_polling_pipeline(MetricsContext& context) {
   if (settings.enable_cpuinfo) {
     auto& new_task = polling_tasks.emplace_back(
         std::make_unique<CpuPollingTask>(*provider, *this, context));
-    std::cerr << "cpuinfo  " << &new_task << " " << new_task.get() << std::endl;
+    DEBUG_PTR("cpuinfo", new_task);
   }
 
   if (settings.enable_network_stats) {
     auto& new_task = polling_tasks.emplace_back(
         std::make_unique<NetworkPollingTask>(*provider, *this, context));
-    std::cerr << "networkstats  " << &new_task << " " << new_task.get()
-              << std::endl;
+    DEBUG_PTR("networkstats", new_task);
   }
   if (settings.enable_diskstat) {
     auto& new_task = polling_tasks.emplace_back(
         std::make_unique<DiskPollingTask>(*provider, *this, context));
-
-    std::cerr << "diskstat  " << &new_task << " " << new_task.get()
-              << std::endl;
+    DEBUG_PTR("new_task", new_task);
   }
   if (settings.enable_processinfo()) {
     auto& new_task = polling_tasks.emplace_back(
         std::make_unique<ProcessPollingTask>(*provider, *this, context));
-    std::cerr << "processinfo  " << &new_task << " " << new_task.get()
-              << std::endl;
+    DEBUG_PTR("processinfo", new_task);
   }
 }

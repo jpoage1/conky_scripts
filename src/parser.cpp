@@ -181,7 +181,7 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
                     std::vector<MetricsContext>& tasks) {
   MetricsContext context;
   std::string command = args[current_index];
-  std::cerr << "Processing command: " << command << std::endl;
+  SPDLOG_DEBUG("Processing command: {}", command);
   size_t initial_index = current_index;
 
   // --- 1. Parse Config File ---
@@ -316,8 +316,9 @@ int ParsedConfig::initialize(
   /* Perform these steps only once */
   for (MetricsContext& task : this->tasks) {
     SystemMetrics& new_task = tasks.emplace_back(task);
-    std::cerr << "Initialize context " << &task << " New task " << &new_task
-              << std::endl;
+
+    DEBUG_PTR("Initialize context", task);
+    DEBUG_PTR("New task", new_task);
     if (new_task.read_data() != 0) {
       std::cerr << "Warning: Failed to read initial data for task."
                 << std::endl;
@@ -329,9 +330,9 @@ int ParsedConfig::initialize(
   timestamp = sleep_until;
 
   for (SystemMetrics& task : tasks) {
+    DEBUG_PTR("Initialize Task", task);
     for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
-      std::cerr << "Initialize Task " << &task << " Polling task "
-                << &polling_task << std::endl;
+      DEBUG_PTR("Polling task address", polling_task);
       polling_task->take_snapshot_1();
     }
   }
@@ -343,8 +344,8 @@ void ParsedConfig::done(std::list<SystemMetrics>& result) {
   // settings/serializer.
 
   if (this->active_pipeline) {
-    std::cerr << "Active pipeline  " << &this->active_pipeline << " result "
-              << &result << std::endl;
+    DEBUG_PTR("Active pipeline", this->active_pipeline);
+    DEBUG_PTR("Active pipeline result", result);
     this->active_pipeline(result);
   }
 }
@@ -361,8 +362,7 @@ OutputPipeline configure_json_pipeline(const MetricSettings& settings) {
 
     // The serializer logic is already baked in; no 'if' checks needed here
     for (const auto& metrics : result) {
-      std::cerr << "configure_json_pipeline lambda Metrics " << &metrics
-                << std::endl;
+      DEBUG_PTR("configure_json_pipeline lambda Metrics", metrics);
       output_json.push_back(serializer->serialize(metrics));
     }
 
@@ -376,8 +376,7 @@ OutputPipeline configure_conky_pipeline(const MetricSettings& settings) {
   // (Or build a helper vector of print-functions like we did for JSON)
   return [settings](const std::list<SystemMetrics>& result) {
     for (const SystemMetrics& metrics : result) {
-      std::cerr << "configure_conky_pipeline lambda Metrics " << &metrics
-                << std::endl;
+      DEBUG_PTR("configure_conky_pipeline lambda Metrics", metrics);
       print_metrics(metrics);
     }
     // for (const auto& m : result) {

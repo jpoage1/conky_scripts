@@ -31,13 +31,9 @@ int main(int argc, char* argv[]) {
     std::chrono::duration<double> time_delta = t2_timestamp - t1_timestamp;
     t1_timestamp = t2_timestamp;
     for (SystemMetrics& task : tasks) {
-      std::stringstream ss;
-      ss << &task;
-      SPDLOG_DEBUG("Task address: {}", ss.str());
+      DEBUG_PTR("main SystemMetrics task address", task);
       for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
-        std::stringstream ss;
-        ss << &polling_task << " " << polling_task.get();
-        SPDLOG_DEBUG("Polling task address: {}", ss.str());
+        DEBUG_PTR("Polling task address", polling_task);
         polling_task->take_snapshot_2();
         polling_task->calculate(time_delta.count());
         polling_task->commit();
