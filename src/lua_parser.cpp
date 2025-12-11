@@ -1,13 +1,8 @@
 #include "lua_parser.hpp"
 
-#include <sol/sol.hpp>
-
 #include "parser.hpp"
 
-MetricsContext load_lua_config(const std::string& filename) {
-  // ParsedConfig config;
-  MetricsContext context;
-  MetricSettings& settings = context.settings;
+sol::state load_lua_file(const std::string& filename) {
   sol::state lua;
 
   // 1. Open standard libraries
@@ -19,10 +14,31 @@ MetricsContext load_lua_config(const std::string& filename) {
     lua.script_file(filename);
   } catch (const sol::error& e) {
     std::cerr << "Lua Config Error: " << e.what() << std::endl;
-    exit(1);
   }
 
-  // 3. Access 'settings' table
+  return lua;
+}
+
+ParsedConfig load_lua_config(const std::string& filename) {
+  ParsedConfig config;
+  sol::state lua = load_lua_file(filename);
+
+  if (!lua["config"].valid()) {
+    std::cerr << "Error: 'config' table missing in " << filename << std::endl;
+    return config;
+  }
+
+  sol::table lua_config = lua["config"];
+
+  config = parse_config(lua_config);
+
+  return config;
+}
+
+MetricsContext load_lua_settings(const std::string& filename) {
+  MetricsContext context;
+  sol::state lua = load_lua_file(filename);
+
   if (!lua["settings"].valid()) {
     std::cerr << "Error: 'settings' table missing in " << filename << std::endl;
     return context;
@@ -30,22 +46,48 @@ MetricsContext load_lua_config(const std::string& filename) {
 
   sol::table lua_settings = lua["settings"];
 
+  context = parse_settings(lua_settings);
+
+  return context;
+}
+
+ParsedConfig parse_config(sol::table lua_config) {
+  ParsedConfig config;
+
   // =========================================================
   // TOP LEVEL SETTINGS
   // =========================================================
   // Map string enums
-  // std::string run_mode_str =
-  //     lua_settings.get_or<std::string>("run_mode", "persistent");
+  std::string run_mode_str =
+      lua_config.get_or<std::string>("run_mode", "persistent");
 
-  // config.set_run_mode(run_mode_str);
+  config.set_run_mode(run_mode_str);
 
-  // std::string output_fmt =
-  //     lua_settings.get_or<std::string>("output_format", "json");
-  // config.set_output_mode(output_fmt);
+  std::string output_fmt =
+      lua_config.get_or<std::string>("output_format", "json");
+  config.set_output_mode(output_fmt);
 
   // Polling Interval
-  // config.set_polling_interval = lua_settings.get_or("polling_interval_ms",
-  // 2500);
+  int interval_ms = lua_config.get_or("polling_interval_ms", 2500);
+  config.set_polling_interval(std::chrono::milliseconds(interval_ms));
+
+  if (lua_config["settings"].valid()) {
+    // Sol2 Magic: Get array of tables
+    std::vector<sol::table> settings_list =
+        lua_config["settings"].get<std::vector<sol::table>>();
+
+    for (auto& settings : settings_list) {
+      MetricsContext context = parse_settings(settings);
+      config.tasks.push_back(std::move(context));
+    }
+  }
+
+  return config;
+}
+
+MetricsContext parse_settings(sol::table lua_settings) {
+  MetricsContext context;
+  MetricSettings& settings = context.settings;
 
   // System Name (Calculated in Lua)
   if (lua_settings["name"].valid()) {

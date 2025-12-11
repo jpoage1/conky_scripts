@@ -47,9 +47,21 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
     else if (command == "--persistent") {
       config.set_run_mode(RunMode::PERSISTENT);
       i++;  // Consume this flag and continue parsing
+    } else if (command == "--config") {
+      if (i + 1 < args_full.size()) {
+        std::string filename = args_full[i + 1];
+
+        config = load_lua_config(filename);
+
+        i += 2;  // Consume flag and filename
+      } else {
+        std::cerr << "Error: --config requires a filename." << std::endl;
+        i++;
+      }
     }
     // Handle Explicit Commands
-    else if (command == "--local" || command == "--ssh" || command == "--lua") {
+    else if (command == "--local" || command == "--ssh" ||
+             command == "--settings") {
       consumed = process_command(args_full, i, config.tasks);
       // Ensure loop advances if process_command fails/returns 0 or doesn't
       // update 'i'
@@ -159,9 +171,9 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
         (command == "--local") ? "Local (Error)" : "SSH (Error)";
     tasks.push_back(std::move(context));
     return current_index - initial_index;  // Return consumed args
-  } else if (command == "--lua") {
+  } else if (command == "--settings") {
     std::cerr << "Loading lua config" << std::endl;
-    context = load_lua_config(config_file);
+    context = load_lua_settings(config_file);
     tasks.push_back(std::move(context));
     return current_index - initial_index;
   } else {

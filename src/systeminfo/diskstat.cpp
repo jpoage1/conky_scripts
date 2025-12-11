@@ -100,7 +100,7 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
     }
   }
 }
-// PollingTaskList read_data(DataStreamProvider&, SystemMetrics&);
+
 void DiskPollingTask::take_snapshot_1() {
   t1_snapshots = read_data(provider.get_diskstats_stream());
 }
@@ -170,12 +170,6 @@ void DiskPollingTask::calculate(double time_delta_seconds) {
   //               << " write=" << stats.write_bytes_per_sec << std::endl;
   //   }
 }
-namespace {
-const DiskStatConfig config;
-// my_settings.insert(DiskStatSettings::Loopback);
-// my_settings.insert(DiskStatSettings::MapperDevices);
-// mysettings.insert(DiskStatSettings::Partitions);
-};  // namespace
 DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
   DiskIoSnapshotMap snapshots;
 

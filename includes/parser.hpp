@@ -20,7 +20,7 @@ enum OutputMode {
 };
 class ParsedConfig {
  private:
-  std::chrono::nanoseconds pooling_interval = std::chrono::milliseconds(500);
+  std::chrono::nanoseconds polling_interval = std::chrono::milliseconds(500);
   OutputMode _output_mode = JSON;
   RunMode _run_mode = RUN_ONCE;
   OutputPipeline active_pipeline;
@@ -33,8 +33,8 @@ class ParsedConfig {
    * It accepts any std::chrono duration and converts it to nanoseconds.
    */
   template <typename DurationType>
-  void set_pooling_interval(const DurationType& interval) {
-    pooling_interval =
+  void set_polling_interval(const DurationType& interval) {
+    polling_interval =
         std::chrono::duration_cast<std::chrono::nanoseconds>(interval);
   }
 
@@ -43,8 +43,8 @@ class ParsedConfig {
    * It returns the interval cast to whatever type the caller asks for.
    */
   template <typename DurationType>
-  DurationType get_pooling_interval() const {
-    return std::chrono::duration_cast<DurationType>(pooling_interval);
+  DurationType get_polling_interval() const {
+    return std::chrono::duration_cast<DurationType>(polling_interval);
   }
 
   bool run_mode(RunMode mode) const;

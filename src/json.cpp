@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::this_thread::sleep_for(
-        config.get_pooling_interval<std::chrono::milliseconds>());
+        config.get_polling_interval<std::chrono::milliseconds>());
     // C. Get T2 snapshot
     auto t2_timestamp = std::chrono::steady_clock::now();
 
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 
     if (!config.run_mode(RunMode::RUN_ONCE)) {
       std::this_thread::sleep_for(
-          config.get_pooling_interval<std::chrono::milliseconds>());
+          config.get_polling_interval<std::chrono::milliseconds>());
     }
     // std::cerr << "Done sleeping" << std::endl;
   } while (config.run_mode(RunMode::PERSISTENT));
