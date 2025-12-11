@@ -48,6 +48,19 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
                                  SystemMetrics& metrics,
                                  MetricsContext& context)
     : IPollingTask(provider, metrics, context) {
+  // 1. Copy the Config
+  this->config = context.disk_stat_config;
+
+  // 2. Load the Allowlist
+  for (const auto& dev : context.io_devices) {
+    // Strip "/dev/" prefix if the user included it in Lua
+    std::string clean_name = dev;
+    size_t pos = clean_name.rfind("/dev/");
+    if (pos != std::string::npos) {
+      clean_name = clean_name.substr(pos + 5);
+    }
+    allowed_io_devices.insert(clean_name);
+  }
   DevicePaths device_paths;
   device_paths.insert(device_paths.end(), context.filesystems.begin(),
                       context.filesystems.end());
@@ -186,29 +199,44 @@ DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
         sectors_read >> time_reading >> writes_completed >> writes_merged >>
         sectors_written >> time_writing;
 
-    if (target_kernel_names.count(dev_name) == 0) {
-      // Filter 1: Check Loopback devices
-      if (major == 7 && config.count(DiskStatSettings::Loopback) == 0) {
-        continue;  // Skip if major is 7 and Loopback is NOT in the set
-      }
+    bool keep = false;
 
-      // Filter 2: Check Device-Mapper
-      if (dev_name.rfind("dm-", 0) == 0 &&
-          config.count(DiskStatSettings::MapperDevices) == 0) {
-        continue;  // Skip if "dm-" and MapperDevices is NOT in the set
-      }
-
-      // Filter 3: Check Partitions
-      if (!dev_name.empty() && std::isdigit(dev_name.back()) &&
-          config.count(DiskStatSettings::Partitions) == 0) {
-        continue;  // Skip if it's a partition and Partitions is NOT in the set
-      }
-      // This only happens during the the first set of iterations
-      target_kernel_names.insert(dev_name);
-      //   std::cerr << "Added disk `" << dev_name << "'" << std::endl;
+    // RULE 1: Always keep devices that map to our Filesystems
+    if (target_kernel_names.count(dev_name) > 0) {
+      keep = true;
     }
-    snapshots[dev_name] = {.bytes_read = sectors_read * 512,
-                           .bytes_written = sectors_written * 512};
+    // RULE 2: Always keep devices explicitly requested in Lua 'io_devices'
+    else if (allowed_io_devices.count(dev_name) > 0) {
+      keep = true;
+    }
+    // RULE 3: If Strict Mode is active (io_devices is not empty), SKIP
+    // everything else
+    else if (!allowed_io_devices.empty()) {
+      keep = false;
+    }
+    // RULE 4: Auto-Discovery Filters (Only runs if strict mode is OFF)
+    else {
+      keep = true;  // Assume true, then try to disqualify
+
+      // Filter: Loopback
+      if (major == 7 && config.count(DiskStatSettings::Loopback) == 0)
+        keep = false;
+
+      // Filter: Device-Mapper
+      if (dev_name.rfind("dm-", 0) == 0 &&
+          config.count(DiskStatSettings::MapperDevices) == 0)
+        keep = false;
+
+      // Filter: Partitions (ends in digit)
+      if (!dev_name.empty() && std::isdigit(dev_name.back()) &&
+          config.count(DiskStatSettings::Partitions) == 0)
+        keep = false;
+    }
+
+    if (keep) {
+      snapshots[dev_name] = {.bytes_read = sectors_read * 512,
+                             .bytes_written = sectors_written * 512};
+    }
   }
 
   //   std::cerr << "[DEBUG] read_data: Finished. Collected " <<

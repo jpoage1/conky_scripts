@@ -115,6 +115,21 @@ MetricsContext load_lua_config(const std::string& filename) {
       context.io_devices =
           storage["io_devices"].get<std::vector<std::string>>();
     }
+
+    // Filter Config
+    if (storage["filters"].valid()) {
+      sol::table filters = storage["filters"];
+
+      if (filters.get_or("enable_loopback", false)) {
+        context.disk_stat_config.insert(DiskStatSettings::Loopback);
+      }
+      if (filters.get_or("enable_mapper", false)) {
+        context.disk_stat_config.insert(DiskStatSettings::MapperDevices);
+      }
+      if (filters.get_or("enable_partitions", false)) {
+        context.disk_stat_config.insert(DiskStatSettings::Partitions);
+      }
+    }
   }
 
   // =========================================================

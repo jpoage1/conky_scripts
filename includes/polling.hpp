@@ -111,6 +111,8 @@ class DiskPollingTask : public IPollingTask {
   // "dm-0")
   std::map<std::string, DeviceInfo*> kernel_to_device_map;
   DevicePaths load_device_paths(const std::string& config_file);
+  std::set<std::string> allowed_io_devices;
+  DiskStatConfig config;
 
  public:
   DiskPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);

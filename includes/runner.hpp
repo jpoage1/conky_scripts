@@ -25,6 +25,7 @@ struct MetricsContext {
   std::set<std::string> interfaces;
   std::vector<std::string> filesystems;
   std::vector<std::string> io_devices;
+  DiskStatConfig disk_stat_config;
 
   MetricsContext(MetricsContext&&) noexcept = default;
   MetricsContext& operator=(MetricsContext&&) noexcept = default;
