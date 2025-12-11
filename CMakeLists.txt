@@ -13,6 +13,7 @@ pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
 pkg_check_modules(LIBSSH REQUIRED libssh)
 
 find_package(Lua REQUIRED)
+find_package(spdlog REQUIRED)
 
 # --- Compiler Flags ---
 add_compile_options(-Wall -Wextra -O3 -march=native)
@@ -59,7 +60,7 @@ add_library(telemetry_core STATIC
 )
 
 # Link external deps to the core library
-target_link_libraries(telemetry_core PUBLIC ${LIBSSH_LIBRARIES} stdc++fs ${LUA_LIBRARIES})
+target_link_libraries(telemetry_core PUBLIC ${LIBSSH_LIBRARIES} stdc++fs spdlog::spdlog ${LUA_LIBRARIES})
 target_include_directories(telemetry_core PUBLIC ${LIBSSH_INCLUDE_DIRS} ${LUA_INCLUDE_DIR})
 
 # --- Executable: Waybard ---

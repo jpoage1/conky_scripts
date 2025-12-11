@@ -1,13 +1,15 @@
 
 #include "data_local.hpp"
+
+#include "log.hpp"
 void LocalDataStreams::finally() {}
 std::ifstream& LocalDataStreams::create_stream_from_file(
     std::ifstream& stream, const std::string& path) {
   if (stream.is_open()) {
-    // std::cerr << "Stream is already open" << std::endl;
+    SPDLOG_DEBUG("Stream is already open");
     stream.close();
   } else {
-    // std::cerr << "Stream is not already open" << std::endl;
+    SPDLOG_DEBUG("Stream is not already open");
   }
   stream.clear();
   stream.open(path);

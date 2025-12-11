@@ -1,5 +1,6 @@
 #include "lua_parser.hpp"
 
+#include "log.hpp"
 #include "parser.hpp"
 
 sol::state load_lua_file(const std::string& filename) {
@@ -93,6 +94,31 @@ MetricsContext parse_settings(sol::table lua_settings) {
   if (lua_settings["name"].valid()) {
     // Assuming you have a name field in MetricSettings, or use it for context
     context.source_name = lua_settings.get<std::string>("name");
+  }
+
+  if (lua_settings["log_level"].valid()) {
+    std::string level_str = lua_settings.get<std::string>("log_level");
+
+    if (level_str == "trace") {
+      spdlog::set_level(spdlog::level::trace);
+    } else if (level_str == "debug") {
+      spdlog::set_level(spdlog::level::debug);
+    } else if (level_str == "info") {
+      spdlog::set_level(spdlog::level::info);
+    } else if (level_str == "warn" || level_str == "warning") {
+      spdlog::set_level(spdlog::level::warn);
+    } else if (level_str == "err" || level_str == "error") {
+      spdlog::set_level(spdlog::level::err);
+    } else if (level_str == "critical") {
+      spdlog::set_level(spdlog::level::critical);
+    } else if (level_str == "off") {
+      spdlog::set_level(spdlog::level::off);
+    } else {
+      // Default fallback
+      spdlog::set_level(spdlog::level::info);
+      SPDLOG_WARN("Invalid log_level '{}' in config. Defaulting to INFO.",
+                  level_str);
+    }
   }
 
   // =========================================================

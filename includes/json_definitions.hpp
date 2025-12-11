@@ -6,6 +6,7 @@
 #include "data.hpp"
 #include "diskstat.hpp"
 #include "filesystems.hpp"
+#include "log.hpp"
 #include "meminfo.hpp"
 #include "networkstats.hpp"
 #include "processinfo.hpp"
@@ -92,7 +93,7 @@ inline void to_json(json& j, const SystemMetrics& s) {
   };
   j["disk_io"] = json::array();
   for (const auto& pair : s.disk_io) {
-    // std::cerr << "Serializing " << pair.second.device_name << std::endl;
+    SPDLOG_DEBUG("Serializing {}", pair.second.device_name);
     j["disk_io"].push_back(
         pair.second);  // pair.second is the DiskIoStats object
   }

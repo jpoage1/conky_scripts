@@ -314,9 +314,6 @@ int ParsedConfig::initialize(
   }
   /* Perform these steps only once */
   for (MetricsContext& task : this->tasks) {
-    // if (!task.provider) continue;
-    // SystemMetrics metrics(task);
-    // tasks.push_back(std::move(metrics));
     SystemMetrics& new_task = tasks.emplace_back(task);
     if (new_task.read_data() != 0) {
       std::cerr << "Warning: Failed to read initial data for task."
@@ -329,7 +326,7 @@ int ParsedConfig::initialize(
   timestamp = sleep_until;
   for (SystemMetrics& task : tasks) {
     for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
-      // std::cerr << "Taking snapshot" << std::endl;
+      SPDLOG_DEBUG("Taking snapshot");
       polling_task->take_snapshot_1();
     }
   }
