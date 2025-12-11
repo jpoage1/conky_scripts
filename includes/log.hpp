@@ -32,3 +32,29 @@ const void* get_real_addr(const T& obj) {
 // Usage: DEBUG_PTR("My Object", my_variable);
 // Visible in debug builds if runtime level is set.
 #define DEBUG_PTR(msg, var) SPDLOG_DEBUG("{}: {}", msg, get_real_addr(var))
+
+inline void configure_log_level(std::string level) {
+  // Normalize to lowercase
+  std::transform(level.begin(), level.end(), level.begin(), ::tolower);
+
+  if (level == "trace") {
+    spdlog::set_level(spdlog::level::trace);
+  } else if (level == "debug") {
+    spdlog::set_level(spdlog::level::debug);
+  } else if (level == "info") {
+    spdlog::set_level(spdlog::level::info);
+  } else if (level == "warn" || level == "warning") {
+    spdlog::set_level(spdlog::level::warn);
+  } else if (level == "err" || level == "error") {
+    spdlog::set_level(spdlog::level::err);
+  } else if (level == "critical") {
+    spdlog::set_level(spdlog::level::critical);
+  } else if (level == "off") {
+    spdlog::set_level(spdlog::level::off);
+  } else {
+    // Default safe fallback
+    spdlog::set_level(spdlog::level::info);
+    SPDLOG_WARN("Unknown log level '{}' in config. Defaulting to INFO.", level);
+  }
+  std::cerr << "Log level: " << level << std::endl;
+}

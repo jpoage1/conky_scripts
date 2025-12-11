@@ -14,8 +14,6 @@ int main(int argc, char* argv[]) {
   std::list<SystemMetrics> tasks;
   config.initialize(tasks);
 
-  spdlog::set_level(spdlog::level::debug);
-
   do {
     config.sleep();
     for (SystemMetrics& task : tasks) {
