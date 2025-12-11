@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
 
   // A. Get T1 snapshot
   auto t1_timestamp = std::chrono::steady_clock::now();
+  auto sleep_until = t1_timestamp;
   for (SystemMetrics& task : tasks) {
     for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
       // std::cerr << "Taking snapshot" << std::endl;
@@ -39,6 +40,8 @@ int main(int argc, char* argv[]) {
     }
   }
   do {
+    sleep_until += config.get_polling_interval<std::chrono::milliseconds>();
+    std::this_thread::sleep_until(sleep_until);
     for (SystemMetrics& task : tasks) {
       //   std::cerr << "Running task" << std::endl;
       task.read_data();
@@ -46,12 +49,13 @@ int main(int argc, char* argv[]) {
       //   std::cerr << "Done running task" << std::endl;
     }
 
-    std::this_thread::sleep_for(
-        config.get_polling_interval<std::chrono::milliseconds>());
+    // std::this_thread::sleep_for(
+    //     config.get_polling_interval<std::chrono::milliseconds>());
     // C. Get T2 snapshot
     auto t2_timestamp = std::chrono::steady_clock::now();
 
     std::chrono::duration<double> time_delta = t2_timestamp - t1_timestamp;
+    t1_timestamp = t2_timestamp;
     for (SystemMetrics& task : tasks) {
       //   std::cerr << "TASK: &task = " << &task
       //             << ", disk_io size = " << task.disk_io.size()
@@ -59,7 +63,7 @@ int main(int argc, char* argv[]) {
       for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
         polling_task->take_snapshot_2();
         polling_task->calculate(time_delta.count());
-        // polling_task->commit(); // unused/dead code
+        polling_task->commit();
         // std::cerr << "AFTER COMMIT: disk_io size: " << task.disk_io.size()
         //           << std::endl;
       }
@@ -88,10 +92,9 @@ int main(int argc, char* argv[]) {
     config.done(tasks);
     // std::cerr << "Done dumping" << std::endl;
 
-    if (!config.run_mode(RunMode::RUN_ONCE)) {
-      std::this_thread::sleep_for(
-          config.get_polling_interval<std::chrono::milliseconds>());
-    }
+    // if (!config.run_mode(RunMode::RUN_ONCE)) {
+    //   std::this_thread::sleep_until(sleep_until);
+    // }
     // std::cerr << "Done sleeping" << std::endl;
   } while (config.run_mode(RunMode::PERSISTENT));
   return 0;
