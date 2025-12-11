@@ -7,33 +7,33 @@
 #include "polling.hpp"
 #include "runner.hpp"
 
-namespace {
+// namespace {
 
-// Command: Get PID, RSS (in KiB), and command name.
-// --no-headers simplifies parsing.
-// --sort=-rss sorts by RSS descending.
-// head -n 10 gets the top 10.
-const char* top_mem_processes_avg_cmd =
-    "ps -eo pid,%cpu,rss,comm --no-headers --sort=-rss | grep -v \" ps$\" | "
-    "head "
-    "-n 10";
+// // Command: Get PID, RSS (in KiB), and command name.
+// // --no-headers simplifies parsing.
+// // --sort=-rss sorts by RSS descending.
+// // head -n 10 gets the top 10.
+// const char* top_mem_processes_avg_cmd =
+//     "ps -eo pid,%cpu,rss,comm --no-headers --sort=-rss | grep -v \" ps$\" | "
+//     "head "
+//     "-n 10";
 
-const char* top_cpu_processes_avg_cmd =
-    "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | grep -v \" ps$\" | "
-    "head -n 10";
-const char* top_cpu_processes_real_cmd =
-    "top -b -n 2 -d 0.9 -o %CPU | "  // 2 iterations, 0.9s apart, sorted by CPU
-    "awk 'BEGIN{RS=\"\"} NR==2' | "  // Get only the second iteration's data
-    "tail -n +8 | "                  // Skip the 7 header lines
-    "head -n 10 | "                  // Get the top 10 processes
-    "awk '{print $1, $9, $6, $12}'";
-const char* top_mem_processes_real_cmd =
-    "top -b -n 2 -d 0.9 -o %MEM | "
-    "awk 'BEGIN{RS=\"\"} NR==2' | "
-    "tail -n +8 | "
-    "head -n 10 | "
-    "awk '{print $1, $9, $6, $12}'";
-};  // namespace
+// const char* top_cpu_processes_avg_cmd =
+//     "ps -eo pid,%cpu,rss,comm --no-headers --sort=-%cpu | grep -v \" ps$\" |
+//     " "head -n 10";
+// const char* top_cpu_processes_real_cmd =
+//     "top -b -n 2 -d 0.9 -o %CPU | "  // 2 iterations, 0.9s apart, sorted by
+//     CPU "awk 'BEGIN{RS=\"\"} NR==2' | "  // Get only the second iteration's
+//     data "tail -n +8 | "                  // Skip the 7 header lines "head -n
+//     10 | "                  // Get the top 10 processes "awk '{print $1, $9,
+//     $6, $12}'";
+// const char* top_mem_processes_real_cmd =
+//     "top -b -n 2 -d 0.9 -o %MEM | "
+//     "awk 'BEGIN{RS=\"\"} NR==2' | "
+//     "tail -n +8 | "
+//     "head -n 10 | "
+//     "awk '{print $1, $9, $6, $12}'";
+// };  // namespace
 
 // --- HELPER FUNCTIONS ---
 

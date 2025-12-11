@@ -19,6 +19,8 @@ pkgs.mkShell {
 
     lua
     sol2
+
+    which
     # openssl
   ];
 
@@ -31,7 +33,9 @@ pkgs.mkShell {
 
     alias waybard="time ./build/waybard ~/.config/conky/file-systems.txt"
     alias json="time ./build/json ~/.config/conky/file-systems.txt"
-    alias lua="time ./build/json --lua ~/.config/conky/config.lua"
+    alias lua-config="time ./build/json --config ~/.config/conky/config.lua"
+    alias lua-settings="time ./build/json --settings ~/.config/conky/settings.lua"
+    alias clean="cmake --build build --target clean"
 
     echo "Entering a Nix development shell for conkyd..."
     echo "C++ compiler available: $(which g++)"

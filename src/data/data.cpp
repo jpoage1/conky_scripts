@@ -26,7 +26,7 @@ void dump_fstream(std::istream& stream) {
   std::cerr << "Done" << std::endl;
 }
 IPollingTask::IPollingTask(DataStreamProvider& _provider,
-                           SystemMetrics& _metrics, MetricsContext& context)
+                           SystemMetrics& _metrics, MetricsContext& /*context*/)
     : provider(_provider), metrics(_metrics) {
   //   std::cerr << "Parent constructor called" << std::endl;
   //   dump_fstream(provider.get_stat_stream());

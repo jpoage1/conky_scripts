@@ -101,31 +101,36 @@ MetricsContext parse_settings(sol::table lua_settings) {
   if (lua_settings["features"].valid()) {
     sol::table features = lua_settings["features"];
 
-    settings.enable_sysinfo = features.get_or("enable_sysinfo", true);
-    settings.enable_uptime = features.get_or("enable_uptime", true);
-    settings.enable_memory = features.get_or("enable_memory", true);
-    settings.enable_cpu_temp = features.get_or("enable_cpu_temp", true);
-    settings.enable_cpuinfo = features.get_or("enable_cpuinfo", true);
+    // CORRECT SYNTAX: get<optional>().value_or()
+    settings.enable_sysinfo =
+        features.get<sol::optional<bool>>("enable_sysinfo").value_or(true);
+    settings.enable_uptime =
+        features.get<sol::optional<bool>>("enable_uptime").value_or(true);
+    settings.enable_memory =
+        features.get<sol::optional<bool>>("enable_memory").value_or(true);
+    settings.enable_cpu_temp =
+        features.get<sol::optional<bool>>("enable_cpu_temp").value_or(true);
+    settings.enable_cpuinfo =
+        features.get<sol::optional<bool>>("enable_cpuinfo").value_or(true);
     settings.enable_load_and_process_stats =
-        features.get_or("enable_load_and_process_stats", true);
+        features.get<sol::optional<bool>>("enable_load_and_process_stats")
+            .value_or(true);
     settings.enable_network_stats =
-        features.get_or("enable_network_stats", true);
-    settings.enable_diskstat = features.get_or("enable_diskstat", true);
+        features.get<sol::optional<bool>>("enable_network_stats")
+            .value_or(true);
+    settings.enable_diskstat =
+        features.get<sol::optional<bool>>("enable_diskstat").value_or(true);
 
-    // Processes (Double Nested)
     if (features["processes"].valid()) {
       sol::table procs = features["processes"];
       settings.enable_avg_processinfo_cpu =
-          procs.get_or("enable_avg_cpu", true);
+          procs.get<sol::optional<bool>>("enable_avg_cpu").value_or(true);
       settings.enable_avg_processinfo_mem =
-          procs.get_or("enable_avg_mem", true);
+          procs.get<sol::optional<bool>>("enable_avg_mem").value_or(true);
       settings.enable_realtime_processinfo_cpu =
-          procs.get_or("enable_realtime_cpu", true);
+          procs.get<sol::optional<bool>>("enable_realtime_cpu").value_or(true);
       settings.enable_realtime_processinfo_mem =
-          procs.get_or("enable_realtime_mem", true);
-
-      // Not implemented
-      // settings.process_count = procs.get_or("count", 10);
+          procs.get<sol::optional<bool>>("enable_realtime_mem").value_or(true);
     }
   }
 
@@ -188,7 +193,7 @@ MetricsContext parse_settings(sol::table lua_settings) {
 
       context.host = ssh.get_or<std::string>("host", "");
       context.user = ssh.get_or<std::string>("user", "");
-      context.port = ssh.get_or("port", 22);
+      ssh.get<sol::optional<int>>(std::string("port"));
       context.key = ssh.get_or<std::string>("key_path", "");
     } else {
       context.provider = DataStreamProviders::LocalDataStream;
