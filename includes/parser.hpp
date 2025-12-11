@@ -24,6 +24,7 @@ class ParsedConfig {
   OutputMode _output_mode = JSON;
   RunMode _run_mode = RUN_ONCE;
   OutputPipeline active_pipeline;
+  std::chrono::time_point<std::chrono::steady_clock> sleep_until;
 
  public:
   std::vector<MetricsContext> tasks;
@@ -56,6 +57,12 @@ class ParsedConfig {
   void set_output_mode(std::string mode);
   void set_run_mode(std::string mode);
   void configure_renderer();
+  void sleep();
+
+  int initialize(std::vector<SystemMetrics>& tasks,
+                 std::chrono::time_point<std::chrono::steady_clock>& timestamp);
+
+  int initialize(std::vector<SystemMetrics>& tasks);
   void done(std::vector<SystemMetrics>& result);
 };
 /**

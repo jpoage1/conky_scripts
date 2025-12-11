@@ -280,6 +280,11 @@ void ParsedConfig::set_run_mode(std::string mode) {
     std ::cerr << "Error: invalid run mode `" << mode << "`" << std::endl;
   }
 }
+void ParsedConfig::sleep() {
+  sleep_until += get_polling_interval<std::chrono::milliseconds>();
+  std::this_thread::sleep_until(sleep_until);
+}
+
 void ParsedConfig::configure_renderer() {
   for (MetricsContext& task : tasks)
     // 1. Select and Configure the pipeline ONCE
@@ -298,6 +303,38 @@ void ParsedConfig::configure_renderer() {
     }
 }
 
+int ParsedConfig::initialize(
+    std::vector<SystemMetrics>& tasks,
+    std::chrono::time_point<std::chrono::steady_clock>& timestamp) {
+  this->configure_renderer();
+
+  if (this->tasks.empty()) {
+    std::cerr << "Initialization failed, no valid tasks to run." << std::endl;
+    return 1;
+  }
+  /* Perform these steps only once */
+  for (MetricsContext& task : this->tasks) {
+    // if (!task.provider) continue;
+    // SystemMetrics metrics(task);
+    // tasks.push_back(std::move(metrics));
+    SystemMetrics& new_task = tasks.emplace_back(task);
+    if (new_task.read_data() != 0) {
+      std::cerr << "Warning: Failed to read initial data for task."
+                << std::endl;
+      // Optional: tasks.pop_back(); // Remove failed task if strict
+    }
+  }
+
+  sleep_until = std::chrono::steady_clock::now();
+  timestamp = sleep_until;
+  for (SystemMetrics& task : tasks) {
+    for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
+      // std::cerr << "Taking snapshot" << std::endl;
+      polling_task->take_snapshot_1();
+    }
+  }
+  return 0;
+}
 void ParsedConfig::done(std::vector<SystemMetrics>& result) {
   // 2. Simply execute it.
   // The 'active_pipeline' already knows what to do and holds the necessary
