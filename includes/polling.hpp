@@ -34,7 +34,7 @@ class IPollingTask {
   SystemMetrics& metrics;
   std::string name;
   std::chrono::steady_clock::time_point timestamp;
-  double delta_time;
+  double time_delta_seconds;
 
  public:
   /**
@@ -51,6 +51,10 @@ class IPollingTask {
 
   virtual ~IPollingTask() = default;
   std::string get_name() { return name; }
+
+  void set_delta_time();
+  void set_timestamp();
+
   virtual void configure() = 0;
   /**
    * @brief Take the "Time 1" (T1) snapshot and store it internally.
@@ -66,7 +70,7 @@ class IPollingTask {
    * @brief Use the stored T1 and T2 snapshots to perform the
    * calculation and save the result into the metrics object.
    */
-  virtual void calculate(double time_delta_seconds) = 0;
+  virtual void calculate() = 0;
   virtual void commit() = 0;
 };
 class CpuPollingTask : public IPollingTask {
@@ -79,7 +83,7 @@ class CpuPollingTask : public IPollingTask {
   void configure() override {};
   void take_snapshot_1() override;
   void take_snapshot_2() override;
-  void calculate(double /*time_delta_seconds*/) override;
+  void calculate() override;
   void commit() override;
   CpuSnapshotList read_data(std::istream&);
 };
@@ -95,7 +99,7 @@ class NetworkPollingTask : public IPollingTask {
   void configure() override {};
   void take_snapshot_1() override;
   void take_snapshot_2() override;
-  void calculate(double time_delta_seconds) override;
+  void calculate() override;
   void commit() override;
 
   NetworkSnapshotMap read_data(std::istream&);
@@ -122,7 +126,7 @@ class DiskPollingTask : public IPollingTask {
   void take_snapshot_1() override;
   void take_snapshot_2() override;
 
-  void calculate(double time_delta_seconds) override;
+  void calculate() override;
   void commit() override;
 
   DiskIoSnapshotMap read_data(std::istream&);
@@ -141,8 +145,7 @@ class ProcessPollingTask : public IPollingTask {
   void configure() override {};
   void take_snapshot_1() override;
   void take_snapshot_2() override;
-  void calculate(double time_delta_seconds)
-      override;  // time_delta_seconds is not strictly needed here
+  void calculate() override;  // time_delta_seconds is not strictly needed here
   void commit() override;
 
   // This internal helper reads the /proc directory and returns the raw snapshot

@@ -12,8 +12,7 @@ int main(int argc, char* argv[]) {
   // 1. Call the parser (handles initial checks and processing)
   ParsedConfig config = parse_arguments(argc, argv);
   std::list<SystemMetrics> tasks;
-  std::chrono::time_point<std::chrono::steady_clock> t1_timestamp;
-  config.initialize(tasks, t1_timestamp);
+  config.initialize(tasks);
 
   spdlog::set_level(spdlog::level::debug);
 
@@ -25,17 +24,12 @@ int main(int argc, char* argv[]) {
       SPDLOG_DEBUG("Done running task");
     }
 
-    // Get T2 snapshot
-    auto t2_timestamp = std::chrono::steady_clock::now();
-
-    std::chrono::duration<double> time_delta = t2_timestamp - t1_timestamp;
-    t1_timestamp = t2_timestamp;
     for (SystemMetrics& task : tasks) {
       DEBUG_PTR("main SystemMetrics task address", task);
       for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
         DEBUG_PTR("Polling task address", polling_task);
         polling_task->take_snapshot_2();
-        polling_task->calculate(time_delta.count());
+        polling_task->calculate();
         polling_task->commit();
       }
 

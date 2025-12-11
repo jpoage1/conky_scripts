@@ -261,8 +261,14 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
         });
   }
 }
-void ProcessPollingTask::take_snapshot_1() { t1_snapshots = read_data(); }
-void ProcessPollingTask::take_snapshot_2() { t2_snapshots = read_data(); }
+void ProcessPollingTask::take_snapshot_1() {
+  set_timestamp();
+  t1_snapshots = read_data();
+}
+void ProcessPollingTask::take_snapshot_2() {
+  set_delta_time();
+  t2_snapshots = read_data();
+}
 
 ProcessSnapshotMap ProcessPollingTask::read_data() {
   return provider.get_process_snapshots();
@@ -304,7 +310,7 @@ void ProcessPollingTask::populate_top_10(std::vector<ProcessInfo>& source,
   }
   SPDLOG_DEBUG("  Sort: Finished.");
 }
-void ProcessPollingTask::calculate(double time_delta_seconds) {
+void ProcessPollingTask::calculate() {
   // 1. Clear all destination vectors
   metrics.top_processes_avg_mem.clear();
   metrics.top_processes_avg_cpu.clear();

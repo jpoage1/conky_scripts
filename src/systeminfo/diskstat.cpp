@@ -103,15 +103,17 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
 }
 
 void DiskPollingTask::take_snapshot_1() {
+  set_timestamp();
   t1_snapshots = read_data(provider.get_diskstats_stream());
 }
 void DiskPollingTask::take_snapshot_2() {
+  set_delta_time();
   t2_snapshots = read_data(provider.get_diskstats_stream());
 }
 
 void DiskPollingTask::commit() { t1_snapshots = t2_snapshots; }
 
-void DiskPollingTask::calculate(double time_delta_seconds) {
+void DiskPollingTask::calculate() {
   //   std::cerr << "CALCULATE START: &metrics = " << &metrics
   //             << ", disk_io size = " << metrics.disk_io.size()
   //             << ", &disk_io = " << &metrics.disk_io << std::endl;

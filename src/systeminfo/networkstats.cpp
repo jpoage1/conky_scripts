@@ -23,10 +23,12 @@ NetworkPollingTask::NetworkPollingTask(DataStreamProvider& provider,
 }
 
 void NetworkPollingTask::take_snapshot_1() {
+  set_timestamp();
   t1_snapshot = read_data(provider.get_net_dev_stream());
 }
 
 void NetworkPollingTask::take_snapshot_2() {
+  set_delta_time();
   t2_snapshot = read_data(provider.get_net_dev_stream());
 }
 void NetworkPollingTask::commit() {
@@ -71,7 +73,7 @@ NetworkSnapshotMap NetworkPollingTask::read_data(std::istream& net_dev_stream) {
   return snapshots;
 }
 
-void NetworkPollingTask::calculate(double time_delta_seconds) {
+void NetworkPollingTask::calculate() {
   std::vector<NetworkInterfaceStats> rates;
 
   if (time_delta_seconds <= 0.0) {

@@ -59,9 +59,6 @@ class ParsedConfig {
   void configure_renderer();
   void sleep();
 
-  int initialize(std::list<SystemMetrics>& tasks,
-                 std::chrono::time_point<std::chrono::steady_clock>& timestamp);
-
   int initialize(std::list<SystemMetrics>& tasks);
   void done(std::list<SystemMetrics>& result);
 };

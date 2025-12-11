@@ -19,7 +19,7 @@ CpuPollingTask::CpuPollingTask(DataStreamProvider& provider,
   //   dump_fstream(provider.get_stat_stream());
 }
 
-void CpuPollingTask::calculate(double /*time_delta_seconds*/) {
+void CpuPollingTask::calculate() {
   std::vector<CoreStats> all_core_stats;
   size_t num_cores_and_agg = std::min(t1_snapshots.size(), t2_snapshots.size());
 
@@ -61,10 +61,12 @@ void CpuPollingTask::calculate(double /*time_delta_seconds*/) {
 
 void CpuPollingTask::take_snapshot_1() {
   //   dump_fstream(provider.get_stat_stream());
+  set_timestamp();
   t1_snapshots = read_data(provider.get_stat_stream());
 }
 
 void CpuPollingTask::take_snapshot_2() {
+  set_delta_time();
   t2_snapshots = read_data(provider.get_stat_stream());
 }
 

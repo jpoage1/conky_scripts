@@ -304,9 +304,7 @@ void ParsedConfig::configure_renderer() {
     }
 }
 
-int ParsedConfig::initialize(
-    std::list<SystemMetrics>& tasks,
-    std::chrono::time_point<std::chrono::steady_clock>& timestamp) {
+int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
   this->configure_renderer();
 
   if (this->tasks.empty()) {
@@ -327,7 +325,6 @@ int ParsedConfig::initialize(
   }
 
   sleep_until = std::chrono::steady_clock::now();
-  timestamp = sleep_until;
 
   for (SystemMetrics& task : tasks) {
     DEBUG_PTR("Initialize Task", task);
