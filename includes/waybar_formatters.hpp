@@ -1,8 +1,8 @@
 // waybar_formatters.hpp
 #pragma once
 
+#include "context.hpp"
 #include "pcn.hpp"
-#include "runner.hpp"
 #include "waybar_types.hpp"
 
 FormattedSize format_size_rate(double bytes_per_sec);

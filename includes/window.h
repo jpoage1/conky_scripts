@@ -2,7 +2,7 @@
 
 #include <gtkmm.h>
 
-#include "data.hpp"
+#include "stream_provider.hpp"
 #include "widgets.h"
 
 /**

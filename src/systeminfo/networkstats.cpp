@@ -1,11 +1,11 @@
 // networkstats.cpp
 #include "networkstats.hpp"
 
-#include "data.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 #include "metrics.hpp"
 #include "polling.hpp"
+#include "stream_provider.hpp"
 
 std::istream& LocalDataStreams::get_net_dev_stream() {
   return create_stream_from_file(net_dev, "/proc/net/dev");

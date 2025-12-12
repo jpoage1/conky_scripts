@@ -1,18 +1,19 @@
 // metrics.cpp
 #include "metrics.hpp"
 
+#include "context.hpp"
 #include "cpuinfo.hpp"
-#include "data.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 #include "diskstat.hpp"
 #include "filesystems.hpp"
 #include "load_avg.hpp"
+#include "log.hpp"
 #include "polling.hpp"
 #include "processinfo.hpp"
 #include "provider.hpp"
-#include "runner.hpp"
 #include "ssh.hpp"
+#include "stream_provider.hpp"
 #include "sysinfo.hpp"
 #include "uptime.hpp"
 

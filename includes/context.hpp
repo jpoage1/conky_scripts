@@ -1,11 +1,10 @@
-// runner.hpp
+// context.hpp
 #pragma once
 
+#include "context.hpp"
 #include "metrics.hpp"
-#include "parser.hpp"
 #include "pcn.hpp"
 #include "provider.hpp"
-#include "runner.hpp"
 using callback = std::function<int(DataStreamProviderPtr&, const std::string&,
                                    SystemMetrics&)>;
 

@@ -1,10 +1,10 @@
 #include "conky_output.hpp"
 
 #include "conky_format.hpp"
-#include "data.hpp"
 #include "filesystems.hpp"
 #include "format.hpp"
 #include "processinfo.hpp"
+#include "stream_provider.hpp"
 
 std::unordered_map<size_t, int> column_widths = {
     {0, 20},  // column 0 has width 20
@@ -76,7 +76,7 @@ void pad_str(const ColoredString& cstr) {
 void print_column_headers(
     std::tuple<std::string, std::function<FuncType>> conky_columns[],
     size_t count) {
-  std::cout << "${color " << paleblue << "}";
+  std::cout << "${color " << colors::paleblue << "}";
   int xpos = 0;
 
   for (size_t i = 0; i < count; ++i) {

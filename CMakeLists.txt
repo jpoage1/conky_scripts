@@ -74,10 +74,13 @@ target_link_libraries(telemetry_features PUBLIC telemetry_backend)
 # =========================================================
 add_library(telemetry_runtime STATIC
     src/lua_parser.cpp
-    src/parser.cpp
+    src/cli_parser.cpp
+    src/parsed_config.cpp
     src/runner.cpp
     src/conky/conky_format.cpp
     src/conky/conky_output.cpp
+    src/conky/conky_pipeline.cpp
+    src/json/json_pipeline.cpp
 )
 target_link_libraries(telemetry_runtime PUBLIC telemetry_features ${LUA_LIBRARIES})
 target_include_directories(telemetry_runtime PUBLIC ${LUA_INCLUDE_DIR})
@@ -86,8 +89,8 @@ target_include_directories(telemetry_runtime PUBLIC ${LUA_INCLUDE_DIR})
 # EXECUTABLES
 # =========================================================
 
-add_executable(waybard src/waybar/waybar_formatters.cpp src/waybar.cpp)
-target_link_libraries(waybard PRIVATE telemetry_runtime)
+# add_executable(waybard src/waybar/waybar_formatters.cpp src/waybar.cpp)
+# target_link_libraries(waybard PRIVATE telemetry_runtime)
 
 add_executable(json src/json.cpp)
 target_link_libraries(json PRIVATE telemetry_runtime)
@@ -96,5 +99,5 @@ add_executable(widgets src/widgets/main.cpp src/widgets/widgets.cpp src/widgets/
 target_link_libraries(widgets PRIVATE telemetry_runtime ${GTKMM_LIBRARIES})
 target_include_directories(widgets PRIVATE ${GTKMM_INCLUDE_DIRS})
 
-install(TARGETS waybard json widgets RUNTIME DESTINATION bin)
+install(TARGETS  json widgets RUNTIME DESTINATION bin)
 install(TARGETS json COMPONENT json RUNTIME DESTINATION bin)

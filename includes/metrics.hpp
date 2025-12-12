@@ -2,12 +2,12 @@
 #pragma once
 
 #include "corestat.hpp"
-#include "data.hpp"
 #include "diskstat.hpp"
 #include "meminfo.hpp"
 #include "networkstats.hpp"
 #include "pcn.hpp"
 #include "provider.hpp"
+#include "stream_provider.hpp"
 
 class IPollingTask;
 struct DeviceInfo;

@@ -2,10 +2,10 @@
 
 #include "waybar_formatters.hpp"
 
+#include "cli_parser.hpp"
 #include "conky_format.hpp"
 #include "format.hpp"
 #include "json_definitions.hpp"
-#include "parser.hpp"
 #include "pcn.hpp"
 #include "waybar_types.hpp"
 

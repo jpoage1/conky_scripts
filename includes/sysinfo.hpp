@@ -1,5 +1,5 @@
 #include <sys/utsname.h>
 
-#include "data.hpp"
+#include "stream_provider.hpp"
 
 void get_system_info(SystemMetrics& metrics);

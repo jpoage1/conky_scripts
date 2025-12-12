@@ -8,9 +8,9 @@
 #include <type_traits>
 #include <vector>
 
-#include "data.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
+#include "stream_provider.hpp"
 
 std::istream& LocalDataStreams::get_loadavg_stream() {
   return create_stream_from_file(loadavg, "/proc/loadavg");

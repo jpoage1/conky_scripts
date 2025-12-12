@@ -1,12 +1,12 @@
 // json.cpp
 
-#include "data.hpp"
+#include "cli_parser.hpp"
+#include "context.hpp"
 #include "json_definitions.hpp"
 #include "log.hpp"
 #include "metrics.hpp"
-#include "parser.hpp"
 #include "polling.hpp"
-#include "runner.hpp"
+#include "stream_provider.hpp"
 
 int main(int argc, char* argv[]) {
   // 1. Call the parser (handles initial checks and processing)

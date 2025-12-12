@@ -3,13 +3,13 @@
 
 // 1. Include all struct definitions FIRST
 #include "corestat.hpp"
-#include "data.hpp"
 #include "diskstat.hpp"
 #include "filesystems.hpp"
 #include "log.hpp"
 #include "meminfo.hpp"
 #include "networkstats.hpp"
 #include "processinfo.hpp"
+#include "stream_provider.hpp"
 
 // 2. Include nlohmann/json.hpp SECOND
 #include "nlohmann/json.hpp"

@@ -2,8 +2,8 @@
 
 #include <gtkmm.h>
 
-#include "data.hpp"
 #include "pcn.hpp"
+#include "stream_provider.hpp"
 struct Deviceinfo;
 // A simple reusable progress bar (eww 'bar')
 class SimpleBar : public Gtk::Box {

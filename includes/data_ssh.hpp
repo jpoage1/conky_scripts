@@ -1,7 +1,7 @@
 // data_ssh.h
 #pragma once
-#include "data.hpp"
 #include "pcn.hpp"
+#include "stream_provider.hpp"
 struct DiskUsage;
 
 struct ProcDataStreams : public DataStreamProvider {

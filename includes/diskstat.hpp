@@ -1,8 +1,9 @@
 // includes/diskstat.hpp
 #pragma once
-#include <limits.h>
-#include <string.h>
 #include <unistd.h>
+
+#include <climits>
+#include <cstring>
 
 #include "pcn.hpp"
 struct DataStreamProvider;

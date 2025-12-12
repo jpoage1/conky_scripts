@@ -1,28 +1,18 @@
-// parser.hpp
+// cli_parser.hpp
 #pragma once
 
+#include "context.hpp"
 #include "json_definitions.hpp"
 #include "lua_parser.hpp"
 #include "metrics.hpp"
 #include "pcn.hpp"
-#include "runner.hpp"
+#include "types.hpp"
 
-// The generic signature for ANY output strategy
-using OutputPipeline = std::function<void(const std::list<SystemMetrics>&)>;
-
-enum RunMode {
-  RUN_ONCE,
-  PERSISTENT,
-};
-enum OutputMode {
-  CONKY,
-  JSON,
-};
 class ParsedConfig {
  private:
   std::chrono::nanoseconds polling_interval = std::chrono::milliseconds(500);
-  OutputMode _output_mode = JSON;
-  RunMode _run_mode = RUN_ONCE;
+  OutputMode _output_mode = OutputMode::JSON;
+  RunMode _run_mode = RunMode::RUN_ONCE;
   OutputPipeline active_pipeline;
   std::chrono::time_point<std::chrono::steady_clock> sleep_until;
 

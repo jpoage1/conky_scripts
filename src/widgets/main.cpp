@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 
-#include "data.hpp"
 #include "data_local.hpp"
 #include "filesystems.hpp"
+#include "stream_provider.hpp"
 #include "window.h"
 
 // --- Config for mounts ---

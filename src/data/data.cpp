@@ -1,8 +1,7 @@
 // data.cpp
-#include "data.hpp"
-
 #include <sys/utsname.h>
 
+#include "cli_parser.hpp"
 #include "corestat.hpp"
 #include "cpuinfo.hpp"
 #include "diskstat.hpp"
@@ -12,9 +11,9 @@
 #include "meminfo.hpp"
 #include "metrics.hpp"
 #include "networkstats.hpp"
-#include "parser.hpp"
 #include "polling.hpp"
 #include "processinfo.hpp"
+#include "stream_provider.hpp"
 #include "sysinfo.hpp"
 #include "uptime.hpp"
 

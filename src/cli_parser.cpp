@@ -1,16 +1,11 @@
-// parser.cpp
-#include "parser.hpp"
+// cli_parser.cpp
+#include "cli_parser.hpp"
 
-#include "conky_output.hpp"
+#include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
-#include "json_serializer.hpp"
 #include "log.hpp"
 #include "polling.hpp"
-#include "runner.hpp"
-
-//
-#include "json_definitions.hpp"
 
 ParsedConfig parse_arguments(int argc, char* argv[]) {
   ParsedConfig config;
@@ -113,14 +108,13 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
       context.source_name = "Parser";
       context.success = false;
       context.error_message = "Unknown command or flag: " + command;
-      //   config.tasks.push_back(context);
       config.tasks.push_back(std::move(context));
       i++;  // Consume unknown command
     }
   }  // end while
 
   // Final checks
-  if (config.tasks.empty() && config.run_mode(RUN_ONCE)) {
+  if (config.tasks.empty() && config.run_mode(RunMode::RUN_ONCE)) {
     std::cerr << "Error: No valid commands contexted in metrics." << std::endl;
   } else {
     // bool any_success = false;
@@ -252,139 +246,4 @@ int process_command(const std::vector<std::string>& args, size_t& current_index,
 
   tasks.push_back(std::move(context));
   return current_index - initial_index;  // Return total consumed args
-}
-
-bool ParsedConfig::run_mode(RunMode mode) const { return _run_mode == mode; }
-bool ParsedConfig::output_mode(OutputMode mode) const {
-  return _output_mode == mode;
-}
-RunMode ParsedConfig::run_mode() const { return _run_mode; }
-OutputMode ParsedConfig::get_output_mode() const { return _output_mode; }
-void ParsedConfig::set_run_mode(RunMode mode) { _run_mode = mode; }
-void ParsedConfig::set_output_mode(OutputMode mode) { _output_mode = mode; }
-
-void ParsedConfig::set_output_mode(std::string mode) {
-  if (mode == "json") {
-    _output_mode = OutputMode::JSON;
-  } else if (mode == "conky") {
-    _output_mode = OutputMode::CONKY;
-  } else {
-    std ::cerr << "Error: invalid output mode `" << mode << "`" << std::endl;
-  }
-}
-void ParsedConfig::set_run_mode(std::string mode) {
-  if (mode == "persistent") {
-    _run_mode = RunMode::PERSISTENT;
-  } else if (mode == "run_once") {
-    _run_mode = RunMode::RUN_ONCE;
-  } else {
-    std ::cerr << "Error: invalid run mode `" << mode << "`" << std::endl;
-  }
-}
-void ParsedConfig::sleep() {
-  sleep_until += get_polling_interval<std::chrono::milliseconds>();
-  std::this_thread::sleep_until(sleep_until);
-}
-
-void ParsedConfig::configure_renderer() {
-  for (MetricsContext& task : tasks)
-    // 1. Select and Configure the pipeline ONCE
-    switch (_output_mode) {
-      case OutputMode::JSON: {
-        this->active_pipeline = configure_json_pipeline(task.settings);
-        break;
-      }
-      case OutputMode::CONKY: {
-        this->active_pipeline = configure_conky_pipeline(task.settings);
-        break;
-      }
-      default:
-        std::cerr << "Invalid output type" << std::endl;
-        exit(1);
-    }
-}
-
-int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
-  this->configure_renderer();
-
-  if (this->tasks.empty()) {
-    std::cerr << "Initialization failed, no valid tasks to run." << std::endl;
-    return 1;
-  }
-  /* Perform these steps only once */
-  for (MetricsContext& task : this->tasks) {
-    SystemMetrics& new_task = tasks.emplace_back(task);
-
-    DEBUG_PTR("Initialize context", task);
-    DEBUG_PTR("New task", new_task);
-    if (new_task.read_data() != 0) {
-      std::cerr << "Warning: Failed to read initial data for task."
-                << std::endl;
-      // Optional: tasks.pop_back(); // Remove failed task if strict
-    }
-  }
-
-  sleep_until = std::chrono::steady_clock::now();
-
-  for (SystemMetrics& task : tasks) {
-    DEBUG_PTR("Initialize Task", task);
-    for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
-      DEBUG_PTR("Polling task address", polling_task);
-      polling_task->take_snapshot_1();
-    }
-  }
-  return 0;
-}
-void ParsedConfig::done(std::list<SystemMetrics>& result) {
-  // 2. Simply execute it.
-  // The 'active_pipeline' already knows what to do and holds the necessary
-  // settings/serializer.
-
-  if (this->active_pipeline) {
-    DEBUG_PTR("Active pipeline", this->active_pipeline);
-    DEBUG_PTR("Active pipeline result", result);
-    this->active_pipeline(result);
-  }
-}
-
-// --- JSON FACTORY ---
-OutputPipeline configure_json_pipeline(const MetricSettings& settings) {
-  // 1. Create the Serializer with the specific settings
-  // We use a shared_ptr so the lambda can capture it cheaply and keep it alive
-  auto serializer = std::make_shared<JsonSerializer>(settings);
-
-  // 2. Return the executable function
-  return [serializer](const std::list<SystemMetrics>& result) {
-    nlohmann::json output_json = nlohmann::json::array();
-
-    // The serializer logic is already baked in; no 'if' checks needed here
-    for (const auto& metrics : result) {
-      DEBUG_PTR("configure_json_pipeline lambda Metrics", metrics);
-      output_json.push_back(serializer->serialize(metrics));
-    }
-
-    std::cout << output_json.dump() << std::endl;
-  };
-}
-
-// --- CONKY FACTORY ---
-OutputPipeline configure_conky_pipeline(const MetricSettings& settings) {
-  // 1. Capture settings by value for the lambda
-  // (Or build a helper vector of print-functions like we did for JSON)
-  return [settings](const std::list<SystemMetrics>& result) {
-    for (const SystemMetrics& metrics : result) {
-      DEBUG_PTR("configure_conky_pipeline lambda Metrics", metrics);
-      print_metrics(metrics);
-    }
-    // for (const auto& m : result) {
-    //   // This runs the loop, but using the captured settings
-    //   if (settings.enable_sysinfo) {
-    //     std::cout << "Node: " << m.node_name << std::endl;
-    //   }
-    //   if (settings.enable_cpu_temp) {
-    //     std::cout << "Temp: " << m.cpu_temp_c << "C" << std::endl;
-    //   }
-    //   // ... etc ...
-    // }
-  };
 }

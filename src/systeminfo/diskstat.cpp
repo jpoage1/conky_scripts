@@ -1,14 +1,14 @@
 
 #include "diskstat.hpp"
 
-#include "data.hpp"
+#include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 #include "filesystems.hpp"
 #include "json_definitions.hpp"
 #include "polling.hpp"
-#include "runner.hpp"
 #include "ssh.hpp"
+#include "stream_provider.hpp"
 
 std::istream& LocalDataStreams::get_diskstats_stream() {
   return create_stream_from_file(diskstats, "/proc/diskstats");
