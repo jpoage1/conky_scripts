@@ -14,6 +14,8 @@ class ParsedConfig {
   RunMode _run_mode = RunMode::RUN_ONCE;
   OutputPipeline active_pipeline;
   std::chrono::time_point<std::chrono::steady_clock> sleep_until;
+  std::string config_path;
+  std::filesystem::file_time_type last_write_time;
 
  public:
   std::vector<MetricsContext> tasks;
@@ -50,4 +52,6 @@ class ParsedConfig {
 
   int initialize(std::list<SystemMetrics>& tasks);
   void done(std::list<SystemMetrics>& result);
+  bool reload_if_changed(std::list<SystemMetrics>& tasks);
+  void set_filename(std::string filename);
 };

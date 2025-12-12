@@ -1,6 +1,7 @@
 // json.cpp
 
 #include "cli_parser.hpp"
+#include "config_types.hpp"
 #include "context.hpp"
 #include "json_definitions.hpp"
 #include "log.hpp"
@@ -15,6 +16,9 @@ int main(int argc, char* argv[]) {
   config.initialize(tasks);
 
   do {
+    if (config.reload_if_changed(tasks)) {
+      continue;
+    }
     config.sleep();
     for (SystemMetrics& task : tasks) {
       SPDLOG_DEBUG("Running task");

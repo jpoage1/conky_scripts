@@ -1,6 +1,7 @@
 // cli_parser.cpp
 #include "cli_parser.hpp"
 
+#include "config_types.hpp"
 #include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
@@ -50,6 +51,7 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
         std::cerr << "Loading global config: " << filename << std::endl;
 
         config = load_lua_config(filename);
+        config.set_filename(filename);
 
         // Stop parsing immediately
         return config;

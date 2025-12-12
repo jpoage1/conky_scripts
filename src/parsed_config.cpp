@@ -1,5 +1,6 @@
 // parsed_config.cpp
 #include "cli_parser.hpp"
+#include "config_types.hpp"
 #include "conky_output.hpp"
 #include "context.hpp"
 #include "log.hpp"
@@ -96,4 +97,62 @@ void ParsedConfig::done(std::list<SystemMetrics>& result) {
     DEBUG_PTR("Active pipeline result", result);
     this->active_pipeline(result);
   }
+}
+bool ParsedConfig::reload_if_changed(std::list<SystemMetrics>& active_tasks) {
+  if (config_path.empty()) return false;
+
+  std::error_code ec;
+  auto current_time = std::filesystem::last_write_time(config_path, ec);
+
+  if (ec) {
+    SPDLOG_WARN("Could not check config file time: {}", ec.message());
+    return false;
+  }
+
+  // If timestamp is newer, reload
+  if (current_time > last_write_time) {
+    SPDLOG_INFO("Config change detected. Reloading...");
+    last_write_time = current_time;
+
+    // 1. Load NEW config into a temporary object
+    // We catch exceptions here to prevent crashing on bad syntax
+    try {
+      ParsedConfig new_config = load_lua_config(config_path);
+
+      // 2. Clear OLD tasks (Destructors run, connections close)
+      active_tasks.clear();
+
+      // 3. Move NEW tasks into the active list
+      // We iterate the 'tasks' inside the temporary 'new_config'
+      // and initialize them into the running 'active_tasks' list.
+
+      // Copy relevant settings over if needed (like run_mode)
+      this->set_run_mode(new_config.run_mode());
+      this->set_output_mode(new_config.get_output_mode());
+
+      // Re-run initialization logic (creates tasks, opens streams)
+      // Note: We need to temporarily swap the 'tasks' context
+      // inside 'this' or just use the new_config's context.
+
+      // Easier way: Steal the contexts from new_config
+      this->tasks = std::move(new_config.tasks);
+
+      // Re-run initialize logic on the main list
+      this->initialize(active_tasks);
+
+      SPDLOG_INFO("Hot reload complete.");
+      return true;
+
+    } catch (const std::exception& e) {
+      SPDLOG_ERROR("Hot reload failed: {}", e.what());
+      // We keep the old tasks running if the new config is broken
+      return false;
+    }
+  }
+  return false;
+}
+
+void ParsedConfig::set_filename(std::string filename) {
+  config_path = filename;
+  last_write_time = std::filesystem::last_write_time(filename);
 }
