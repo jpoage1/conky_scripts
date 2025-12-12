@@ -32,7 +32,21 @@ int main(int argc, char* argv[]) {
         // Logic moved from process_command
         context.provider = DataStreamProviders::LocalDataStream;
         context.device_file = cmd.config_path;
-        // Validate file existence here
+      } else if (cmd.type == CommandType::SSH) {
+        context.device_file = cmd.config_path;
+        context.interfaces = cmd.interfaces;
+
+        if (!cmd.host.empty() && !cmd.user.empty()) {
+          // Specific Host
+          context.source_name = cmd.user + "@" + cmd.host;
+          context.provider = DataStreamProviders::ProcDataStream;
+          context.host = cmd.host;
+          context.user = cmd.user;
+        } else {
+          // Default SSH
+          context.source_name = "Default SSH";
+          context.provider = DataStreamProviders::ProcDataStream;
+        }
       } else if (cmd.type == CommandType::SETTINGS) {
         context = load_lua_settings(cmd.config_path);
       }

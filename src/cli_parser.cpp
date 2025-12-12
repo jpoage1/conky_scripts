@@ -58,13 +58,40 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
     // --- 2. Primary Commands ---
     else if (arg == "--local") {
       if (i + 1 < args.size()) {
-        options.commands.push_back({CommandType::LOCAL, args[++i], {}});
+        options.commands.push_back({CommandType::LOCAL, args[++i], {}, "", ""});
       } else {
         std::cerr << "Error: --local requires a config file.\n";
       }
+    } else if (arg == "--ssh") {
+      if (i + 1 < args.size()) {
+        CommandRequest req;
+        req.type = CommandType::SSH;
+        req.config_path = args[++i];  // Consume config file
+
+        // Check for optional Host/User arguments
+        // We peek ahead 1 and 2 spots. If they exist and don't start with '-',
+        // consume them.
+        if (i + 2 < args.size()) {
+          std::string potential_host = args[i + 1];
+          std::string potential_user = args[i + 2];
+
+          if (potential_host[0] != '-' && potential_user[0] != '-') {
+            req.host = potential_host;
+            req.user = potential_user;
+            i += 2;  // Consume host and user
+          }
+        }
+
+        // Initialize empty interfaces (will be filled if --interfaces follows)
+        req.interfaces = {};
+        options.commands.push_back(req);
+      } else {
+        std::cerr << "Error: --ssh requires a config file.\n";
+      }
     } else if (arg == "--settings") {
       if (i + 1 < args.size()) {
-        options.commands.push_back({CommandType::SETTINGS, args[++i], {}});
+        options.commands.push_back(
+            {CommandType::SETTINGS, args[++i], {}, "", ""});
       } else {
         std::cerr << "Error: --settings requires a config file.\n";
       }
@@ -87,10 +114,8 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
     // --- 4. Implicit Local (Positional Arg) ---
     // If it's not a flag (doesn't start with -), treat as local config
     else if (arg[0] != '-') {
-      options.commands.push_back({CommandType::LOCAL, arg, {}});
-    }
-
-    else {
+      options.commands.push_back({CommandType::LOCAL, arg, {}, "", ""});
+    } else {
       // Deprecated/Ignored flags (like --ssh)
       std::cerr << "Warning: Unknown or deprecated argument ignored: " << arg
                 << "\n";
@@ -147,15 +172,6 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
   return config;
 }
 
-int check_config_file(const std::string& config_file) {
-  if (!std::filesystem::exists(config_file)) {
-    std::cerr << "Warning: Config file not found, skipping: " << config_file
-              << std::endl;
-    return 1;
-  }
-  return 0;
-}
-
 void print_usage(const char* prog_name) {
   std::cerr
       << "Usage: " << prog_name << " [options...]\n\n"
@@ -172,80 +188,4 @@ void print_usage(const char* prog_name) {
       << "Example:\n"
       << "  " << prog_name
       << " /path/local.conf --ssh /path/ssh.conf my-server conky\n";
-}
-int process_command(const std::vector<std::string>& args, size_t& current_index,
-                    std::vector<MetricsContext>& tasks) {
-  MetricsContext context;
-  std::string command = args[current_index];
-  SPDLOG_DEBUG("Processing command: {}", command);
-  size_t initial_index = current_index;
-
-  // --- 1. Parse Config File ---
-  if (current_index + 1 >= args.size()) {
-    context.success = false;
-    context.error_message = command + " requires a <config_file> argument.";
-    context.source_name =
-        (command == "--local") ? "Local (Error)" : "SSH (Error)";
-    tasks.push_back(std::move(context));
-    return 1;  // Consume only the command itself
-  }
-  std::string config_file = args[current_index + 1];
-  current_index += 2;  // Tentatively consume command + config
-
-  // --- 2. Check Config File ---
-  if (check_config_file(config_file) != 0) {
-    context.success = false;
-    context.error_message = "Config file not found: " + config_file;
-    context.source_name =
-        (command == "--local") ? "Local (Error)" : "SSH (Error)";
-    tasks.push_back(std::move(context));
-    return current_index - initial_index;  // Return consumed args
-  } else if (command == "--settings") {
-    std::cerr << "Loading lua config" << std::endl;
-    context = load_lua_settings(config_file);
-    tasks.push_back(std::move(context));
-    return current_index - initial_index;
-  } else {
-    context.device_file = config_file;
-  }
-
-  // --- 3. Call Appropriate Get Function ---
-  if (command == "--local") {
-    context.source_name = "Local";
-    context.provider = DataStreamProviders::LocalDataStream;
-  } else if (command == "--ssh") {
-    // Check for specific host/user
-    if (current_index + 1 < args.size() &&
-        args[current_index].rfind("--", 0) != 0 &&
-        args[current_index + 1].rfind("--", 0) != 0) {
-      std::string host = args[current_index];
-      std::string user = args[current_index + 1];
-      context.source_name = user + "@" + host;
-
-      context.provider = DataStreamProviders::ProcDataStream;
-      context.host = host;
-      context.user = user;
-      current_index += 2;  // Consume host + user
-    } else {
-      // Default SSH host
-      context.source_name = "Default SSH";
-      context.provider = DataStreamProviders::ProcDataStream;
-    }
-  }
-  // --- 4. Check for --interfaces ---
-  if (current_index < args.size() && args[current_index] == "--interfaces") {
-    if (current_index + 1 < args.size()) {
-      context.interfaces = parse_interface_list(args[current_index + 1]);
-      current_index += 2;  // Consume --interfaces and its value
-    } else {
-      // Handle error: --interfaces flag without a value
-      // You might want to add an error to context.error_message
-      std::cerr << "Warning: --interfaces flag requires a comma-separated list."
-                << std::endl;
-      current_index += 1;  // Consume only the flag to avoid infinite loop
-    }
-  }
-
-  tasks.push_back(std::move(context));
-  return current_index - initial_index;  // Return total consumed args
 }
