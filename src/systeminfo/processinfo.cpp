@@ -200,6 +200,9 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
     : IPollingTask(p, m, context) {
   auto settings = context.settings;
 
+  process_count = settings.process_count;
+  ignore_list = settings.ignore_list;
+
   // 1. CPU Configuration
   if (settings.enable_realtime_processinfo_cpu ||
       settings.enable_avg_processinfo_cpu) {
@@ -329,6 +332,11 @@ void ProcessPollingTask::calculate() {
 
   // 2. Calculate Real-Time Delta for ALL processes
   for (const auto& [pid, current_snap] : t2_snapshots) {
+    if (std::find(ignore_list.begin(), ignore_list.end(), current_snap.name) !=
+        ignore_list.end()) {
+      continue;
+    }
+
     auto prev_it = t1_snapshots.find(pid);
     if (prev_it != t1_snapshots.end()) {
       const auto& prev_snap = prev_it->second;

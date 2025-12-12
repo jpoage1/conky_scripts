@@ -108,11 +108,8 @@ void SystemMetrics::configure_polling_pipeline(MetricsContext& context) {
     DEBUG_PTR("new_task", new_task);
   }
   if (settings.enable_processinfo()) {
-    auto task = std::make_unique<ProcessPollingTask>(*provider, *this, context);
-    task->set_process_count(settings.process_count);
-
-    DEBUG_PTR("processinfo", task);
-
-    polling_tasks.push_back(std::move(task));
+    auto& new_task = polling_tasks.emplace_back(
+        std::make_unique<ProcessPollingTask>(*provider, *this, context));
+    DEBUG_PTR("processinfo", new_task);
   }
 }
