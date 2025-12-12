@@ -102,16 +102,16 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
   }
 }
 
-void DiskPollingTask::take_snapshot_1() {
+void DiskPollingTask::take_initial_snapshot() {
   set_timestamp();
-  t1_snapshots = read_data(provider.get_diskstats_stream());
+  prev_snapshots = read_data(provider.get_diskstats_stream());
 }
-void DiskPollingTask::take_snapshot_2() {
+void DiskPollingTask::take_new_snapshot() {
   set_delta_time();
-  t2_snapshots = read_data(provider.get_diskstats_stream());
+  current_snapshots = read_data(provider.get_diskstats_stream());
 }
 
-void DiskPollingTask::commit() { t1_snapshots = t2_snapshots; }
+void DiskPollingTask::commit() { prev_snapshots = current_snapshots; }
 
 void DiskPollingTask::calculate() {
   //   std::cerr << "CALCULATE START: &metrics = " << &metrics
@@ -127,22 +127,23 @@ void DiskPollingTask::calculate() {
     info_ptr->io.read_bytes_per_sec = 0;
     info_ptr->io.write_bytes_per_sec = 0;
   }
-  SPDLOG_DEBUG("Disk Calculate: T2 Size = {}", t2_snapshots.size());
+  SPDLOG_DEBUG("Disk Calculate: Curr Size = {}", current_snapshots.size());
 
   // 3. Calculate stats for all devices
-  for (auto const& [dev_name, t2_snap] : t2_snapshots) {
-    auto t1_it = t1_snapshots.find(dev_name);
-    if (t1_it == t1_snapshots.end()) {
-      continue;  // No T1 data, skip
+  for (auto const& [dev_name, curr_snap] : current_snapshots) {
+    auto prev_it = prev_snapshots.find(dev_name);
+    if (prev_it == prev_snapshots.end()) {
+      continue;  // No prev data, skip
     }
 
-    const auto& t1_snap = t1_it->second;
-    uint64_t read_delta = (t2_snap.bytes_read >= t1_snap.bytes_read)
-                              ? (t2_snap.bytes_read - t1_snap.bytes_read)
+    const auto& prev_snap = prev_it->second;
+    uint64_t read_delta = (curr_snap.bytes_read >= prev_snap.bytes_read)
+                              ? (curr_snap.bytes_read - prev_snap.bytes_read)
                               : 0;
-    uint64_t write_delta = (t2_snap.bytes_written >= t1_snap.bytes_written)
-                               ? (t2_snap.bytes_written - t1_snap.bytes_written)
-                               : 0;
+    uint64_t write_delta =
+        (curr_snap.bytes_written >= prev_snap.bytes_written)
+            ? (curr_snap.bytes_written - prev_snap.bytes_written)
+            : 0;
     uint64_t read_bps = static_cast<uint64_t>(read_delta / time_delta_seconds);
     uint64_t write_bps =
         static_cast<uint64_t>(write_delta / time_delta_seconds);

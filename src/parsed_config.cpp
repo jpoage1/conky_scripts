@@ -63,6 +63,7 @@ int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
     std::cerr << "Initialization failed, no valid tasks to run." << std::endl;
     return 1;
   }
+  sleep_until = std::chrono::steady_clock::now();
   /* Perform these steps only once */
   for (MetricsContext& task : this->tasks) {
     SystemMetrics& new_task = tasks.emplace_back(task);
@@ -74,17 +75,12 @@ int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
                 << std::endl;
       // Optional: tasks.pop_back(); // Remove failed task if strict
     }
-  }
-
-  sleep_until = std::chrono::steady_clock::now();
-
-  for (SystemMetrics& task : tasks) {
-    DEBUG_PTR("Initialize Task", task);
-    for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
+    for (std::unique_ptr<IPollingTask>& polling_task : new_task.polling_tasks) {
       DEBUG_PTR("Polling task address", polling_task);
-      polling_task->take_snapshot_1();
+      polling_task->take_initial_snapshot();
     }
   }
+
   return 0;
 }
 void ParsedConfig::done(std::list<SystemMetrics>& result) {

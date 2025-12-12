@@ -96,21 +96,6 @@ class SystemMetrics {
   void create_pipeline(MetricsContext& context);
   void configure_provider(MetricsContext& context);
 };
-// int get_local_metrics(DataStreamProvider& provider,
-//                       const std::string& config_file, SystemMetrics&
-//                       metrics);
-// int get_metrics_from_provider(DataStreamProvider& provider,
-//                               const std::string& config_file,
-//                               SystemMetrics& metrics);
-
-// int get_server_metrics(DataStreamProvider& provider,
-//                        const std::string& config_file,
-//                        SystemMetrics& metrics);
-
-// int get_server_metrics(DataStreamProvider& provider,
-//                        const std::string& config_file, SystemMetrics&
-//                        metrics, const std::string& host, const std::string&
-//                        user);
 
 int get_local_metrics(DataStreamProviderPtr&, const std::string& config_file,
                       SystemMetrics& metrics);

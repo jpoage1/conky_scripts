@@ -26,18 +26,18 @@ NetworkPollingTask::NetworkPollingTask(DataStreamProvider& provider,
   name = "Network polling";
 }
 
-void NetworkPollingTask::take_snapshot_1() {
+void NetworkPollingTask::take_initial_snapshot() {
   set_timestamp();
-  t1_snapshot = read_data(provider.get_net_dev_stream());
+  prev_snapshot = read_data(provider.get_net_dev_stream());
 }
 
-void NetworkPollingTask::take_snapshot_2() {
+void NetworkPollingTask::take_new_snapshot() {
   set_delta_time();
-  t2_snapshot = read_data(provider.get_net_dev_stream());
+  current_snapshot = read_data(provider.get_net_dev_stream());
 }
 void NetworkPollingTask::commit() {
-  t1_snapshot =
-      t2_snapshot;  // Note: singular 'snapshot' based on your previous code
+  prev_snapshot = current_snapshot;  // Note: singular 'snapshot' based on your
+                                     // previous code
 }
 
 NetworkSnapshotMap NetworkPollingTask::read_data(std::istream& net_dev_stream) {
@@ -85,9 +85,9 @@ void NetworkPollingTask::calculate() {
     return;
   }
 
-  for (const auto& [name, current] : t2_snapshot) {
-    auto prev_it = t1_snapshot.find(name);
-    if (prev_it != t1_snapshot.end()) {
+  for (const auto& [name, current] : current_snapshot) {
+    auto prev_it = prev_snapshot.find(name);
+    if (prev_it != prev_snapshot.end()) {
       const auto& prev = prev_it->second;
 
       NetworkInterfaceStats stats;

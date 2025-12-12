@@ -52,24 +52,26 @@ int main(int argc, char* argv[]) {
     config.sleep();
     for (SystemMetrics& task : tasks) {
       SPDLOG_DEBUG("Running task");
-      task.read_data();
-      SPDLOG_DEBUG("Done running task");
-    }
 
-    for (SystemMetrics& task : tasks) {
+      if (task.read_data() != 0) {
+        std::cerr << "Warning: Failed to read initial data for task."
+                  << std::endl;
+      }
+
       DEBUG_PTR("main SystemMetrics task address", task);
       for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
         DEBUG_PTR("Polling task address", polling_task);
-        polling_task->take_snapshot_2();
+        polling_task->take_new_snapshot();
         polling_task->calculate();
         polling_task->commit();
       }
 
       // refresh data after polling
-      //   task.complete(); // unused/dead code
+      //   task.complete(); // not implemented
 
       // Cleanup ssh session
       task.provider->finally();
+      SPDLOG_DEBUG("Done running task");
     }
     // Print the result or whatever
     SPDLOG_DEBUG("config.done()");

@@ -21,24 +21,26 @@ CpuPollingTask::CpuPollingTask(DataStreamProvider& provider,
 
 void CpuPollingTask::calculate() {
   std::vector<CoreStats> all_core_stats;
-  size_t num_cores_and_agg = std::min(t1_snapshots.size(), t2_snapshots.size());
+  size_t num_cores_and_agg =
+      std::min(prev_snapshots.size(), current_snapshots.size());
 
   for (size_t i = 0; i < num_cores_and_agg; ++i) {
-    const auto& t1 = t1_snapshots[i];
-    const auto& t2 = t2_snapshots[i];
+    const auto& prev = prev_snapshots[i];
+    const auto& curr = current_snapshots[i];
 
-    unsigned long long total_delta = t2.get_total_time() - t1.get_total_time();
+    unsigned long long total_delta =
+        curr.get_total_time() - prev.get_total_time();
 
     if (total_delta == 0) {
       all_core_stats.push_back({i, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f});
       continue;
     }
 
-    unsigned long long user_delta = t2.user - t1.user;
-    unsigned long long nice_delta = t2.nice - t1.nice;
-    unsigned long long system_delta = t2.system - t1.system;
-    unsigned long long iowait_delta = t2.iowait - t1.iowait;
-    unsigned long long idle_delta = t2.idle - t1.idle;
+    unsigned long long user_delta = curr.user - prev.user;
+    unsigned long long nice_delta = curr.nice - prev.nice;
+    unsigned long long system_delta = curr.system - prev.system;
+    unsigned long long iowait_delta = curr.iowait - prev.iowait;
+    unsigned long long idle_delta = curr.idle - prev.idle;
 
     CoreStats core_stat;
     core_stat.core_id = i;  // 0 = aggregate, 1 = Core 0, etc.
@@ -59,18 +61,18 @@ void CpuPollingTask::calculate() {
   metrics.cores = all_core_stats;
 }
 
-void CpuPollingTask::take_snapshot_1() {
+void CpuPollingTask::take_initial_snapshot() {
   //   dump_fstream(provider.get_stat_stream());
   set_timestamp();
-  t1_snapshots = read_data(provider.get_stat_stream());
+  prev_snapshots = read_data(provider.get_stat_stream());
 }
 
-void CpuPollingTask::take_snapshot_2() {
+void CpuPollingTask::take_new_snapshot() {
   set_delta_time();
-  t2_snapshots = read_data(provider.get_stat_stream());
+  current_snapshots = read_data(provider.get_stat_stream());
 }
 
-void CpuPollingTask::commit() { t1_snapshots = t2_snapshots; }
+void CpuPollingTask::commit() { prev_snapshots = current_snapshots; }
 
 CpuSnapshotList CpuPollingTask::read_data(std::istream& input_stream) {
   CpuSnapshotList snapshots;

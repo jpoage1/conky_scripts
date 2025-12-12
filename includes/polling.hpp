@@ -59,12 +59,12 @@ class IPollingTask {
   /**
    * @brief Take the "Time 1" (T1) snapshot and store it internally.
    */
-  virtual void take_snapshot_1() = 0;
+  virtual void take_initial_snapshot() = 0;
 
   /**
    * @brief Take the "Time 2" (T2) snapshot and store it internally.
    */
-  virtual void take_snapshot_2() = 0;
+  virtual void take_new_snapshot() = 0;
 
   /**
    * @brief Use the stored T1 and T2 snapshots to perform the
@@ -75,14 +75,14 @@ class IPollingTask {
 };
 class CpuPollingTask : public IPollingTask {
  private:
-  CpuSnapshotList t1_snapshots;
-  CpuSnapshotList t2_snapshots;
+  CpuSnapshotList prev_snapshots;
+  CpuSnapshotList current_snapshots;
 
  public:
   CpuPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
   void configure() override {};
-  void take_snapshot_1() override;
-  void take_snapshot_2() override;
+  void take_initial_snapshot() override;
+  void take_new_snapshot() override;
   void calculate() override;
   void commit() override;
   CpuSnapshotList read_data(std::istream&);
@@ -91,14 +91,14 @@ using CpuPollingTaskPtr = std::unique_ptr<CpuPollingTask>;
 
 class NetworkPollingTask : public IPollingTask {
  private:
-  NetworkSnapshotMap t1_snapshot;
-  NetworkSnapshotMap t2_snapshot;
+  NetworkSnapshotMap prev_snapshot;
+  NetworkSnapshotMap current_snapshot;
 
  public:
   NetworkPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
   void configure() override {};
-  void take_snapshot_1() override;
-  void take_snapshot_2() override;
+  void take_initial_snapshot() override;
+  void take_new_snapshot() override;
   void calculate() override;
   void commit() override;
 
@@ -108,8 +108,8 @@ using NetworkPollingTaskPtr = std::unique_ptr<NetworkPollingTask>;
 
 class DiskPollingTask : public IPollingTask {
  private:
-  DiskIoSnapshotMap t1_snapshots;
-  DiskIoSnapshotMap t2_snapshots;
+  DiskIoSnapshotMap prev_snapshots;
+  DiskIoSnapshotMap current_snapshots;
   // A set of the kernel device names we actually care about (e.g., "dm-0",
   // "sda1")
   std::set<std::string> target_kernel_names;
@@ -123,8 +123,8 @@ class DiskPollingTask : public IPollingTask {
  public:
   DiskPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
   void configure() override;
-  void take_snapshot_1() override;
-  void take_snapshot_2() override;
+  void take_initial_snapshot() override;
+  void take_new_snapshot() override;
 
   void calculate() override;
   void commit() override;
@@ -137,8 +137,8 @@ class ProcessPollingTask : public IPollingTask {
   long unsigned int process_count = 10;
   std::vector<std::string> ignore_list;
   bool only_user_processes = true;
-  ProcessSnapshotMap t1_snapshots;
-  ProcessSnapshotMap t2_snapshots;
+  ProcessSnapshotMap prev_snapshots;
+  ProcessSnapshotMap current_snapshots;
   std::vector<std::function<void(std::vector<ProcessInfo>&)>> output_pipeline;
   void populate_top_ps(std::vector<ProcessInfo>& source,
                        std::vector<ProcessInfo>& dest, SortMode mode);
@@ -146,8 +146,8 @@ class ProcessPollingTask : public IPollingTask {
  public:
   ProcessPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
   void configure() override {};
-  void take_snapshot_1() override;
-  void take_snapshot_2() override;
+  void take_initial_snapshot() override;
+  void take_new_snapshot() override;
   void calculate() override;  // time_delta_seconds is not strictly needed here
   void commit() override;
 

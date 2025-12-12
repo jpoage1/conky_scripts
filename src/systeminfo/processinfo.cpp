@@ -276,20 +276,22 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
         });
   }
 }
-void ProcessPollingTask::take_snapshot_1() {
+void ProcessPollingTask::take_initial_snapshot() {
   set_timestamp();
-  t1_snapshots = read_data();
+  prev_snapshots = read_data();
 }
-void ProcessPollingTask::take_snapshot_2() {
+void ProcessPollingTask::take_new_snapshot() {
   set_delta_time();
-  t2_snapshots = read_data();
+  current_snapshots = read_data();
 }
 
 ProcessSnapshotMap ProcessPollingTask::read_data() {
   return provider.get_process_snapshots(only_user_processes);
 }
 
-void ProcessPollingTask::commit() { t1_snapshots = std::move(t2_snapshots); }
+void ProcessPollingTask::commit() {
+  prev_snapshots = std::move(current_snapshots);
+}
 
 // Helper lambda for sorting and assigning top 10
 void ProcessPollingTask::populate_top_ps(std::vector<ProcessInfo>& source,
@@ -339,17 +341,17 @@ void ProcessPollingTask::calculate() {
   long system_uptime_jiffies = get_system_uptime_jiffies();
 
   std::vector<ProcessInfo> all_procs;
-  all_procs.reserve(t2_snapshots.size());
+  all_procs.reserve(current_snapshots.size());
 
   // 2. Calculate Real-Time Delta for ALL processes
-  for (const auto& [pid, current_snap] : t2_snapshots) {
+  for (const auto& [pid, current_snap] : current_snapshots) {
     if (std::find(ignore_list.begin(), ignore_list.end(), current_snap.name) !=
         ignore_list.end()) {
       continue;
     }
 
-    auto prev_it = t1_snapshots.find(pid);
-    if (prev_it != t1_snapshots.end()) {
+    auto prev_it = prev_snapshots.find(pid);
+    if (prev_it != prev_snapshots.end()) {
       const auto& prev_snap = prev_it->second;
 
       ProcessInfo info;
