@@ -149,21 +149,64 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
   }
 
   // 4. Instantiate Commands
+  // 4. Instantiate Commands
   for (const auto& cmd : options.commands) {
     MetricsContext context;
 
+    // --- STEP 1: Load Base Configuration (The "Defaults") ---
+    // If a config file path exists, load it first to populate the context.
+    // This applies to SETTINGS, LOCAL (if file provided), and SSH (if file
+    // provided).
+    if (!cmd.config_path.empty()) {
+      // We use load_lua_settings for everything initially to get the base
+      // 'settings' table Note: specific LOCAL/SSH config loading might differ
+      // slightly based on your legacy logic, but typically you load the Lua
+      // "settings" table to get the baseline.
+
+      // Check if file exists before trying to load to avoid confusing Lua
+      // errors if the user just passed a raw string meant for something else.
+      if (std::filesystem::exists(cmd.config_path)) {
+        context = load_lua_settings(cmd.config_path);
+      } else {
+        // If it's not a file, strict modes might want to error,
+        // but for LOCAL context.device_file might just be the file string
+        // itself if used differently. For now, we assume if it's a file, we
+        // load settings.
+        context.device_file = cmd.config_path;
+      }
+    }
+
+    // --- STEP 2: Apply Command-Type Specific Defaults ---
     if (cmd.type == CommandType::LOCAL) {
       context.provider = DataStreamProviders::LocalDataStream;
-      context.device_file = cmd.config_path;
-      context.interfaces = cmd.interfaces;  // Apply filtered interfaces
       context.source_name = "Local";
-    } else if (cmd.type == CommandType::SETTINGS) {
-      context = load_lua_settings(cmd.config_path);
-      // Settings might have interfaces defined in Lua,
-      // but CLI overrides usually take precedence if you wanted to merge them.
-      if (!cmd.interfaces.empty()) {
-        context.interfaces = cmd.interfaces;
+      // Ensure device_file is set if load_lua_settings didn't set it/wasn't
+      // used
+      if (context.device_file.empty()) context.device_file = cmd.config_path;
+    } else if (cmd.type == CommandType::SSH) {
+      context.provider = DataStreamProviders::ProcDataStream;
+      context.source_name = "Default SSH";  // Default, overridden below
+    }
+
+    // --- STEP 3: Merge CLI Arguments (The "Overrides") ---
+
+    // A. Interfaces: MERGE (Union of Lua set + CLI set)
+    if (!cmd.interfaces.empty()) {
+      // This adds CLI interfaces to existing Lua interfaces.
+      // If you want CLI to REPLACE Lua completely, use '=' instead of 'insert'.
+      context.interfaces.insert(cmd.interfaces.begin(), cmd.interfaces.end());
+    }
+
+    // B. SSH Credentials: OVERRIDE
+    if (cmd.type == CommandType::SSH) {
+      if (!cmd.host.empty() && !cmd.user.empty()) {
+        // CLI explicit host/user overrides anything found in Lua
+        context.host = cmd.host;
+        context.user = cmd.user;
+        context.source_name = cmd.user + "@" + cmd.host;
       }
+      // If CLI didn't provide host/user, we stick with what load_lua_settings
+      // found (if any)
     }
 
     config.tasks.push_back(std::move(context));

@@ -7,7 +7,7 @@
 #include "metrics.hpp"
 #include "pcn.hpp"
 #include "types.hpp"
-enum class CommandType { LOCAL, SETTINGS, SSH };
+enum class CommandType { LOCAL, SETTINGS, SSH, SOCKETS };
 
 struct CommandRequest {
   CommandType type;
