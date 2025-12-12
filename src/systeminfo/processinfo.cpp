@@ -213,7 +213,7 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
           DEBUG_PTR("ProcessPollingTask lambda metrics", metrics);
           if (need_real) {
             // Sort by Realtime CPU
-            this->populate_top_10(data, this->metrics.top_processes_real_cpu,
+            this->populate_top_ps(data, this->metrics.top_processes_real_cpu,
                                   SortMode::CPU_REAL);
 
             if (need_avg) {
@@ -224,7 +224,7 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
             }
           } else {
             // Only Avg requested: Sort specifically by Lifetime Average
-            this->populate_top_10(data, this->metrics.top_processes_avg_cpu,
+            this->populate_top_ps(data, this->metrics.top_processes_avg_cpu,
                                   SortMode::CPU_AVG);
           }
           SPDLOG_DEBUG("CPU Lambda: Exiting scope.");
@@ -242,7 +242,7 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
           DEBUG_PTR("ProcessPollingTask lambda this", this);
           DEBUG_PTR("ProcessPollingTask lambda metrics", metrics);
           // Always sort by Memory (RSS)
-          this->populate_top_10(data, this->metrics.top_processes_real_mem,
+          this->populate_top_ps(data, this->metrics.top_processes_real_mem,
                                 SortMode::MEM);
 
           if (need_avg) {
@@ -275,18 +275,14 @@ ProcessSnapshotMap ProcessPollingTask::read_data() {
   return provider.get_process_snapshots();
 }
 
-void ProcessPollingTask::commit() {
-  // Efficiently move T2 data to T1.
-  // This clears T2 and prepares T1 for the next loop instantly.
-  t1_snapshots = std::move(t2_snapshots);
-}
+void ProcessPollingTask::commit() { t1_snapshots = std::move(t2_snapshots); }
 
 // Helper lambda for sorting and assigning top 10
-void ProcessPollingTask::populate_top_10(std::vector<ProcessInfo>& source,
+void ProcessPollingTask::populate_top_ps(std::vector<ProcessInfo>& source,
                                          std::vector<ProcessInfo>& dest,
                                          SortMode mode) {
   SPDLOG_DEBUG("  Sort: Start. Size: {}", source.size());
-  dest.reserve(10);
+  dest.reserve(process_count);
 
   // Define the comparator based on the mode
   auto sorter = [mode](const ProcessInfo& a, const ProcessInfo& b) {
@@ -301,10 +297,10 @@ void ProcessPollingTask::populate_top_10(std::vector<ProcessInfo>& source,
     return false;
   };
 
-  if (source.size() > 10) {
-    std::partial_sort(source.begin(), source.begin() + 10, source.end(),
-                      sorter);
-    dest.assign(source.begin(), source.begin() + 10);
+  if (source.size() > process_count) {
+    std::partial_sort(source.begin(), source.begin() + process_count,
+                      source.end(), sorter);
+    dest.assign(source.begin(), source.begin() + process_count);
   } else {
     std::sort(source.begin(), source.end(), sorter);
     dest = source;
@@ -403,3 +399,4 @@ void ProcessPollingTask::calculate() {
 
   SPDLOG_DEBUG("Pipeline complete.");
 }
+void ProcessPollingTask::set_process_count(int count) { process_count = count; }

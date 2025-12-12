@@ -142,6 +142,11 @@ MetricsContext parse_settings(sol::table lua_settings) {
           procs.get<sol::optional<bool>>("enable_realtime_cpu").value_or(true);
       settings.enable_realtime_processinfo_mem =
           procs.get<sol::optional<bool>>("enable_realtime_mem").value_or(true);
+      settings.process_count =
+          procs.get<sol::optional<long unsigned int>>("count").value_or(10);
+      settings.ignore_list =
+          procs.get<sol::optional<std::vector<std::string>>>("ignore_list")
+              .value_or(std::vector<std::string>{});
     }
   }
 

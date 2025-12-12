@@ -134,10 +134,11 @@ class DiskPollingTask : public IPollingTask {
 using DiskPollingTaskPtr = std::unique_ptr<DiskPollingTask>;
 class ProcessPollingTask : public IPollingTask {
  private:
+  long unsigned int process_count = 10;
   ProcessSnapshotMap t1_snapshots;
   ProcessSnapshotMap t2_snapshots;
   std::vector<std::function<void(std::vector<ProcessInfo>&)>> output_pipeline;
-  void populate_top_10(std::vector<ProcessInfo>& source,
+  void populate_top_ps(std::vector<ProcessInfo>& source,
                        std::vector<ProcessInfo>& dest, SortMode mode);
 
  public:
@@ -151,5 +152,6 @@ class ProcessPollingTask : public IPollingTask {
   // This internal helper reads the /proc directory and returns the raw snapshot
   // list
   ProcessSnapshotMap read_data();
+  void set_process_count(int);
 };
 using ProcessPollingTaskPtr = std::unique_ptr<ProcessPollingTask>;

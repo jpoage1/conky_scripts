@@ -35,6 +35,9 @@ struct MetricSettings {
   bool enable_avg_processinfo_mem = true;
   bool enable_realtime_processinfo_cpu = true;
   bool enable_realtime_processinfo_mem = true;
+  long unsigned int process_count = true;
+  std::vector<std::string> ignore_list;
+
   bool enable_processinfo() {
     return enable_avg_processinfo_cpu || enable_avg_processinfo_mem ||
            enable_realtime_processinfo_cpu || enable_realtime_processinfo_mem;
