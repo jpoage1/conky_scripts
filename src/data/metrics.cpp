@@ -46,6 +46,12 @@ SystemMetrics::SystemMetrics(MetricsContext& context) {
 void SystemMetrics::create_pipeline(MetricsContext& context) {
   auto settings = context.settings;
 
+  // Task: Battery Info
+  task_pipeline.emplace_back([this, &context]() {
+    this->battery_info =
+        provider->get_battery_status(context.settings.batteries);
+  });
+
   // Task: CPU Temp
   if (settings.enable_cpu_temp) {
     task_pipeline.emplace_back(

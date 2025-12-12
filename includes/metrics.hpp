@@ -1,6 +1,7 @@
 // metrics.hpp
 #pragma once
 
+#include "batteryinfo.hpp"
 #include "corestat.hpp"
 #include "diskstat.hpp"
 #include "meminfo.hpp"
@@ -36,6 +37,9 @@ struct MetricSettings {
   bool enable_realtime_processinfo_cpu = true;
   bool enable_realtime_processinfo_mem = true;
   long unsigned int process_count = true;
+  bool only_user_processes = false;
+  std::vector<BatteryConfig> batteries;
+
   std::vector<std::string> ignore_list;
 
   bool enable_processinfo() {
@@ -57,6 +61,7 @@ class SystemMetrics {
   MemInfo meminfo;
   MemInfo swapinfo;
   std::string uptime;
+  std::vector<BatteryStatus> battery_info;
 
   double load_avg_1m = 0.0;
   double load_avg_5m = 0.0;

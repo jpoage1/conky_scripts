@@ -63,6 +63,7 @@ add_library(telemetry_features STATIC
     src/systeminfo/filesystems.cpp
     src/systeminfo/sysinfo.cpp
     src/systeminfo/hwmonitor.cpp
+    src/systeminfo/batteryinfo.cpp
 )
 # Links against Backend to get data
 target_link_libraries(telemetry_features PUBLIC telemetry_backend)

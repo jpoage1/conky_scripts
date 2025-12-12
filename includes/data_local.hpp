@@ -11,6 +11,7 @@ struct PopenDeleter {
   }
 };
 struct DiskUsage;
+struct BatteryInfo;
 struct LocalDataStreams : public DataStreamProvider {
   std::ifstream cpuinfo;
   std::ifstream meminfo;
@@ -20,6 +21,7 @@ struct LocalDataStreams : public DataStreamProvider {
   std::ifstream diskstats;
   std::ifstream loadavg;
   std::ifstream net_dev;
+  std::stringstream battery;
   std::stringstream top_mem_procs;
   std::stringstream top_cpu_procs;
 
@@ -32,7 +34,7 @@ struct LocalDataStreams : public DataStreamProvider {
   std::istream& get_diskstats_stream() override;
   std::istream& get_loadavg_stream() override;
   std::istream& get_net_dev_stream() override;
-  ProcessSnapshotMap get_process_snapshots() override;
+  ProcessSnapshotMap get_process_snapshots(bool only_user_processes) override;
 
   //   std::istream& get_top_mem_processes_stream() override;
   //   std::istream& get_top_cpu_processes_stream() override;
@@ -54,6 +56,9 @@ struct LocalDataStreams : public DataStreamProvider {
   std::stringstream& create_stream_from_command(std::stringstream& stream,
                                                 const char* cmd,
                                                 std::string stream_name);
+  std::vector<BatteryStatus> get_battery_status(std::vector<BatteryConfig>&);
+  std::vector<BatteryStatus> get_battery_status(
+      const std::vector<BatteryConfig>& configs) override;
 };
 
 using LocalDataStreamsPtr = std::unique_ptr<LocalDataStreams>;

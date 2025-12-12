@@ -16,6 +16,7 @@ struct NetworkSnapshot {
  */
 struct NetworkInterfaceStats {
   std::string interface_name;
+  std::string ip_address;
   double rx_bytes_per_sec = 0.0;
   double tx_bytes_per_sec = 0.0;
   // Add packet rates if needed
@@ -29,3 +30,5 @@ struct NetworkInterfaceStats {
  * @param prev_timestamp Reference to the time_point of the previous snapshot.
  * @param initialized Reference to the boolean tracking initialization.
  */
+
+std::string get_ip_address(const std::string& interface_name);

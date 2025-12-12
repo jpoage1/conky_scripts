@@ -4,6 +4,7 @@
 
 struct DiskUsage;
 struct ProcessRawSnapshot;
+struct BatteryStatus;
 using ProcessSnapshotMap = std::map<long, ProcessRawSnapshot>;
 enum DataStreamProviders {
   LocalDataStream,
@@ -15,6 +16,8 @@ class DataStreamProvider {
   void rewind(std::istream& stream);
 
   virtual ~DataStreamProvider() = default;
+  virtual std::vector<BatteryStatus> get_battery_status(
+      const std::vector<BatteryConfig>&) = 0;
   virtual std::istream& get_cpuinfo_stream() = 0;
   virtual std::istream& get_meminfo_stream() = 0;
   virtual std::istream& get_uptime_stream() = 0;
@@ -23,7 +26,7 @@ class DataStreamProvider {
   virtual std::istream& get_diskstats_stream() = 0;
   virtual std::istream& get_loadavg_stream() = 0;
   virtual std::istream& get_net_dev_stream() = 0;
-  virtual ProcessSnapshotMap get_process_snapshots() = 0;
+  virtual ProcessSnapshotMap get_process_snapshots(bool) = 0;
   //   virtual std::istream& get_top_mem_processes_stream() = 0;
   //   virtual std::istream& get_top_cpu_processes_stream() = 0;
   virtual DiskUsage get_disk_usage(const std::string&) = 0;

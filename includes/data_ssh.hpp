@@ -15,6 +15,7 @@ struct ProcDataStreams : public DataStreamProvider {
   std::stringstream net_dev;
   std::stringstream top_mem_procs;
   std::stringstream top_cpu_procs;
+  std::stringstream battery;
 
   /*  DataStreamProvider functions */
 
@@ -26,7 +27,7 @@ struct ProcDataStreams : public DataStreamProvider {
   std::istream& get_diskstats_stream() override;
   std::istream& get_loadavg_stream() override;
   std::istream& get_net_dev_stream() override;
-  ProcessSnapshotMap get_process_snapshots() override;
+  ProcessSnapshotMap get_process_snapshots(bool only_user_processes) override;
   //   std::istream& get_top_mem_processes_stream() override;
   //   std::istream& get_top_cpu_processes_stream() override;
   //   uint64_t get_used_space_bytes(const std::string& mount_point) override;
@@ -52,6 +53,9 @@ struct ProcDataStreams : public DataStreamProvider {
   void cleanup_ssh_session();
   int ssh_connection();
   int setup_ssh_session();
+  std::vector<BatteryStatus> get_battery_status(std::vector<BatteryConfig>&);
+  std::vector<BatteryStatus> get_battery_status(
+      const std::vector<BatteryConfig>& configs) override;
 };
 std::string trim(const std::string& str);
 uint64_t get_df_data_bytes(const std::string& mount_point, bool get_used);

@@ -136,6 +136,7 @@ class ProcessPollingTask : public IPollingTask {
  private:
   long unsigned int process_count = 10;
   std::vector<std::string> ignore_list;
+  bool only_user_processes = true;
   ProcessSnapshotMap t1_snapshots;
   ProcessSnapshotMap t2_snapshots;
   std::vector<std::function<void(std::vector<ProcessInfo>&)>> output_pipeline;

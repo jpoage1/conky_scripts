@@ -1,6 +1,10 @@
 // networkstats.cpp
 #include "networkstats.hpp"
 
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <netdb.h>
+
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 #include "metrics.hpp"
@@ -88,6 +92,7 @@ void NetworkPollingTask::calculate() {
 
       NetworkInterfaceStats stats;
       stats.interface_name = name;
+      stats.ip_address = get_ip_address(name);
 
       // Check for counter reset (less likely but possible)
       if (current.rx_bytes >= prev.rx_bytes) {
@@ -103,4 +108,25 @@ void NetworkPollingTask::calculate() {
     }
   }
   metrics.network_interfaces = rates;
+}
+std::string get_ip_address(const std::string& interface_name) {
+  struct ifaddrs *ifaddr, *ifa;
+  std::string ip = "";
+
+  if (getifaddrs(&ifaddr) == -1) return "";
+
+  for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == NULL) continue;
+    if (ifa->ifa_addr->sa_family == AF_INET) {  // IPv4
+      if (interface_name == ifa->ifa_name) {
+        char host[NI_MAXHOST];
+        int s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host,
+                            NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+        if (s == 0) ip = host;
+        break;
+      }
+    }
+  }
+  freeifaddrs(ifaddr);
+  return ip;
 }

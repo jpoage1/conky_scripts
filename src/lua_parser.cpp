@@ -142,6 +142,8 @@ MetricsContext parse_settings(sol::table lua_settings) {
           procs.get<sol::optional<bool>>("enable_realtime_cpu").value_or(true);
       settings.enable_realtime_processinfo_mem =
           procs.get<sol::optional<bool>>("enable_realtime_mem").value_or(true);
+      settings.only_user_processes =
+          procs.get<sol::optional<bool>>("only_user_processes").value_or(true);
       settings.process_count =
           procs.get<sol::optional<long unsigned int>>("count").value_or(10);
       settings.ignore_list =
@@ -160,6 +162,33 @@ MetricsContext parse_settings(sol::table lua_settings) {
     if (net["interfaces"].valid()) {
       // Auto-convert Lua array to C++ vector
       context.interfaces = net["interfaces"].get<std::set<std::string>>();
+    }
+  }
+
+  // =========================================================
+  // BATTERIES (Lists)
+  // =========================================================
+  if (lua_settings["batteries"].valid()) {
+    sol::table batteries_list = lua_settings["batteries"];
+
+    // Iterate over the array part of the table
+    // sol::table iteration returns {key, value} pairs
+    for (const auto& kv : batteries_list) {
+      sol::object value = kv.second;
+
+      // Ensure the item is actually a table (e.g. { name=..., path=... })
+      if (value.is<sol::table>()) {
+        sol::table bat_item = value.as<sol::table>();
+
+        BatteryConfig config;
+        config.name = bat_item.get_or<std::string>("name", "Battery");
+        config.path = bat_item.get_or<std::string>("path", "");
+
+        // Basic validation
+        if (!config.path.empty()) {
+          settings.batteries.push_back(config);
+        }
+      }
     }
   }
 

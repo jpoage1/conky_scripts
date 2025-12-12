@@ -2,6 +2,7 @@
 #pragma once
 
 // 1. Include all struct definitions FIRST
+#include "batteryinfo.hpp"
 #include "corestat.hpp"
 #include "diskstat.hpp"
 #include "filesystems.hpp"
@@ -36,6 +37,8 @@ inline void from_json(const json& j, ProcessInfo& p) {
   j.at("mem_percent").get_to(p.mem_percent);
   j.at("name").get_to(p.name);
 }
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BatteryStatus, name, percentage, status);
 
 // DeviceInfo
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DiskUsage, used_bytes, size_bytes);

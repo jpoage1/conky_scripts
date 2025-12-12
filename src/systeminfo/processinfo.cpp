@@ -1,6 +1,7 @@
 // processinfo.cpp
 #include "processinfo.hpp"
 
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "context.hpp"
@@ -115,7 +116,8 @@ long get_system_uptime_jiffies() {
 // --- DATA PROVIDERS ---
 
 // 1. LOCAL: High-performance direct /proc parsing
-ProcessSnapshotMap LocalDataStreams::get_process_snapshots() {
+ProcessSnapshotMap LocalDataStreams::get_process_snapshots(
+    bool only_user_processes) {
   namespace fs = std::filesystem;
   ProcessSnapshotMap snapshots;
 
@@ -124,6 +126,13 @@ ProcessSnapshotMap LocalDataStreams::get_process_snapshots() {
 
     // Fast check: is it a PID directory?
     if (!entry.is_directory() || !isdigit(pid_str[0])) continue;
+
+    struct stat stats;
+    if (::stat(entry.path().c_str(), &stats) == 0) {
+      if (only_user_processes && stats.st_uid != getuid()) {
+        continue;  // Skip processes not owned by me
+      }
+    }
 
     long pid = 0;
     try {
@@ -153,7 +162,8 @@ ProcessSnapshotMap LocalDataStreams::get_process_snapshots() {
 }
 
 // 2. REMOTE (SSH): Fallback using 'ps' command to reduce network overhead
-ProcessSnapshotMap ProcDataStreams::get_process_snapshots() {
+ProcessSnapshotMap ProcDataStreams::get_process_snapshots(
+    bool /*only_user_processes*/) {
   ProcessSnapshotMap snapshots;
 
   // Command: Get PID, RSS(kb), Cumulative CPU Time(seconds), Command Name
@@ -202,6 +212,7 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
 
   process_count = settings.process_count;
   ignore_list = settings.ignore_list;
+  only_user_processes = settings.only_user_processes;
 
   // 1. CPU Configuration
   if (settings.enable_realtime_processinfo_cpu ||
@@ -275,7 +286,7 @@ void ProcessPollingTask::take_snapshot_2() {
 }
 
 ProcessSnapshotMap ProcessPollingTask::read_data() {
-  return provider.get_process_snapshots();
+  return provider.get_process_snapshots(only_user_processes);
 }
 
 void ProcessPollingTask::commit() { t1_snapshots = std::move(t2_snapshots); }
