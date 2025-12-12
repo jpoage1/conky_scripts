@@ -7,7 +7,22 @@
 #include "metrics.hpp"
 #include "pcn.hpp"
 #include "types.hpp"
+enum class CommandType { LOCAL, SETTINGS };
 
+struct CommandRequest {
+  CommandType type;
+  std::string config_path;
+  std::set<std::string> interfaces;
+};
+
+struct ProgramOptions {
+  // Global Flags
+  std::optional<std::string> global_config_file;  // --config
+  bool persistent = false;                        // --persistent
+
+  // The list of tasks to execute
+  std::vector<CommandRequest> commands;
+};
 /**
  * @brief Parses command line arguments (argc, argv) to collect metric results.
  * Handles initial argument checks and conversion.
@@ -22,11 +37,13 @@ void print_usage(const char* prog_name);
 
 int check_config_file(const std::string& config_file);
 
-std::set<std::string> parse_interface_list(const std::string& list_str);
-
 int process_command(const std::vector<std::string>& args, size_t& current_index,
                     std::vector<MetricsContext>& all_results);
 
 // Factory functions: They take settings and return a runnable function
 OutputPipeline configure_json_pipeline(const MetricSettings& settings);
 OutputPipeline configure_conky_pipeline(const MetricSettings& settings);
+
+std::set<std::string> parse_interface_list(const std::string& list_str);
+ProgramOptions parse_token_stream(int argc, char* argv[]);
+ProgramOptions parse_cli(int argc, char* argv[]);

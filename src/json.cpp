@@ -1,17 +1,47 @@
-// json.cpp
 
 #include "cli_parser.hpp"
 #include "config_types.hpp"
 #include "context.hpp"
 #include "json_definitions.hpp"
 #include "log.hpp"
+#include "lua_parser.hpp"
 #include "metrics.hpp"
 #include "polling.hpp"
 #include "stream_provider.hpp"
 
 int main(int argc, char* argv[]) {
-  // 1. Call the parser (handles initial checks and processing)
-  ParsedConfig config = parse_arguments(argc, argv);
+  // Phase 1: Parse Text
+  ProgramOptions options = parse_cli(argc, argv);
+
+  ParsedConfig config;  // Your existing runtime controller
+
+  // Handle Exclusive Global Config
+  if (options.global_config_file.has_value()) {
+    config = load_lua_config(options.global_config_file.value());
+    // Early exit logic handles here
+  } else {
+    // Phase 2: Build Contexts
+    if (options.persistent) {
+      config.set_run_mode(RunMode::PERSISTENT);
+    }
+
+    for (const auto& cmd : options.commands) {
+      MetricsContext context;
+
+      if (cmd.type == CommandType::LOCAL) {
+        // Logic moved from process_command
+        context.provider = DataStreamProviders::LocalDataStream;
+        context.device_file = cmd.config_path;
+        // Validate file existence here
+      } else if (cmd.type == CommandType::SETTINGS) {
+        context = load_lua_settings(cmd.config_path);
+      }
+
+      config.tasks.push_back(std::move(context));
+    }
+  }
+
+  // Phase 3: Execute
   std::list<SystemMetrics> tasks;
   config.initialize(tasks);
 
