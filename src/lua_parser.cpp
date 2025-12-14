@@ -145,7 +145,8 @@ MetricsContext parse_settings(sol::table lua_settings) {
       settings.only_user_processes =
           procs.get<sol::optional<bool>>("only_user_processes").value_or(true);
       settings.process_count =
-          procs.get<sol::optional<long unsigned int>>("count").value_or(10);
+          procs.get<sol::optional<long unsigned int>>(std::string("count"))
+              .value_or(10);
       settings.ignore_list =
           procs.get<sol::optional<std::vector<std::string>>>("ignore_list")
               .value_or(std::vector<std::string>{});
@@ -181,7 +182,11 @@ MetricsContext parse_settings(sol::table lua_settings) {
         sol::table bat_item = value.as<sol::table>();
 
         BatteryConfig config;
-        config.name = bat_item.get_or<std::string>("name", "Battery");
+        config.name =
+            bat_item.get_or<std::string>(std::string("name"), "Battery");
+        // config.name =
+        // bat_item.get<sol::optional<std::string>>("name").value_or(
+        //     "Battery");
         config.path = bat_item.get_or<std::string>("path", "");
 
         // Basic validation

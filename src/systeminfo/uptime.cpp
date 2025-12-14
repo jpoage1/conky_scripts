@@ -10,12 +10,14 @@ std::istream& LocalDataStreams::get_uptime_stream() {
 std::istream& ProcDataStreams::get_uptime_stream() {
   return create_stream_from_command(uptime, "cat /proc/uptime");
 }
-std::string get_uptime(std::istream& input_stream) {
+Time get_uptime(std::istream& input_stream) {
   double uptime_seconds;
-  input_stream >> uptime_seconds;
-  int days = uptime_seconds / 86400;
-  int hours = ((int)uptime_seconds % 86400) / 3600;
-  int minutes = ((int)uptime_seconds % 3600) / 60;
-  return std::to_string(days) + "d " + std::to_string(hours) + "h " +
-         std::to_string(minutes) + "m";
+  if (input_stream >> uptime_seconds) {
+    int days = uptime_seconds / 86400;
+    int hours = ((int)uptime_seconds % 86400) / 3600;
+    int minutes = ((int)uptime_seconds % 3600) / 60;
+    int seconds = (int)uptime_seconds % 60;
+    return {days, hours, minutes, seconds, uptime_seconds};
+  }
+  return {0, 0, 0, 0, 0};
 }

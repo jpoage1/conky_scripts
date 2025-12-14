@@ -292,7 +292,7 @@ std::string show_system_metrics(const MetricsContext& result,
         << system_metrics.sys_name << " " << system_metrics.node_name << " "
         << system_metrics.kernel_release << " " << system_metrics.machine_type
         << "</tt>\n"  // End tt tag
-        << "Uptime: " << system_metrics.uptime << "\n"
+        << "Uptime: " << system_metrics.uptime.to_str() << "\n"
         << "Load (1m/5m/15m): " << std::fixed << std::setprecision(2)
         << system_metrics.load_avg_1m << " / " << system_metrics.load_avg_5m
         << " / " << system_metrics.load_avg_15m << "\n"

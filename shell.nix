@@ -21,13 +21,20 @@ pkgs.mkShell {
     sol2
 
     which
+    aha
     # openssl
   ];
 
 
   # Shell-specific settings
   shellHook = ''
-    
+    get_stuff () {
+      local rev=$(git rev-parse HEAD)
+      local sha256=$(nix-prefetch-url --unpack https://github.com/jpoage1/telemetry/archive/$(git rev-parse HEAD).tar.gz)
+      echo "rev $rev"
+      echo "sha256 $sha256"
+    }
+
     alias build-target="cmake --build build --target"
     alias install-component="cmake --install ./build/ --component"
 

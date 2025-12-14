@@ -9,6 +9,7 @@
 #include "pcn.hpp"
 #include "provider.hpp"
 #include "stream_provider.hpp"
+#include "uptime.hpp"
 
 class IPollingTask;
 struct DeviceInfo;
@@ -60,7 +61,7 @@ class SystemMetrics {
   double cpu_temp_c;
   MemInfo meminfo;
   MemInfo swapinfo;
-  std::string uptime;
+  Time uptime;
   std::vector<BatteryStatus> battery_info;
 
   double load_avg_1m = 0.0;

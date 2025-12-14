@@ -40,7 +40,7 @@ void print_metrics(const SystemMetrics& metrics) {
   }
   std::cout << "-----------------" << std::endl;
 
-  std::cout << "Uptime: " << metrics.uptime << std::endl;
+  std::cout << "Uptime: " << metrics.uptime.to_str() << std::endl;
 
   std::cout << "Mem: " << metrics.meminfo.used_kb << " / "
             << metrics.meminfo.total_kb << " kB (" << metrics.meminfo.percent

@@ -11,6 +11,7 @@
 #include "networkstats.hpp"
 #include "processinfo.hpp"
 #include "stream_provider.hpp"
+#include "uptime.hpp"
 
 // 2. Include nlohmann/json.hpp SECOND
 #include "nlohmann/json.hpp"
@@ -40,6 +41,8 @@ inline void from_json(const json& j, ProcessInfo& p) {
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BatteryStatus, name, percentage, status);
 
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Time, days, hours, minutes, seconds);
+
 // DeviceInfo
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DiskUsage, used_bytes, size_bytes);
 
@@ -66,6 +69,26 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HdIoStats, device_name, read_bytes_per_sec,
 
 // MemInfo
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MemInfo, used_kb, total_kb, percent);
+
+inline void to_json(json& j, const Time& t) {
+  j = json{
+      {"days", t.days},
+      {"hours", t.hours},
+      {"minutes", t.minutes},
+      {"seconds", t.seconds},
+      {"raw", t.raw},
+      {"text", t.to_str()},        // "0d 0h 5m"
+      {"clock", t.to_clock_str()}  // "00:00:05"
+  };
+}
+
+inline void from_json(const json& j, Time& t) {
+  j.at("days").get_to(t.days);
+  j.at("hours").get_to(t.hours);
+  j.at("minutes").get_to(t.minutes);
+  j.at("seconds").get_to(t.seconds);
+  j.at("raw").get_to(t.raw);
+}
 
 // 4. Define serialization for the PARENT STRUCT (SystemMetrics) LAST
 //    Now it can find the definitions for all its members.
