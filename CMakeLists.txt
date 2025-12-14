@@ -93,12 +93,12 @@ target_include_directories(telemetry_runtime PUBLIC ${LUA_INCLUDE_DIR})
 # add_executable(waybard src/waybar/waybar_formatters.cpp src/waybar.cpp)
 # target_link_libraries(waybard PRIVATE telemetry_runtime)
 
-add_executable(json src/json.cpp)
-target_link_libraries(json PRIVATE telemetry_runtime)
+add_executable(telemetry src/telemetry.cpp)
+target_link_libraries(telemetry PRIVATE telemetry_runtime)
 
 add_executable(widgets src/widgets/main.cpp src/widgets/widgets.cpp src/widgets/window.cpp)
 target_link_libraries(widgets PRIVATE telemetry_runtime ${GTKMM_LIBRARIES})
 target_include_directories(widgets PRIVATE ${GTKMM_INCLUDE_DIRS})
 
-install(TARGETS  json widgets RUNTIME DESTINATION bin)
-install(TARGETS json COMPONENT json RUNTIME DESTINATION bin)
+install(TARGETS  telemetry widgets RUNTIME DESTINATION bin)
+install(TARGETS telemetry COMPONENT telemetry RUNTIME DESTINATION bin)
