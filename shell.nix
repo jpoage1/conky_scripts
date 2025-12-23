@@ -44,6 +44,18 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     # Compiler
     gcc
+    gnumake
+    valgrind
+    clang-tools
+    python3
+    kdePackages.qtbase
+    kdePackages.qtdeclarative
+    kdePackages.wrapQtAppsHook
+    qtcreator
+    gtest
+    ninja
+    mold
+
 
     # Build system
     cmake
@@ -66,6 +78,14 @@ pkgs.mkShell {
 
   # Shell-specific settings
   shellHook = ''
+    # Set the Qt Plugin Path (needed for platform integration, e.g. xcb/wayland)
+    export QT_PLUGIN_PATH="${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}"
+
+    # Set the QML Import Path (needed for QtQuick.Controls, etc.)
+    export QML2_IMPORT_PATH="${pkgs.qt6.qtdeclarative}/${pkgs.qt6.qtbase.qtQmlPrefix}"
+    export LD_LIBRARY_PATH="$(nix-build --no-out-link '<nixpkgs>' -A stdenv.cc.cc.lib)/lib:$(nix-build --no-out-link '<nixpkgs>' -A qt6.qtbase)/lib:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH"
+
     clip() {
       if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
         cat "$@" | wl-copy
@@ -75,11 +95,17 @@ pkgs.mkShell {
         echo "Not running on a recognized X11 or Wayland session." >&2
       fi
     }
-    get_commit_message() {
-      git_diff=$(git diff main|aha)
-      echo "I need a commit message, no formatting. just plain, alphanumeric text with proper punctuation" > ./diff.prompt
-      echo "\`\`\`$git_diff\`\`\`" >> ./diff.prompt
-      clip ./diff.prompt
+    commit_message() {
+      local branch=''\${1:-main}
+      git_diff=$(git diff --cached)
+      if [ -z "$git_diff" ]; then
+        echo "Error: No staged changes found. Did you 'git add'?"
+        return 1
+      fi
+      msg="Analyze the provided diff. Identify the functional logic delta. Ignore all previous conversational history and prior commit messages. Describe the atomic changes in the added and removed lines. Output only the alphanumeric message text. No headers, no markdown, no filler. Terminate immediately after delivery."
+      # msg="I need a commit message, no formatting. just plain, alphanumeric text with proper punctuation. Do not ask follow up questions.  Please do not repeat previous commit messages."
+      prompt=("''\$msg" "\`\`\`''\$git_diff\`\`\`")
+      printf "%s\n" "''\${prompt[@]}" | clip
     }
     nix_hash () {
       local rev=$(git rev-parse HEAD)
@@ -88,6 +114,7 @@ pkgs.mkShell {
       echo "sha256 $sha256"
     }
 
+    alias build="cmake --build build"
     alias build-target="cmake --build build --target"
     alias build-telemetry="cmake --build build --target telemetry"
     alias install-component="cmake --install ./build/ --component"
@@ -108,5 +135,6 @@ pkgs.mkShell {
   
     unset NIX_ENFORCE_NO_NATIVE
     ${help-command}
+    PS1="$PS1 telemetry shell) "
   '';
 }
