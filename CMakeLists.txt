@@ -83,6 +83,8 @@ add_library(telemetry_runtime STATIC
     src/conky/conky_output.cpp
     src/conky/conky_pipeline.cpp
     src/json/json_pipeline.cpp
+    src/json/json_serializer.cpp
+    src/json/json_definitions.cpp
     src/io.cpp
     src/rotate_file_sync.cpp
     src/teebuf.cpp

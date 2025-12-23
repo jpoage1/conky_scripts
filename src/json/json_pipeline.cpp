@@ -1,16 +1,18 @@
-// parser.cpp
+// json_pipeline.cpp
 #include "cli_parser.hpp"
 #include "conky_output.hpp"
 #include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
-#include "json_serializer.hpp"
 #include "log.hpp"
 #include "polling.hpp"
 #include "uptime.hpp"
 
-//
+// First:
 #include "json_definitions.hpp"
+
+// Last:
+#include "json_serializer.hpp"
 
 // --- JSON FACTORY ---
 OutputPipeline configure_json_pipeline(const MetricSettings& settings) {
