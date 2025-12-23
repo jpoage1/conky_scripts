@@ -2,6 +2,8 @@
 #include "conky_format.hpp"
 
 #include "colors.hpp"
+#include "conky_output.hpp"
+#include "diskstat.hpp"
 #include "filesystems.hpp"
 #include "format.hpp"
 

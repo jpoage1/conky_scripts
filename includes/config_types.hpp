@@ -1,5 +1,6 @@
 // cli_parser.hpp
-#pragma once
+#ifndef CONFIG_TYPES_HPP
+#define CONFIG_TYPES_HPP
 
 #include "context.hpp"
 #include "lua_parser.hpp"
@@ -55,3 +56,5 @@ class ParsedConfig {
   bool reload_if_changed(std::list<SystemMetrics>& tasks);
   void set_filename(std::string filename);
 };
+
+#endif

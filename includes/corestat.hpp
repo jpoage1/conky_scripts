@@ -1,5 +1,6 @@
-// corestat.h
-#pragma once
+// corestat.hpp
+#ifndef CORESTAT_HPP
+#define CORESTAT_HPP
 
 #include "pcn.hpp"
 
@@ -35,3 +36,4 @@ struct CoreStats {
 
 std::vector<CPUCore> read_cpu_times(std::istream&);
 std::string format_cpu_times(const CPUCore&, size_t);
+#endif

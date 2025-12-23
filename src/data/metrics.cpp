@@ -9,6 +9,8 @@
 #include "filesystems.hpp"
 #include "load_avg.hpp"
 #include "log.hpp"
+#include "networkstats.hpp"
+#include "pcn.hpp"
 #include "polling.hpp"
 #include "processinfo.hpp"
 #include "provider.hpp"
@@ -96,26 +98,28 @@ int SystemMetrics::read_data() {
 
 void SystemMetrics::configure_polling_pipeline(MetricsContext& context) {
   auto settings = context.settings;
+  std::unique_ptr<IPollingTask>* new_task;
 
   if (settings.enable_cpuinfo) {
-    auto& new_task = polling_tasks.emplace_back(
+    new_task = &polling_tasks.emplace_back(
         std::make_unique<CpuPollingTask>(*provider, *this, context));
     DEBUG_PTR("cpuinfo", new_task);
   }
 
   if (settings.enable_network_stats) {
-    auto& new_task = polling_tasks.emplace_back(
+    new_task = &polling_tasks.emplace_back(
         std::make_unique<NetworkPollingTask>(*provider, *this, context));
     DEBUG_PTR("networkstats", new_task);
   }
   if (settings.enable_diskstat) {
-    auto& new_task = polling_tasks.emplace_back(
+    new_task = &polling_tasks.emplace_back(
         std::make_unique<DiskPollingTask>(*provider, *this, context));
     DEBUG_PTR("new_task", new_task);
   }
   if (settings.enable_processinfo()) {
-    auto& new_task = polling_tasks.emplace_back(
+    new_task = &polling_tasks.emplace_back(
         std::make_unique<ProcessPollingTask>(*provider, *this, context));
     DEBUG_PTR("processinfo", new_task);
   }
+  (void)new_task;
 }

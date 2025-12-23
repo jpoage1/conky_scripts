@@ -1,5 +1,6 @@
 // networkstats.hpp
-#pragma once
+#ifndef NETWORKSTATS_HPP
+#define NETWORKSTATS_HPP
 
 #include "pcn.hpp"
 
@@ -32,3 +33,5 @@ struct NetworkInterfaceStats {
  */
 
 std::string get_ip_address(const std::string& interface_name);
+
+#endif

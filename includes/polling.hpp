@@ -1,13 +1,27 @@
-// polling_task.h
-#pragma once
+// polling.hpp
+#ifndef POLLING_HPP
+#define POLLING_HPP
 
+#include "diskstat.hpp"
 #include "metrics.hpp"
+#include "networkstats.hpp"
 #include "processinfo.hpp"
 #include "provider.hpp"
+
+struct NetworkSnapshot;
+struct NetworkInterfaceStats;
+struct MetricsContext;
+struct CpuSnapshot;
+struct DiskIoSnapshot;
+struct DeviceInfo;
+
+class SystemMetrics;
 
 using CpuSnapshotList = std::vector<CpuSnapshot>;
 using NetworkSnapshotMap = std::map<std::string, NetworkSnapshot>;
 using DiskIoSnapshotMap = std::map<std::string, DiskIoSnapshot>;
+using DevicePaths = std::vector<std::string>;
+using DiskStatConfig = std::set<DiskStatSettings>;
 
 struct ProcessSnapshot {
   long pid;
@@ -157,3 +171,4 @@ class ProcessPollingTask : public IPollingTask {
   void set_process_count(int);
 };
 using ProcessPollingTaskPtr = std::unique_ptr<ProcessPollingTask>;
+#endif

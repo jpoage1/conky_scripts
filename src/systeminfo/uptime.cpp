@@ -21,3 +21,23 @@ Time get_uptime(std::istream& input_stream) {
   }
   return {0, 0, 0, 0, 0};
 }
+
+// Default constructor
+Time::Time() = default;
+
+// Parameterized constructor
+Time::Time(int d, int h, int m, int s, double r)
+    : days(d), hours(h), minutes(m), seconds(s), raw(r) {}
+
+// Format: "1d 4h 30m"
+std::string Time::to_str() const {
+  return std::to_string(days) + "d " + std::to_string(hours) + "h " +
+         std::to_string(minutes) + "m";
+}
+
+// Format: "04:30:15"
+std::string Time::to_clock_str() const {
+  char buffer[32];
+  std::sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds);
+  return std::string(buffer);
+}

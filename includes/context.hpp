@@ -1,12 +1,20 @@
 // context.hpp
-#pragma once
+#ifndef CONTEXT_HPP
+#define CONTEXT_HPP
 
 #include "context.hpp"
+#include "diskstat.hpp"
 #include "metrics.hpp"
 #include "pcn.hpp"
 #include "provider.hpp"
+
+// struct MetricSettings;
+
+class SystemMetrics;
+
 using callback = std::function<int(DataStreamProviderPtr&, const std::string&,
                                    SystemMetrics&)>;
+using DiskStatConfig = std::set<DiskStatSettings>;
 
 struct MetricsContext {
   MetricSettings settings;
@@ -34,3 +42,5 @@ struct MetricsContext {
 
   MetricsContext() = default;
 };
+
+#endif

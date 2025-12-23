@@ -1,7 +1,9 @@
-// data_ssh.h
-#pragma once
+// data_ssh.hpp
+#ifndef DATA_SSH_HPP
+#define DATA_SSH_HPP
 #include "pcn.hpp"
-#include "stream_provider.hpp"
+#include "provider.hpp"
+
 struct DiskUsage;
 
 struct ProcDataStreams : public DataStreamProvider {
@@ -59,3 +61,5 @@ struct ProcDataStreams : public DataStreamProvider {
 };
 std::string trim(const std::string& str);
 uint64_t get_df_data_bytes(const std::string& mount_point, bool get_used);
+
+#endif

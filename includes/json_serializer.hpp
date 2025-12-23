@@ -1,5 +1,20 @@
 // json_serializer.hpp
-#pragma once
+#ifndef JSON_SERIALIZER_HPP
+#define JSON_SERIALIZER_HPP
+
+#include "batteryinfo.hpp"
+#include "corestat.hpp"
+#include "diskstat.hpp"
+#include "filesystems.hpp"
+#include "log.hpp"
+#include "meminfo.hpp"
+#include "networkstats.hpp"
+#include "pcn.hpp"
+#include "processinfo.hpp"
+#include "stream_provider.hpp"
+#include "uptime.hpp"
+
+//
 #include <functional>
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -112,3 +127,5 @@ class JsonSerializer {
     return j;
   }
 };
+
+#endif

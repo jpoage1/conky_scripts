@@ -1,8 +1,8 @@
-#pragma once
+#ifndef FORMAT_HPP
+#define FORMAT_HPP
 
 #include "pcn.hpp"
 
-struct DeviceInfo;
 // Enum to define the target output format
 enum class TargetFormat { CONKY, WAYBAR };
 
@@ -26,4 +26,4 @@ struct ColoredString {
     }
   }
 };
-using FuncType = ColoredString(const DeviceInfo&);
+#endif

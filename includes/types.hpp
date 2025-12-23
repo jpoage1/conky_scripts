@@ -1,5 +1,6 @@
 // types.hpp
-#pragma once
+#ifndef TYPES_HPP
+#define TYPES_HPP
 #include "pcn.hpp"
 
 // Forward decl
@@ -17,3 +18,5 @@ enum class OutputMode {
   CONKY,
   JSON,
 };
+
+#endif

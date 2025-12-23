@@ -10,6 +10,7 @@
 
 #include "data_local.hpp"
 #include "data_ssh.hpp"
+#include "metrics.hpp"
 #include "stream_provider.hpp"
 
 std::istream& LocalDataStreams::get_loadavg_stream() {

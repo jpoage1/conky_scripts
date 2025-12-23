@@ -1,5 +1,6 @@
 // json_definitions.hpp
-#pragma once
+#ifndef JSON_DEFINITIONS_HPP
+#define JSON_DEFINITIONS_HPP
 
 // 1. Include all struct definitions FIRST
 #include "batteryinfo.hpp"
@@ -8,6 +9,7 @@
 #include "filesystems.hpp"
 #include "log.hpp"
 #include "meminfo.hpp"
+#include "metrics.hpp"
 #include "networkstats.hpp"
 #include "processinfo.hpp"
 #include "stream_provider.hpp"
@@ -119,7 +121,7 @@ inline void to_json(json& j, const SystemMetrics& s) {
   };
   j["disk_io"] = json::array();
   for (const auto& pair : s.disk_io) {
-    SPDLOG_DEBUG("Serializing {}", pair.second.device_name);
+    SPDLOG_TRACE("Serializing {}", pair.second.device_name);
     j["disk_io"].push_back(
         pair.second);  // pair.second is the DiskIoStats object
   }
@@ -150,3 +152,5 @@ inline void from_json(const json& j, SystemMetrics& s) {
   j.at("disk_io").get_to(s.disk_io);
   // Note: polling_tasks is intentionally omitted
 }
+
+#endif

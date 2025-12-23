@@ -1,5 +1,7 @@
 // batteryinfo.hpp
-#pragma once
+#ifndef BATTERYINFO_HPP
+#define BATTERYINFO_HPP
+
 #include "pcn.hpp"
 
 // Configuration (from Lua)
@@ -16,3 +18,5 @@ struct BatteryStatus {
   std::string path;
   bool present = false;
 };
+
+#endif

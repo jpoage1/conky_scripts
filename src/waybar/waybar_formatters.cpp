@@ -4,6 +4,7 @@
 
 #include "cli_parser.hpp"
 #include "conky_format.hpp"
+#include "context.hpp"
 #include "format.hpp"
 #include "json_definitions.hpp"
 #include "pcn.hpp"

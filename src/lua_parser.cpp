@@ -2,6 +2,7 @@
 
 #include "cli_parser.hpp"
 #include "config_types.hpp"
+#include "context.hpp"
 #include "log.hpp"
 
 sol::state load_lua_file(const std::string& filename) {

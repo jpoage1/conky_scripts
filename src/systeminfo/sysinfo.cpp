@@ -2,6 +2,9 @@
 
 #include <sys/utsname.h>
 
+#include "metrics.hpp"
+#include "stream_provider.hpp"
+
 // Helper to read a single line from a file
 std::string read_line(const std::string& path) {
   std::ifstream f(path);

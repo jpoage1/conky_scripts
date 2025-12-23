@@ -1,7 +1,7 @@
 // stream_provider.hpp
-#pragma once
+#ifndef STREAM_PROVIDER_HPP
+#define STREAM_PROVIDER_HPP
 
-#include "metrics.hpp"
 #include "pcn.hpp"
 
 enum LogLevel {
@@ -21,3 +21,5 @@ void log_stream_state(std::istream& stream, const LogLevel log_level,
 
 void log_stream_state(const std::string time, const std::string stream_name,
                       const std::string state);
+
+#endif

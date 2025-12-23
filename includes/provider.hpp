@@ -1,10 +1,14 @@
 // provider.hpp
-#pragma once
+#ifndef PROVIDER_HPP
+#define PROVIDER_HPP
+#include "batteryinfo.hpp"
 #include "pcn.hpp"
 
 struct DiskUsage;
 struct ProcessRawSnapshot;
 struct BatteryStatus;
+struct BatteryConfig;
+
 using ProcessSnapshotMap = std::map<long, ProcessRawSnapshot>;
 enum DataStreamProviders {
   LocalDataStream,
@@ -37,3 +41,5 @@ class DataStreamProvider {
   virtual void finally() = 0;
 };
 using DataStreamProviderPtr = std::unique_ptr<DataStreamProvider>;
+
+#endif

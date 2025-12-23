@@ -1,6 +1,9 @@
 // hwmonitor.cpp
 #include "hwmonitor.hpp"
 
+#include "data_local.hpp"
+#include "provider.hpp"
+
 double LocalDataStreams::get_cpu_temperature() {
   const std::string hwmon_base = "/sys/class/hwmon";
   std::optional<double> fallback_temp;  // Fallback to first core/sensor

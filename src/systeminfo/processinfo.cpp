@@ -6,7 +6,10 @@
 
 #include "context.hpp"
 #include "data_local.hpp"
+#include "data_ssh.hpp"
+#include "diskstat.hpp"
 #include "log.hpp"
+#include "metrics.hpp"
 #include "polling.hpp"
 
 // namespace {
@@ -241,7 +244,7 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
             this->populate_top_ps(data, this->metrics.top_processes_avg_cpu,
                                   SortMode::CPU_AVG);
           }
-          SPDLOG_DEBUG("CPU Lambda: Exiting scope.");
+          SPDLOG_TRACE("CPU Lambda: Exiting scope.");
         });
   }
 
@@ -268,11 +271,11 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
           // because "Average Memory" isn't really a distinct thing (it's just
           // current usage).
           if (!need_real && need_avg) {
-            SPDLOG_DEBUG("pipeline (alt path)");
+            SPDLOG_TRACE("pipeline (alt path)");
             this->metrics.top_processes_avg_mem =
                 this->metrics.top_processes_real_mem;
           }
-          SPDLOG_DEBUG("Memory Lambda: Exiting scope.");
+          SPDLOG_TRACE("Memory Lambda: Exiting scope.");
         });
   }
 }
@@ -297,7 +300,7 @@ void ProcessPollingTask::commit() {
 void ProcessPollingTask::populate_top_ps(std::vector<ProcessInfo>& source,
                                          std::vector<ProcessInfo>& dest,
                                          SortMode mode) {
-  SPDLOG_DEBUG("  Sort: Start. Size: {}", source.size());
+  SPDLOG_TRACE("  Sort: Start. Size: {}", source.size());
   dest.reserve(process_count);
 
   // Define the comparator based on the mode
@@ -321,7 +324,7 @@ void ProcessPollingTask::populate_top_ps(std::vector<ProcessInfo>& source,
     std::sort(source.begin(), source.end(), sorter);
     dest = source;
   }
-  SPDLOG_DEBUG("  Sort: Finished.");
+  SPDLOG_TRACE("  Sort: Finished.");
 }
 void ProcessPollingTask::calculate() {
   // 1. Clear all destination vectors
@@ -404,20 +407,20 @@ void ProcessPollingTask::calculate() {
       all_procs.push_back(std::move(info));
     }
   }
-  SPDLOG_DEBUG("Starting pipeline execution. Steps: {}",
+  SPDLOG_TRACE("Starting pipeline execution. Steps: {}",
                output_pipeline.size());
 
   int step_index = 0;
   for (const auto& task : output_pipeline) {
-    SPDLOG_DEBUG(" [Step {}] Invoking task...", step_index);
+    SPDLOG_TRACE(" [Step {}] Invoking task...", step_index);
 
     // EXECUTE
     task(all_procs);
 
-    SPDLOG_DEBUG(" [Step {}] Task finished.", step_index);
+    SPDLOG_TRACE(" [Step {}] Task finished.", step_index);
     step_index++;
   }
 
-  SPDLOG_DEBUG("Pipeline complete.");
+  SPDLOG_TRACE("Pipeline complete.");
 }
 void ProcessPollingTask::set_process_count(int count) { process_count = count; }

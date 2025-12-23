@@ -7,6 +7,7 @@
 #include "json_serializer.hpp"
 #include "log.hpp"
 #include "polling.hpp"
+#include "uptime.hpp"
 
 //
 #include "json_definitions.hpp"

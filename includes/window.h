@@ -1,3 +1,4 @@
+// window.hpp
 #pragma once
 
 #include <gtkmm.h>

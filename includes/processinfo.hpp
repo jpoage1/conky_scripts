@@ -1,11 +1,10 @@
 // processinfo.hpp
-#pragma once
+#ifndef PROCESSINFO_HPP
+#define PROCESSINFO_HPP
 
 #include <algorithm>
 #include <cmath>  // For std::round
 
-#include "data_local.hpp"
-#include "data_ssh.hpp"
 #include "pcn.hpp"
 
 // Data structure to hold information about a single process
@@ -22,3 +21,5 @@ struct CpuState {
   std::chrono::steady_clock::time_point timestamp;
 };
 enum class SortMode { MEM, CPU_REAL, CPU_AVG };
+
+#endif

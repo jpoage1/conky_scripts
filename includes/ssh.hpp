@@ -1,4 +1,4 @@
-// ssh.h
+// ssh.hpp
 #ifndef SSH_H
 #define SSH_H
 

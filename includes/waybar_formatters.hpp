@@ -1,9 +1,13 @@
 // waybar_formatters.hpp
-#pragma once
+#ifndef WAYBAR_FORMATTERS_HPP
+#define WAYBAR_FORMATTERS_HPP
 
-#include "context.hpp"
 #include "pcn.hpp"
-#include "waybar_types.hpp"
+
+struct MetricsContext;
+struct FormattedSize;
+struct ProcessInfo;
+struct DeviceInfo;
 
 FormattedSize format_size_rate(double bytes_per_sec);
 void generate_waybar_output(const std::vector<MetricsContext>& all_results);
@@ -26,3 +30,5 @@ std::string show_devices(const MetricsContext& result,
 std::string show_system_metrics(const MetricsContext& result,
                                 const SystemMetrics& system_metrics,
                                 int& total_mem_percent, int& valid_mem_sources);
+
+#endif

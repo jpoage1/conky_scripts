@@ -86,7 +86,7 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
       info.device_path = logical_path;
       info.mount_point =
           get_mount_point(provider.get_mounts_stream(), logical_path);
-      SPDLOG_DEBUG("Found mount point: {}", info.mount_point);
+      SPDLOG_TRACE("Found mount point: {}", info.mount_point);
       info.usage = provider.get_disk_usage(info.mount_point);
 
       metrics.disks.push_back(std::move(info));
@@ -127,7 +127,7 @@ void DiskPollingTask::calculate() {
     info_ptr->io.read_bytes_per_sec = 0;
     info_ptr->io.write_bytes_per_sec = 0;
   }
-  SPDLOG_DEBUG("Disk Calculate: Curr Size = {}", current_snapshots.size());
+  SPDLOG_TRACE("Disk Calculate: Curr Size = {}", current_snapshots.size());
 
   // 3. Calculate stats for all devices
   for (auto const& [dev_name, curr_snap] : current_snapshots) {
@@ -168,13 +168,13 @@ void DiskPollingTask::calculate() {
       io.read_bytes_per_sec = read_bps;
       io.write_bytes_per_sec = write_bps;
 
-      SPDLOG_DEBUG("Found disk `{}`", io.device_name);
+      SPDLOG_TRACE("Found disk `{}`", io.device_name);
       //   std::cerr << "CALCULATE: Added to disk_io map: " << dev_name
       //             << " (read: " << read_bps << ", write: " << write_bps
       //             << "), map size: " << metrics.disk_io.size() << std::endl;
     }
   }
-  SPDLOG_DEBUG("CALCULATE END: disk_io map has {} entries.",
+  SPDLOG_TRACE("CALCULATE END: disk_io map has {} entries.",
                metrics.disk_io.size());
   //   for (const auto& [name, stats] : metrics.disk_io) {
   //     std::cerr << "  - " << name << ": '" << stats.device_name
@@ -188,7 +188,7 @@ DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
   diskstats_stream.clear();
   diskstats_stream.seekg(0, std::ios::beg);
 
-  SPDLOG_DEBUG("read_data: Reading /proc/diskstats...");
+  SPDLOG_TRACE("read_data: Reading /proc/diskstats...");
 
   std::string line;
   int line_count = 0;
@@ -244,7 +244,7 @@ DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
     }
   }
 
-  SPDLOG_DEBUG("read_data: Finished. Collected {} devices.", snapshots.size());
+  SPDLOG_TRACE("read_data: Finished. Collected {} devices.", snapshots.size());
 
   return snapshots;
 }

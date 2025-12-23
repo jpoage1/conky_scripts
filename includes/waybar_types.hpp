@@ -1,5 +1,6 @@
 // waybar_types.hpp
-#pragma once
+#ifndef WAYBAR_TYPES_HPP
+#define WAYBAR_TYPES_HPP
 
 #include "format.hpp"
 
@@ -15,3 +16,4 @@ struct FormattedSize {
     return text;
   }
 };
+#endif

@@ -1,6 +1,8 @@
 #include "data_ssh.hpp"
 
+#include "provider.hpp"
 #include "ssh.hpp"
+#include "stream_provider.hpp"
 
 ProcDataStreams::ProcDataStreams() {
   if (setup_ssh_session() != 0) {

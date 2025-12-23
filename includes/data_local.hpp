@@ -1,7 +1,8 @@
-// data_local.h
-#pragma once
+// data_local.hpp
+#ifndef DATA_LOCAL_HPP
+#define DATA_LOCAL_HPP
 #include "pcn.hpp"
-#include "stream_provider.hpp"
+#include "provider.hpp"
 
 struct PopenDeleter {
   void operator()(FILE* fp) const {
@@ -62,3 +63,4 @@ struct LocalDataStreams : public DataStreamProvider {
 };
 
 using LocalDataStreamsPtr = std::unique_ptr<LocalDataStreams>;
+#endif

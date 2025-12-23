@@ -1,12 +1,14 @@
 // includes/diskstat.hpp
-#pragma once
+#ifndef DISKSTAT_HPP
+#define DISKSTAT_HPP
 #include <unistd.h>
 
 #include <climits>
 #include <cstring>
 
 #include "pcn.hpp"
-struct DataStreamProvider;
+
+class DataStreamProvider;
 
 enum DiskStatSettings {
   Loopback,
@@ -52,3 +54,4 @@ int diskstat(DataStreamProvider& provider, const std::string& config_file);
 
 std::string get_mount_point(const std::string& device_path);
 std::string get_mount_point(std::istream&, const std::string& device_path);
+#endif

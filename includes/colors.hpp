@@ -1,4 +1,6 @@
-#pragma once
+// colors.hpp
+#ifndef COLORS_HPP
+#define COLORS_HPP
 
 #include <string>
 namespace colors {
@@ -12,3 +14,5 @@ const std::string reset = "";
 const std::string gray = "999999";
 const std::string blue = "3399ff";
 }  // namespace colors
+
+#endif

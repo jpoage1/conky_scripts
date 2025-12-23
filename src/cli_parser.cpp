@@ -11,9 +11,14 @@
 #include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
+#include "io.hpp"
+#include "json_definitions.hpp"
 #include "log.hpp"
 #include "lua_parser.hpp"
+#include "metrics.hpp"
+#include "pcn.hpp"
 #include "polling.hpp"
+#include "types.hpp"
 
 // Helper: Parse "eth0,wlan0" into a set
 std::set<std::string> parse_interface_list(const std::string& list_str) {
@@ -33,7 +38,7 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
   ProgramOptions options;
 
   if (argc < 2) {
-    std::cerr << "Error: No arguments provided.\n";
+    kerr << "Error: No arguments provided.\n";
     print_usage(argv[0]);
     return options;
   }
@@ -49,7 +54,7 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
         options.global_config_file = args[++i];
         return options;  // Exclusive Mode: Stop parsing immediately
       } else {
-        std::cerr << "Error: --config requires a filename.\n";
+        kerr << "Error: --config requires a filename.\n";
       }
     } else if (arg == "--persistent") {
       options.persistent = true;
@@ -60,7 +65,7 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
       if (i + 1 < args.size()) {
         options.commands.push_back({CommandType::LOCAL, args[++i], {}, "", ""});
       } else {
-        std::cerr << "Error: --local requires a config file.\n";
+        kerr << "Error: --local requires a config file.\n";
       }
     } else if (arg == "--ssh") {
       if (i + 1 < args.size()) {
@@ -86,14 +91,14 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
         req.interfaces = {};
         options.commands.push_back(req);
       } else {
-        std::cerr << "Error: --ssh requires a config file.\n";
+        kerr << "Error: --ssh requires a config file.\n";
       }
     } else if (arg == "--settings") {
       if (i + 1 < args.size()) {
         options.commands.push_back(
             {CommandType::SETTINGS, args[++i], {}, "", ""});
       } else {
-        std::cerr << "Error: --settings requires a config file.\n";
+        kerr << "Error: --settings requires a config file.\n";
       }
     }
 
@@ -101,13 +106,13 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
     // Applies to the MOST RECENTLY added command
     else if (arg == "--interfaces") {
       if (options.commands.empty()) {
-        std::cerr << "Warning: --interfaces ignored (no preceding command).\n";
+        kerr << "Warning: --interfaces ignored (no preceding command).\n";
         if (i + 1 < args.size()) i++;  // Consume value anyway to stay in sync
       } else if (i + 1 < args.size()) {
         std::string list_str = args[++i];
         options.commands.back().interfaces = parse_interface_list(list_str);
       } else {
-        std::cerr << "Error: --interfaces requires a list (e.g. eth0,wlan0).\n";
+        kerr << "Error: --interfaces requires a list (e.g. eth0,wlan0).\n";
       }
     }
 
@@ -117,8 +122,8 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
       options.commands.push_back({CommandType::LOCAL, arg, {}, "", ""});
     } else {
       // Deprecated/Ignored flags (like --ssh)
-      std::cerr << "Warning: Unknown or deprecated argument ignored: " << arg
-                << "\n";
+      kerr << "Warning: Unknown or deprecated argument ignored: " << arg
+           << "\n";
     }
   }
 
@@ -136,8 +141,8 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
 
   // 2. Handle Exclusive Mode
   if (options.global_config_file.has_value()) {
-    std::cerr << "Loading global config: " << options.global_config_file.value()
-              << std::endl;
+    kerr << "Loading global config: " << options.global_config_file.value()
+         << std::endl;
     config = load_lua_config(options.global_config_file.value());
     config.set_filename(options.global_config_file.value());
     return config;
@@ -216,19 +221,18 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
 }
 
 void print_usage(const char* prog_name) {
-  std::cerr
-      << "Usage: " << prog_name << " [options...]\n\n"
-      << "Generates metrics based on one or more commands.\n"
-      << "If the first argument is a file path, it defaults to --local.\n\n"
-      << "Commands:\n"
-      << "  <config_file>       (As first argument) Generate local metrics.\n"
-      << "  --local <config_file>\n"
-      << "                      Generate local metrics.\n"
-      << "  --ssh <config_file>\n"
-      << "                      Generate metrics from default SSH host.\n"
-      << "  --ssh <config_file> <host> <user>\n"
-      << "                      Generate metrics from specific SSH host.\n\n"
-      << "Example:\n"
-      << "  " << prog_name
-      << " /path/local.conf --ssh /path/ssh.conf my-server conky\n";
+  kerr << "Usage: " << prog_name << " [options...]\n\n"
+       << "Generates metrics based on one or more commands.\n"
+       << "If the first argument is a file path, it defaults to --local.\n\n"
+       << "Commands:\n"
+       << "  <config_file>       (As first argument) Generate local metrics.\n"
+       << "  --local <config_file>\n"
+       << "                      Generate local metrics.\n"
+       << "  --ssh <config_file>\n"
+       << "                      Generate metrics from default SSH host.\n"
+       << "  --ssh <config_file> <host> <user>\n"
+       << "                      Generate metrics from specific SSH host.\n\n"
+       << "Example:\n"
+       << "  " << prog_name
+       << " /path/local.conf --ssh /path/ssh.conf my-server conky\n";
 }

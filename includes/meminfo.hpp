@@ -1,6 +1,7 @@
-// meminfo.h
+// meminfo.hpp
+#ifndef MEMINFO_HPP
+#define MEMINFO_HPP
 
-#pragma once
 #include "pcn.hpp"
 
 struct MemInfo {
@@ -10,3 +11,4 @@ struct MemInfo {
 };
 void get_mem_usage(std::istream& input_stream, MemInfo& meminfo,
                    MemInfo& swapinfo);
+#endif

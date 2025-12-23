@@ -1,5 +1,6 @@
 // uptime.hpp
-#pragma once
+#ifndef UPTIME_HPP
+#define UPTIME_HPP
 
 #include "pcn.hpp"
 
@@ -8,24 +9,18 @@ struct Time {
   double raw;
 
   // Default constructor
-  Time() = default;
+  Time();
 
   // Parameterized constructor
-  Time(int d, int h, int m, int s, double r)
-      : days(d), hours(h), minutes(m), seconds(s), raw(r) {}
+  Time(int d, int h, int m, int s, double r);
 
   // Format: "1d 4h 30m"
-  std::string to_str() const {
-    return std::to_string(days) + "d " + std::to_string(hours) + "h " +
-           std::to_string(minutes) + "m";
-  }
+  std::string to_str() const;
 
   // Format: "04:30:15"
-  std::string to_clock_str() const {
-    char buffer[32];
-    std::sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds);
-    return std::string(buffer);
-  }
+  std::string to_clock_str() const;
 };
 
 Time get_uptime(std::istream&);
+
+#endif

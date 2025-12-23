@@ -1,7 +1,9 @@
 
 #include "cli_parser.hpp"
 #include "config_types.hpp"
+#include "configuration_builder.hpp"
 #include "context.hpp"
+#include "controller.hpp"
 #include "json_definitions.hpp"
 #include "log.hpp"
 #include "lua_parser.hpp"
@@ -11,86 +13,20 @@
 
 int main(int argc, char* argv[]) {
   // Phase 1: Parse Text
+  // Phase 1: Parse CLI
   ProgramOptions options = parse_cli(argc, argv);
 
-  ParsedConfig config;  // Your existing runtime controller
+  // Phase 2: Build Config (Reusable/Testable Path)
+  ParsedConfig config = build_config_from_options(options);
 
-  // Handle Exclusive Global Config
-  if (options.global_config_file.has_value()) {
-    config = load_lua_config(options.global_config_file.value());
-    // Early exit logic handles here
-  } else {
-    // Phase 2: Build Contexts
-    if (options.persistent) {
-      config.set_run_mode(RunMode::PERSISTENT);
-    }
-
-    for (const auto& cmd : options.commands) {
-      MetricsContext context;
-
-      if (cmd.type == CommandType::LOCAL) {
-        // Logic moved from process_command
-        context.provider = DataStreamProviders::LocalDataStream;
-        context.device_file = cmd.config_path;
-      } else if (cmd.type == CommandType::SSH) {
-        context.device_file = cmd.config_path;
-        context.interfaces = cmd.interfaces;
-
-        if (!cmd.host.empty() && !cmd.user.empty()) {
-          // Specific Host
-          context.source_name = cmd.user + "@" + cmd.host;
-          context.provider = DataStreamProviders::ProcDataStream;
-          context.host = cmd.host;
-          context.user = cmd.user;
-        } else {
-          // Default SSH
-          context.source_name = "Default SSH";
-          context.provider = DataStreamProviders::ProcDataStream;
-        }
-      } else if (cmd.type == CommandType::SETTINGS) {
-        context = load_lua_settings(cmd.config_path);
-      }
-
-      config.tasks.push_back(std::move(context));
-    }
-  }
-
-  // Phase 3: Execute
-  std::list<SystemMetrics> tasks;
-  config.initialize(tasks);
+  // Phase 3: Execute (The Game/Standalone Path)
+  Controller controller;
+  controller.initialize(config);
 
   do {
-    if (config.reload_if_changed(tasks)) {
-      continue;
-    }
-    config.sleep();
-    for (SystemMetrics& task : tasks) {
-      SPDLOG_DEBUG("Running task");
+    controller.sleep();
+    controller.tick();
+  } while (controller.is_persistent());
 
-      if (task.read_data() != 0) {
-        std::cerr << "Warning: Failed to read initial data for task."
-                  << std::endl;
-      }
-
-      DEBUG_PTR("main SystemMetrics task address", task);
-      for (std::unique_ptr<IPollingTask>& polling_task : task.polling_tasks) {
-        DEBUG_PTR("Polling task address", polling_task);
-        polling_task->take_new_snapshot();
-        polling_task->calculate();
-        polling_task->commit();
-      }
-
-      // refresh data after polling
-      //   task.complete(); // not implemented
-
-      // Cleanup ssh session
-      task.provider->finally();
-      SPDLOG_DEBUG("Done running task");
-    }
-    // Print the result or whatever
-    SPDLOG_DEBUG("config.done()");
-    config.done(tasks);
-
-  } while (config.run_mode(RunMode::PERSISTENT));
   return 0;
 }

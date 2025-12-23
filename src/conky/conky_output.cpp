@@ -1,8 +1,12 @@
 #include "conky_output.hpp"
 
+#include "colors.hpp"
 #include "conky_format.hpp"
+#include "conky_output.hpp"
+#include "diskstat.hpp"
 #include "filesystems.hpp"
 #include "format.hpp"
+#include "metrics.hpp"
 #include "processinfo.hpp"
 #include "stream_provider.hpp"
 

@@ -83,6 +83,12 @@ add_library(telemetry_runtime STATIC
     src/conky/conky_output.cpp
     src/conky/conky_pipeline.cpp
     src/json/json_pipeline.cpp
+    src/io.cpp
+    src/rotate_file_sync.cpp
+    src/teebuf.cpp
+    src/log.cpp
+    src/controller.cpp
+    src/configuration_builder.cpp
 )
 target_link_libraries(telemetry_runtime PUBLIC telemetry_features ${LUA_LIBRARIES})
 target_include_directories(telemetry_runtime PUBLIC ${LUA_INCLUDE_DIR})

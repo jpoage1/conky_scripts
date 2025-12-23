@@ -1,5 +1,6 @@
 // metrics.hpp
-#pragma once
+#ifndef METRICS_HPP
+#define METRICS_HPP
 
 #include "batteryinfo.hpp"
 #include "corestat.hpp"
@@ -11,16 +12,19 @@
 #include "stream_provider.hpp"
 #include "uptime.hpp"
 
-class IPollingTask;
 struct DeviceInfo;
 struct ProcessInfo;
 struct DiskUsage;
 struct LocalDataStreams;
 struct ProcDataStreams;
 struct MetricsContext;
+struct NetworkInterfaceStats;
+class DataStreamProvider;
+class IPollingTask;
 
 using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
 using DevicePaths = std::vector<std::string>;
+using DataStreamProviderPtr = std::unique_ptr<DataStreamProvider>;
 
 struct MetricSettings {
   bool enable_sysinfo = true;
@@ -109,3 +113,4 @@ int get_server_metrics(DataStreamProviderPtr&, const std::string& config_file,
 int get_server_metrics(DataStreamProviderPtr&, const std::string& config_file,
                        SystemMetrics& metrics, const std::string& host,
                        const std::string& user);
+#endif

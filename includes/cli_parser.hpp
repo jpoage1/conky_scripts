@@ -1,12 +1,18 @@
 // cli_parser.hpp
-#pragma once
+#ifndef CLI_PARSER_HPP
+#define CLI_PARSER_HPP
 
-#include "context.hpp"
-#include "json_definitions.hpp"
-#include "lua_parser.hpp"
-#include "metrics.hpp"
 #include "pcn.hpp"
-#include "types.hpp"
+
+struct MetricSettings;
+struct ProgramOptions;
+
+class SystemMetrics;
+class ParsedConfig;
+
+using OutputPipeline =
+    std::function<void(const std::__cxx11::list<SystemMetrics>&)>;
+
 enum class CommandType { LOCAL, SETTINGS, SSH, SOCKETS };
 
 struct CommandRequest {
@@ -45,3 +51,5 @@ OutputPipeline configure_conky_pipeline(const MetricSettings& settings);
 std::set<std::string> parse_interface_list(const std::string& list_str);
 ProgramOptions parse_token_stream(int argc, char* argv[]);
 ProgramOptions parse_cli(int argc, char* argv[]);
+
+#endif
