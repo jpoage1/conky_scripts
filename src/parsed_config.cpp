@@ -4,6 +4,7 @@
 #include "conky_output.hpp"
 #include "context.hpp"
 #include "log.hpp"
+#include "pipeline.hpp"
 #include "polling.hpp"
 
 bool ParsedConfig::run_mode(RunMode mode) const { return _run_mode == mode; }

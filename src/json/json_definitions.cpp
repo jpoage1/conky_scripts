@@ -1,10 +1,13 @@
 // json_definitions.cpp
 #include "json_definitions.hpp"
 
+#include <nlohmann/json.hpp>
+
 #include "batteryinfo.hpp"
 #include "corestat.hpp"
 #include "diskstat.hpp"
 #include "filesystems.hpp"
+#include "json_definitions.hpp"
 #include "log.hpp"
 #include "meminfo.hpp"
 #include "metrics.hpp"
@@ -17,35 +20,24 @@
 // Use the nlohmann namespace for convenience
 using json = nlohmann::json;
 
-// ProcessInfo
-void to_json(json& j, const ProcessInfo& p) {
-  j = json{{"pid", p.pid},
-           {"vmRssKb", p.vmRssKb},
-           {"cpu_percent", p.cpu_percent},
-           {"mem_percent", p.mem_percent},
-           {"name", p.name}};
+// --- Battery ---
+void to_json(json& j, const BatteryStatus& s) {
+  j = json{
+      {"name", s.name}, {"percentage", s.percentage}, {"status", s.status}};
+}
+void from_json(const json& j, BatteryStatus& s) {
+  j.at("name").get_to(s.name);
+  j.at("percentage").get_to(s.percentage);
+  j.at("status").get_to(s.status);
 }
 
-void from_json(const json& j, ProcessInfo& p) {
-  j.at("pid").get_to(p.pid);
-  j.at("vmRssKb").get_to(p.vmRssKb);
-  j.at("cpu_percent").get_to(p.cpu_percent);
-  j.at("mem_percent").get_to(p.mem_percent);
-  j.at("name").get_to(p.name);
-}
-
+// --- Time / Uptime ---
 void to_json(json& j, const Time& t) {
   j = json{
-      {"days", t.days},
-      {"hours", t.hours},
-      {"minutes", t.minutes},
-      {"seconds", t.seconds},
-      {"raw", t.raw},
-      {"text", t.to_str()},        // "0d 0h 5m"
-      {"clock", t.to_clock_str()}  // "00:00:05"
-  };
+      {"days", t.days},           {"hours", t.hours}, {"minutes", t.minutes},
+      {"seconds", t.seconds},     {"raw", t.raw},     {"text", t.to_str()},
+      {"clock", t.to_clock_str()}};
 }
-
 void from_json(const json& j, Time& t) {
   j.at("days").get_to(t.days);
   j.at("hours").get_to(t.hours);
@@ -54,8 +46,111 @@ void from_json(const json& j, Time& t) {
   j.at("raw").get_to(t.raw);
 }
 
-// 4. Define serialization for the PARENT STRUCT (SystemMetrics) LAST
-//    Now it can find the definitions for all its members.
+// --- Storage ---
+void to_json(json& j, const DiskUsage& s) {
+  j = json{{"used_bytes", s.used_bytes}, {"size_bytes", s.size_bytes}};
+}
+void from_json(const json& j, DiskUsage& s) {
+  j.at("used_bytes").get_to(s.used_bytes);
+  j.at("size_bytes").get_to(s.size_bytes);
+}
+
+// --- Disk IO
+void to_json(json& j, const DiskIoStats& s) {
+  j = json{{"read_bytes_per_sec", s.read_bytes_per_sec},
+           {"write_bytes_per_sec", s.write_bytes_per_sec}};
+}
+void from_json(const json& j, DiskIoStats& s) {
+  j.at("read_bytes_per_sec").get_to(s.read_bytes_per_sec);
+  j.at("write_bytes_per_sec").get_to(s.write_bytes_per_sec);
+}
+
+// --- Disk Info
+void to_json(json& j, const DeviceInfo& s) {
+  j = json{{"device_path", s.device_path},
+           {"mount_point", s.mount_point},
+           {"usage", s.usage},
+           {"io", s.io}};
+}
+void from_json(const json& j, DeviceInfo& s) {
+  j.at("device_path").get_to(s.device_path);
+  j.at("mount_point").get_to(s.mount_point);
+  j.at("usage").get_to(s.usage);
+  j.at("io").get_to(s.io);
+}
+
+// --- HDD IO
+void to_json(json& j, const HdIoStats& s) {
+  j = json{{"device_name", s.device_name},
+           {"read_bytes_per_sec", s.read_bytes_per_sec},
+           {"write_bytes_per_sec", s.write_bytes_per_sec}};
+}
+void from_json(const json& j, HdIoStats& s) {
+  j.at("device_name").get_to(s.device_name);
+  j.at("read_bytes_per_sec").get_to(s.read_bytes_per_sec);
+  j.at("write_bytes_per_sec").get_to(s.write_bytes_per_sec);
+}
+
+// --- CPU ---
+void to_json(json& j, const CoreStats& s) {
+  j = json{{"core_id", s.core_id},
+           {"user_percent", s.user_percent},
+           {"nice_percent", s.nice_percent},
+           {"system_percent", s.system_percent},
+           {"iowait_percent", s.iowait_percent},
+           {"idle_percent", s.idle_percent},
+           {"total_usage_percent", s.total_usage_percent}};
+}
+void from_json(const json& j, CoreStats& s) {
+  j.at("core_id").get_to(s.core_id);
+  j.at("user_percent").get_to(s.user_percent);
+  j.at("nice_percent").get_to(s.nice_percent);
+  j.at("system_percent").get_to(s.system_percent);
+  j.at("iowait_percent").get_to(s.iowait_percent);
+  j.at("idle_percent").get_to(s.idle_percent);
+  j.at("total_usage_percent").get_to(s.total_usage_percent);
+}
+
+// --- Network ---
+void to_json(json& j, const NetworkInterfaceStats& s) {
+  j = json{{"interface_name", s.interface_name},
+           {"rx_bytes_per_sec", s.rx_bytes_per_sec},
+           {"tx_bytes_per_sec", s.tx_bytes_per_sec}};
+}
+void from_json(const json& j, NetworkInterfaceStats& s) {
+  j.at("interface_name").get_to(s.interface_name);
+  j.at("rx_bytes_per_sec").get_to(s.rx_bytes_per_sec);
+  j.at("tx_bytes_per_sec").get_to(s.tx_bytes_per_sec);
+}
+
+// --- Memory ---
+void to_json(json& j, const MemInfo& s) {
+  j = json{
+      {"used_kb", s.used_kb}, {"total_kb", s.total_kb}, {"percent", s.percent}};
+}
+void from_json(const json& j, MemInfo& s) {
+  j.at("used_kb").get_to(s.used_kb);
+  j.at("total_kb").get_to(s.total_kb);
+  j.at("percent").get_to(s.percent);
+}
+
+// --- ProcessInfo ---
+void to_json(json& j, const ProcessInfo& p) {
+  j = json{{"pid", p.pid},
+           {"vmRssKb", p.vmRssKb},
+           {"cpu_percent", p.cpu_percent},
+           {"mem_percent", p.mem_percent},
+           {"name", p.name}};
+}
+void from_json(const json& j, ProcessInfo& p) {
+  j.at("pid").get_to(p.pid);
+  j.at("vmRssKb").get_to(p.vmRssKb);
+  j.at("cpu_percent").get_to(p.cpu_percent);
+  j.at("mem_percent").get_to(p.mem_percent);
+  j.at("name").get_to(p.name);
+}
+
+// System Metrics
 void to_json(json& j, const SystemMetrics& s) {
   j = json{
       {"cores", s.cores},

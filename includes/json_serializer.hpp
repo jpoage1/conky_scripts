@@ -6,17 +6,9 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
-#include "batteryinfo.hpp"
-#include "corestat.hpp"
-#include "diskstat.hpp"
-#include "filesystems.hpp"
-#include "log.hpp"
-#include "meminfo.hpp"
-#include "metrics.hpp"
-#include "networkstats.hpp"
-#include "processinfo.hpp"
-#include "stream_provider.hpp"
-#include "uptime.hpp"
+struct MetricSettings;
+
+class SystemMetrics;
 
 class JsonSerializer {
  public:

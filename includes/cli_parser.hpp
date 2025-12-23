@@ -44,10 +44,6 @@ ParsedConfig parse_arguments(int argc, char* argv[]);
 
 void print_usage(const char* prog_name);
 
-// Factory functions: They take settings and return a runnable function
-OutputPipeline configure_json_pipeline(const MetricSettings& settings);
-OutputPipeline configure_conky_pipeline(const MetricSettings& settings);
-
 std::set<std::string> parse_interface_list(const std::string& list_str);
 ProgramOptions parse_token_stream(int argc, char* argv[]);
 ProgramOptions parse_cli(int argc, char* argv[]);

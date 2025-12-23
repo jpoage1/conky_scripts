@@ -6,6 +6,7 @@
 #include "data_ssh.hpp"
 #include "filesystems.hpp"
 #include "json_definitions.hpp"
+#include "log.hpp"
 #include "polling.hpp"
 #include "ssh.hpp"
 #include "stream_provider.hpp"
