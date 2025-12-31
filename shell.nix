@@ -73,6 +73,8 @@ pkgs.mkShell {
     aha
     # openssl
     dev-help
+    sysprof
+    fmt
   ];
 
 
@@ -84,7 +86,17 @@ pkgs.mkShell {
     # Set the QML Import Path (needed for QtQuick.Controls, etc.)
     export QML2_IMPORT_PATH="${pkgs.qt6.qtdeclarative}/${pkgs.qt6.qtbase.qtQmlPrefix}"
     export LD_LIBRARY_PATH="$(nix-build --no-out-link '<nixpkgs>' -A stdenv.cc.cc.lib)/lib:$(nix-build --no-out-link '<nixpkgs>' -A qt6.qtbase)/lib:$LD_LIBRARY_PATH"
-    export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
+    pkgs.libssh
+    pkgs.libssh2
+    pkgs.gtkmm4
+    pkgs.spdlog
+    pkgs.lua
+    pkgs.stdenv.cc.cc.lib
+    pkgs.qt6.qtbase
+    pkgs.fmt
+  ]}:$LD_LIBRARY_PATH"
+    #export LD_PRELOAD=$(gcc -print-file-name=libasan.so) build/telemetry
 
     clip() {
       if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
@@ -118,6 +130,8 @@ pkgs.mkShell {
     alias build-target="cmake --build build --target"
     alias build-telemetry="cmake --build build --target telemetry"
     alias install-component="cmake --install ./build/ --component"
+    alias install="cmake --install build --prefix $HOME/.config/telemetry"
+    alias install="cmake --install build --prefix $HOME/.config/telemetry/bin"
 
     alias waybard="time ./build/waybard ~/.config/conky/file-systems.txt"
     alias json="time ./build/json ~/.config/conky/file-systems.txt"

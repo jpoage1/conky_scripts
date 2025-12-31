@@ -28,8 +28,18 @@ void CpuPollingTask::calculate() {
     const auto& prev = prev_snapshots[i];
     const auto& curr = current_snapshots[i];
 
-    unsigned long long total_delta =
-        curr.get_total_time() - prev.get_total_time();
+    unsigned long long curr_total = curr.get_total_time();
+    unsigned long long prev_total = prev.get_total_time();
+
+    // Handle counter wraps or resets: if total time or individual metrics regressed
+    if (curr_total < prev_total || curr.user < prev.user || 
+        curr.nice < prev.nice || curr.system < prev.system || 
+        curr.idle < prev.idle || curr.iowait < prev.iowait) {
+      all_core_stats.push_back({i, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f});
+      continue;
+    }
+
+    unsigned long long total_delta = curr_total - prev_total;
 
     if (total_delta == 0) {
       all_core_stats.push_back({i, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f});
@@ -58,6 +68,10 @@ void CpuPollingTask::calculate() {
 
     all_core_stats.push_back(core_stat);
   }
+  std::sort(all_core_stats.begin(), all_core_stats.end(), 
+            [](const CoreStats& a, const CoreStats& b) {
+              return a.core_id < b.core_id;
+            });
   metrics.cores = all_core_stats;
 }
 

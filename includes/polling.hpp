@@ -2,6 +2,8 @@
 #ifndef POLLING_HPP
 #define POLLING_HPP
 
+#include <gtest/gtest_prod.h>
+
 #include "diskstat.hpp"
 #include "metrics.hpp"
 #include "networkstats.hpp"
@@ -88,6 +90,12 @@ class IPollingTask {
   virtual void commit() = 0;
 };
 class CpuPollingTask : public IPollingTask {
+  FRIEND_TEST(CpuCoverageTest, MismatchedSnapshotSizes);
+  FRIEND_TEST(CpuCoverageTest, CounterWrapHandling);
+  FRIEND_TEST(CpuCoverageTest, AggregateAccuracy);
+
+  FRIEND_TEST(CpuCoverageTest, AggregateIsZeroIndex);
+
  private:
   CpuSnapshotList prev_snapshots;
   CpuSnapshotList current_snapshots;

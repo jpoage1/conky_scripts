@@ -67,15 +67,15 @@ JsonSerializer::JsonSerializer(const MetricSettings& settings) {
     });
   }
 
-  if (settings.enable_sysinfo) {
+  if (settings.enable_cpuinfo) {
     pipeline.emplace_back([](nlohmann::json& j, const SystemMetrics& s) {
       j["cores"] = s.cores;
-      j["disks"] = s.disks;
     });
   }
 
   if (settings.enable_diskstat) {
     pipeline.emplace_back([](nlohmann::json& j, const SystemMetrics& s) {
+      j["disks"] = s.disks;
       j["disk_io"] = nlohmann::json::array();
       for (const auto& pair : s.disk_io) {
         j["disk_io"].push_back(pair.second);
