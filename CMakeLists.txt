@@ -10,6 +10,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
+# Ensure RUNPATH is used instead of RPATH
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--enable-new-dtags")
+
+
+
 # --- Legacy Include Pathing ---
 include_directories(
     includes
@@ -41,8 +53,10 @@ endif()
 
 # --- 2. Dependencies ---
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
 pkg_check_modules(LIBSSH REQUIRED libssh)
+pkg_check_modules(LIBSSH REQUIRED IMPORTED_TARGET libssh)
+#pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
+#pkg_check_modules(GTKMM REQUIRED IMPORTED_TARGET gtkmm-4.0)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets)
 find_package(GTest REQUIRED)
@@ -71,13 +85,21 @@ add_library(telemetry_backend STATIC
     src/ssh.cpp
 )
 
-target_compile_definitions(telemetry_backend PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
-target_link_libraries(telemetry_backend PUBLIC 
-    PkgConfig::LIBSSH 
-    spdlog::spdlog 
-    Threads::Threads
+target_compile_definitions(telemetry_backend PUBLIC
+    SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
 )
-target_include_directories(telemetry_backend PUBLIC includes ${LIBSSH_INCLUDE_DIRS})
+
+target_link_libraries(telemetry_backend PUBLIC
+    ${LIBSSH_LIBRARIES}
+    stdc++fs
+    spdlog::spdlog
+    Threads::Threads
+    PkgConfig::LIBSSH 
+)
+target_include_directories(telemetry_backend PUBLIC
+    includes
+    ${LIBSSH_INCLUDE_DIRS}
+)
 
 target_include_directories(telemetry_backend PUBLIC includes)
 
@@ -133,44 +155,21 @@ target_include_directories(telemetry_runtime PUBLIC ${LUA_INCLUDE_DIR})
 
 # Main Telemetry (Qt/QML based)
 add_executable(telemetry_bin 
-    src/qt_main.cpp
-    # resources.qrc # Uncomment if you have assets
+    src/telemetry.cpp
 )
 set_target_properties(telemetry_bin PROPERTIES OUTPUT_NAME "telemetry")
+set_target_properties(telemetry_bin PROPERTIES 
+    OUTPUT_NAME "telemetry"
+    SKIP_BUILD_RPATH FALSE
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "${NIX_FINAL_RPATH}"
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
 target_link_libraries(telemetry_bin PRIVATE 
     telemetry_runtime 
     Qt6::Quick 
     Qt6::Widgets
 )
-
-# Standalone CLI Telemetry
-add_executable(telemetry src/telemetry.cpp)
-target_link_libraries(telemetry PRIVATE telemetry_runtime)
-
-# Legacy GTK Widgets executable
-add_executable(telemetry_widgets 
-    src/widgets/main.cpp 
-    src/widgets/widgets.cpp 
-    src/widgets/window.cpp
-)
-
-target_link_libraries(telemetry_widgets PRIVATE 
-    telemetry_runtime 
-    PkgConfig::GTKMM
-)
-
-# Alternative Widgets naming (requested section)
-add_executable(widgets src/widgets/main.cpp src/widgets/widgets.cpp src/widgets/window.cpp)
-target_link_libraries(widgets PRIVATE telemetry_runtime ${GTKMM_LIBRARIES})
-target_include_directories(widgets PRIVATE ${GTKMM_INCLUDE_DIRS})
-
-# Waybar Tool Tip
-# add_executable(waybard src/waybar/waybar_formatters.cpp src/waybar.cpp)
-# target_link_libraries(waybard PRIVATE telemetry_runtime)
-
-# Conky Polling
-# add_executable(conkyd src/conky_main.cpp)
-# target_link_libraries(waybard PRIVATE telemetry_runtime)
 
 # --- 6. Testing ---
 enable_testing()
@@ -182,5 +181,4 @@ target_link_libraries(unit_tests PRIVATE
 add_test(NAME AllUnits COMMAND unit_tests)
 
 # --- 7. Installation ---
-install(TARGETS telemetry_bin telemetry_widgets RUNTIME DESTINATION bin)
-# install(TARGETS telemetry COMPONENT telemetry RUNTIME DESTINATION bin)
+install(TARGETS telemetry_bin COMPONENT telemetry RUNTIME DESTINATION bin)
