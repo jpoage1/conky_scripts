@@ -1,5 +1,6 @@
 # Build Directory (Primary CMake output)
 build/
+result/
 
 # In-source build safeguards
 CMakeFiles/

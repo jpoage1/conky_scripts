@@ -66,7 +66,6 @@ stdenv.mkDerivation rec {
     gtest
     stdenv.cc.cc.lib # Mandatory for libstdc++.so.6
     libglvnd
-    # gcc.libc
   ];
 
   passthru = {

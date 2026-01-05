@@ -79,12 +79,16 @@ add_library(telemetry_core STATIC
     src/parsed_config.cpp
 )
 
+add_library(telemetry_unit_tests STATIC
+    tests/unit_corestat.cpp
+    tests/unit_json_order.cpp
+)
+
 # Link external deps to the core library
 target_link_libraries(telemetry_core PUBLIC
     ${LIBSSH_LIBRARIES}
     stdc++fs ${LUA_LIBRARIES}
     spdlog::spdlog
-    GTest::gtest_main 
 )
 target_include_directories(telemetry_core PUBLIC ${LIBSSH_INCLUDE_DIRS} ${LUA_INCLUDE_DIR})
 
@@ -93,6 +97,13 @@ target_include_directories(telemetry_core PUBLIC ${LIBSSH_INCLUDE_DIRS} ${LUA_IN
 add_executable(telemetry src/telemetry.cpp)
 target_link_libraries(telemetry PRIVATE telemetry_core)
 
+enable_testing()
+add_executable(unit_tests tests/main.cpp)
+target_link_libraries(unit_tests PRIVATE
+    telemetry_core 
+    telemetry_unit_tests
+    GTest::gtest
+)
 
 # --- Install ---
 install(TARGETS telemetry COMPONENT telemetry RUNTIME DESTINATION bin)
