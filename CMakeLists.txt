@@ -41,7 +41,7 @@ add_library(telemetry_core STATIC
     src/data/data_ssh.cpp
     src/data/metrics.cpp
     src/data/polling.cpp
-    src/ssh.cpp
+    src/data/ssh.cpp
     
     # System Info Logic
     src/systeminfo/corestat.cpp
@@ -57,28 +57,30 @@ add_library(telemetry_core STATIC
     src/systeminfo/hwmonitor.cpp
     src/systeminfo/batteryinfo.cpp
     
-    # Runners & Parsers
-    src/
-    src/lua_parser.cpp
-    src/cli_parser.cpp
-    src/runner.cpp
+    # Conky
     src/conky/conky_format.cpp
     src/conky/conky_output.cpp
     src/conky/conky_pipeline.cpp
 
-
+    # JSON
     src/json/json_pipeline.cpp
     src/json/json_serializer.cpp
     src/json/json_definitions.cpp
 
+    # Logging
+    src/logging/io.cpp
+    src/logging/rotate_file_sync.cpp
+    src/logging/teebuf.cpp
+    src/logging/log.cpp
 
-    src/io.cpp
-    src/rotate_file_sync.cpp
-    src/teebuf.cpp
-    src/log.cpp
-    src/controller.cpp
-    src/configuration_builder.cpp
-    src/parsed_config.cpp
+    # Core
+    src/core/controller.cpp
+    src/core/configuration_builder.cpp
+    src/core/parsed_config.cpp
+    src/core/telemetry.cpp
+    src/core/lua_parser.cpp
+    src/core/cli_parser.cpp
+    src/core/runner.cpp
 )
 
 add_library(telemetry_unit_tests STATIC
@@ -110,13 +112,15 @@ qt6_add_resources(WIDGET_RESOURCES resources.qrc)
 set_property(SOURCE ${WIDGET_RESOURCES} PROPERTY SKIP_AUTORCC ON)
 
 # --- Executable: telemetry ---
-add_executable(telemetry src/telemetry.cpp)
+add_executable(telemetry src/json/json_main.cpp)
 target_link_libraries(telemetry PRIVATE telemetry_core)
 
 # --- Executable: widgets ---
 add_executable(widgets
     ${WIDGET_RESOURCES}
-    src/qt_main.cpp
+    src/qt_widgets/qt_pipeline.cpp
+    src/qt_widgets/qt_main.cpp
+    includes/window_settings.hpp
     includes/system_metrics_proxy.hpp
 )
 target_link_libraries(widgets PRIVATE
