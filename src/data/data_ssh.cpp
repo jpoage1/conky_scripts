@@ -41,7 +41,7 @@ std::string trim(const std::string& str) {
   return str.substr(str_begin, str_range);
 }
 
-void ProcDataStreams::finally() { cleanup_ssh_session(); }
+void ProcDataStreams::cleanup() { cleanup_ssh_session(); }
 
 // uint64_t get_df_data_bytes(const std::string& mount_point, bool get_used) {
 //   // Execute df command and get the output as a single string.

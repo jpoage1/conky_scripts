@@ -38,7 +38,7 @@ class DataStreamProvider {
   //   0; virtual uint64_t get_disk_size_bytes(const std::string& mount_point) =
   //   0;
   virtual double get_cpu_temperature() = 0;
-  virtual void finally() = 0;
+  virtual void cleanup() = 0;
 };
 using DataStreamProviderPtr = std::unique_ptr<DataStreamProvider>;
 

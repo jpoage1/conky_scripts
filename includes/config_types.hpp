@@ -19,6 +19,7 @@ class ParsedConfig {
   std::filesystem::file_time_type last_write_time;
 
  public:
+  static std::map<OutputMode, PipelineFactory> pipeline_registry;
   std::vector<MetricsContext> tasks;
 
   /**
@@ -55,6 +56,7 @@ class ParsedConfig {
   void done(std::list<SystemMetrics>& result);
   bool reload_if_changed(std::list<SystemMetrics>& tasks);
   void set_filename(std::string filename);
+  static void register_pipeline(OutputMode mode, PipelineFactory factory);
 };
 
 #endif

@@ -35,7 +35,7 @@ struct ProcDataStreams : public DataStreamProvider {
   //   uint64_t get_used_space_bytes(const std::string& mount_point) override;
   //   uint64_t get_disk_size_bytes(const std::string& mount_point) override;
   DiskUsage get_disk_usage(const std::string&) override;
-  void finally() override;
+  void cleanup() override;
 
   /* ProcDataStreams functions */
   ProcDataStreams(const std::string& host, const std::string& user);

@@ -57,9 +57,11 @@ pkgs.mkShell {
     alias build="cmake --build build"
     alias build-target="cmake --build build --target"
     alias install-component="cmake --install ./build/ --component"
+    alias install="cmake --install ./build/"
 
     alias waybard="time ./build/waybard ~/.config/telemetry/filesystems.txt"
     alias json="time ./build/telemetry ~/.config/telemetry/filesystems.txt"
+    alias widgets="time ./build/widgets --config ~/.config/telemetry/widgets.lua"
     alias lua-config="time ./build/telemetry --config ~/.config/telemetry/config.lua"
     alias lua-settings="time ./build/telemetry --settings ~/.config/telemetry/settings.lua"
     alias clean="cmake --build build --target clean"

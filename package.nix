@@ -34,7 +34,15 @@ stdenv.mkDerivation rec {
   pname = "telemetry";
   version = "1.0.0";
 
-  src = ./.;
+  # src = ./.;
+  src = lib.cleanSourceWith {
+    filter = name: type: let baseName = baseNameOf (toString name); in ! (
+      (type == "directory" && baseName == "build") ||
+      (type == "directory" && baseName == ".git") ||
+      (baseName == "result")
+    );
+    src = ./.;
+  };
 
   nativeBuildInputs = [
     cmake

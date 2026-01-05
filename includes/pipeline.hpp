@@ -8,4 +8,6 @@ OutputPipeline configure_conky_pipeline(const MetricSettings& settings);
 // --- JSON FACTORY ---
 OutputPipeline configure_json_pipeline(const MetricSettings& settings);
 
+OutputPipeline configure_widget_pipeline(const MetricSettings& settings);
+
 #endif

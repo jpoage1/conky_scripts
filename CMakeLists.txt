@@ -16,6 +16,8 @@ find_package(Lua REQUIRED)
 
 find_package(GTest REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets)
+
 
 # --- Compiler Flags ---
 add_compile_options(-Wall -Wextra -O3 -march=native)
@@ -93,9 +95,35 @@ target_link_libraries(telemetry_core PUBLIC
 target_include_directories(telemetry_core PUBLIC ${LIBSSH_INCLUDE_DIRS} ${LUA_INCLUDE_DIR})
 
 
+
+add_library(telemetry_widgets STATIC
+    includes/system_metrics_proxy.hpp
+)
+target_link_libraries(telemetry_widgets PUBLIC
+    telemetry_core
+    Qt6::Quick 
+    Qt6::Widgets
+)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+qt6_add_resources(WIDGET_RESOURCES resources.qrc)
+
 # --- Executable: telemetry ---
 add_executable(telemetry src/telemetry.cpp)
 target_link_libraries(telemetry PRIVATE telemetry_core)
+
+# --- Executable: widgets ---
+add_executable(widgets
+    ${WIDGET_RESOURCES}
+    src/qt_main.cpp
+    includes/system_metrics_proxy.hpp
+)
+target_link_libraries(widgets PRIVATE
+    telemetry_widgets
+    Qt6::Gui 
+    Qt6::Quick 
+    Qt6::Qml
+)
 
 enable_testing()
 add_executable(unit_tests tests/main.cpp)
@@ -107,6 +135,7 @@ target_link_libraries(unit_tests PRIVATE
 
 # --- Install ---
 install(TARGETS telemetry COMPONENT telemetry RUNTIME DESTINATION bin)
+install(TARGETS telemetry COMPONENT widgets RUNTIME DESTINATION bin)
 
 enable_testing()
 

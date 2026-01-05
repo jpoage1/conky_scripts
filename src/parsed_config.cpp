@@ -21,6 +21,8 @@ void ParsedConfig::set_output_mode(std::string mode) {
     _output_mode = OutputMode::JSON;
   } else if (mode == "conky") {
     _output_mode = OutputMode::CONKY;
+  } else if (mode == "widgets") {
+    _output_mode = OutputMode::WIDGETS;
   } else {
     std ::cerr << "Error: invalid output mode `" << mode << "`" << std::endl;
   }
@@ -40,21 +42,42 @@ void ParsedConfig::sleep() {
 }
 
 void ParsedConfig::configure_renderer() {
-  for (MetricsContext& task : tasks)
-    // 1. Select and Configure the pipeline ONCE
-    switch (_output_mode) {
-      case OutputMode::JSON: {
-        this->active_pipeline = configure_json_pipeline(task.settings);
-        break;
-      }
-      case OutputMode::CONKY: {
-        this->active_pipeline = configure_conky_pipeline(task.settings);
-        break;
-      }
-      default:
-        std::cerr << "Invalid output type" << std::endl;
-        exit(1);
+
+  if (tasks.empty()) {
+        std::cerr << "Error: Cannot configure renderer with empty task list." << std::endl;
+        return;
     }
+
+  for (MetricsContext& task : tasks) {
+
+    // Lookup the factory in the registry
+    auto it = pipeline_registry.find(_output_mode);
+    
+    if (it != pipeline_registry.end()) {
+      // We use the settings from the first task to build the pipeline
+      if (!tasks.empty()) {
+          this->active_pipeline = it->second(tasks.front().settings);
+      }
+    } else {
+      switch (_output_mode) {
+        case OutputMode::JSON: {
+          this->active_pipeline = configure_json_pipeline(task.settings);
+          break;
+        }
+        case OutputMode::CONKY: {
+          this->active_pipeline = configure_conky_pipeline(task.settings);
+          break;
+        }
+        default:
+          std::cerr << "Fatal: OutputMode [" << static_cast<int>(_output_mode) 
+                        << "] is not in the dynamic registry and has no legacy implementation." << std::endl;
+      }
+    }
+  } 
+}
+std::map<OutputMode, PipelineFactory> ParsedConfig::pipeline_registry = {};
+void ParsedConfig::register_pipeline(OutputMode mode, PipelineFactory factory) {
+    ParsedConfig::pipeline_registry[mode] = factory;
 }
 
 int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {

@@ -4,7 +4,7 @@
 #include "log.hpp"
 #include "provider.hpp"
 
-void LocalDataStreams::finally() {}
+void LocalDataStreams::cleanup() {}
 std::ifstream& LocalDataStreams::create_stream_from_file(
     std::ifstream& stream, const std::string& path) {
   if (stream.is_open()) {

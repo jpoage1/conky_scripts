@@ -49,8 +49,8 @@ void Controller::tick() {
     // refresh data after polling
     //   task.complete(); // not implemented
 
-    SPDLOG_TRACE("Calling finally(): Cleaning up data provider.");
-    task.provider->finally();
+    SPDLOG_TRACE("Calling cleanup(): Cleaning up data provider.");
+    task.provider->cleanup();
   }
   SPDLOG_TRACE("Calling config.done()");
   tasks_pimpl->config->done(tasks_pimpl->tasks);
