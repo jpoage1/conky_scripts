@@ -1,0 +1,29 @@
+; ./metrics/cpu-cores.yuck
+(include "./helpers/header.yuck")
+(include "./helpers/stacked-core-bar.yuck")
+(defwidget cpu-cores [cores]
+  (box :orientation "vertical" :space-evenly false :spacing 2 :class "column"
+    (header :text "CPU")
+
+    ;; NEW HEADER ROW for stacked-core-bar details
+    (box :orientation "horizontal" :class "proc-header" :space-evenly false :spacing 10
+      (label :text "Core" :xalign 0 :class "bar-label-wide")
+
+      ;; This box aligns with the stacked-bar-container
+      (box :orientation "horizontal" :hexpand true :halign "fill" :spacing 0
+        (label :text "User" :xalign 0 :class "cpu-header-user")
+        (label :text "System" :xalign 0 :class "cpu-header-system")
+        (label :text "Nice" :xalign 0 :class "cpu-header-nice")
+        (label :text "IOWait" :xalign 0 :class "cpu-header-iowait")
+        (label :text "Idle" :xalign 0 :class "cpu-header-idle")
+      )
+
+      (label :text "Total" :xalign 1 :class "bar-total-label")
+    )
+
+    ;; 1. The Core Bars (now graphical)
+    (for core in {cores}
+      (stacked-core-bar :core core)
+    )
+
+  ))

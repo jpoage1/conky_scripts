@@ -1,0 +1,22 @@
+; ./metrics/mem-swap.yuck
+(include "./helpers/header.yuck")
+(include "./helpers/bar.yuck")
+
+(defwidget mem-swap [meminfo swapinfo]
+  (box :orientation "vertical" :space-evenly false :spacing 5 :class "column"
+    (header :text "Memory")
+
+    ;; MEMORY
+    (bar :label "MEM" :value {meminfo.percent})
+    (label
+      :text "Used: ${round(meminfo.used_kb / 1024, 0)} MB / Total: ${round(meminfo.total_kb / 1024, 0)} MB"
+      :xalign 0
+    )
+
+    ;; SWAP
+    (bar :label "SWP" :value {swapinfo.percent})
+    (label
+      :text "Used: ${round(swapinfo.used_kb / 1024, 0)} MB / Total: ${round(swapinfo.total_kb / 1024, 0)} MB"
+      :xalign 0
+    )
+  ))

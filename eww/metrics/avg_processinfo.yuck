@@ -1,0 +1,11 @@
+; ./metrics/avg_processinfo.yuck
+
+(defwidget avg-processinfo [metrics]
+(box :orientation "horizontal" :space-evenly true :spacing 15
+      (proc-list
+        :title "Top Average CPU"
+      :procs {metrics.top_processes_avg_cpu})
+      (proc-list
+        :title "Top Average Mem"
+      :procs {metrics.top_processes_avg_mem})
+    ))

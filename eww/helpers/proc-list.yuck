@@ -1,0 +1,34 @@
+; ./helpers/proc-list.yuck
+(include "./helpers/header.yuck")
+
+(defwidget proc-list [title procs]
+  (box :orientation "vertical" :space-evenly false :class "proc-box column"
+    (header :text title)
+
+    ;; Header Row
+    (box :orientation "horizontal" :class "proc-header" :space-evenly false :spacing 10 :hexpand true
+      (label :text "Name" :xalign 0 :width 140)
+      (label :text "PID"  :xalign 0 :width 70)
+      (label :text "CPU"  :xalign 1 :width 70)
+      (label :text "MEM"  :xalign 1 :width 70)
+    )
+
+    ;; Data Rows
+    (for proc in procs
+      (box :orientation "horizontal" :space-evenly false :spacing 10 :hexpand true
+        (label :text "${proc.name}"
+          :xalign 0
+          :hexpand true
+        :limit-width 140) ;; Truncates text longer than 40 chars
+        (label :text "${proc.pid}"
+          :xalign 0
+        :width 70)
+        (label :text "${round(proc.cpu_percent, 1)}%"
+          :xalign 1
+        :width 70)
+        (label :text "${round(proc.mem_percent, 1)}%"
+          :xalign 1
+        :width 70)
+      )
+    )
+  ))

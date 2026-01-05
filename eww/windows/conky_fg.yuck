@@ -1,0 +1,16 @@
+; ./windows/conky_fg.yuck
+(include "./telemetry.yuck")
+(defwindow conky_fg
+  :monitor 0
+  :windowtype "desktop"
+  :stacking "fg"
+  :wm-ignore true
+  :geometry (geometry :x "20px" :y "30px"
+  :width "700px" :height "900px")
+  (conky :metrics {system-data[0]}))
+
+
+struct WindowSettings {
+    enum windowType { DESKTOP, }
+    enum windowStacking { FG, BOTTOM }
+}

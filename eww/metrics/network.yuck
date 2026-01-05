@@ -1,0 +1,28 @@
+; ./metrics/network.yuck
+(include "./helpers/header.yuck")
+
+(defwidget network [network_interfaces]
+  (box :orientation "vertical" :space-evenly false :halign "fill"
+    (header :text "Network (Raw Bytes/s)" :halign "end")
+    (box :orientation "horizontal" :class "proc-header" :space-evenly false :spacing 10 :hexpand true
+      (label :class "interface-name-header" :text "Device" :xalign 0 :width 70)
+      (label :class "interface-down-header" :text "Down" :xalign 1 :width 70)
+      (label :class "interface-up-header" :text "Up" :xalign 1 :width 70)
+    )
+    (for iface in {network_interfaces}
+      (box :orientation "horizontal" :space-evenly false :spacing 10 :hexpand true
+        (label
+          :text "${iface.interface_name}"
+          :xalign 0
+        :width 70)
+        (label
+          :text "${round(iface.rx_bytes_per_sec, 1)}"
+          :xalign 1
+        :width 70)
+        (label
+          :text "${round(iface.tx_bytes_per_sec, 1)}"
+          :xalign 1
+        :width 70)
+      )
+    )
+  ))

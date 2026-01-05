@@ -1,0 +1,23 @@
+; ./metrics/sys-info.yuck
+(include "./helpers/header.yuck")
+
+(defwidget sys-info [metrics]
+  (box :orientation "vertical" :space-evenly false :spacing 5
+    (header :text "System")
+    (label :text "Host:   ${metrics.node_name}" :halign "start")
+    (label :text "Kernel: ${metrics.sys_name} ${metrics.machine_type} ${metrics.kernel_release}" :halign "start")
+    (label :text "Uptime: ${metrics.uptime.text}" :halign "start")
+
+    (label :text "Freq:   ${round(metrics.cpu_frequency_ghz, 2)} GHz" :halign "start")
+    (label :text "Temp:   ${round(metrics.cpu_temp_c, 1)}°C" :halign "start")
+    (label
+      :text "Total: ${metrics.processes_total} | Running: ${metrics.processes_running}"
+      :xalign 0
+    )
+    (label
+      :xalign 0
+      :halign "start"
+      :text "Load Average: 1m: ${metrics.load_avg_1m} | 5m: ${metrics.load_avg_5m} | 15m: ${metrics.load_avg_15m}"
+    )
+
+  ))

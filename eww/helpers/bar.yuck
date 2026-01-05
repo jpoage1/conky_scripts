@@ -1,0 +1,8 @@
+; ./helpers/bar.yuck
+
+(defwidget bar [label value]
+  (box :orientation "horizontal" :space-evenly false :class "bar"
+    (label :text label :class "bar-label")
+    (progress :value {value} :active false)
+    (label :text "${value}%")
+  ))

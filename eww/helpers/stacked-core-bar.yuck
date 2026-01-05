@@ -1,0 +1,50 @@
+; ./helpers/stacked-cor-bar.yuck
+
+(defwidget stacked-core-bar [core]
+  (box :orientation "horizontal" :space-evenly false :class "bar"
+    ;; --- Core Label ---
+    (label
+      :xalign 0
+      :text {core.core_id == 0 ? "Avg" : "Core ${core.core_id}"}
+      :class "bar-label-wide"
+    )
+
+    ;; --- Stacked Bar Graph Container ---
+    (box :orientation "horizontal"
+      :class "stacked-bar-container"
+      :hexpand true
+      :halign "fill"
+      :spacing 0
+      :height 18
+
+      ;; Each box's width is its percentage. Tooltips provide the verbosity.
+      (box :width "${round(core.user_percent, 0)}"
+        :class "cpu-bar-user"
+        :tooltip "User: ${round(core.user_percent, 1)}%")
+
+      (box :width "${round(core.system_percent, 0)}"
+        :class "cpu-bar-system"
+        :tooltip "System: ${round(core.system_percent, 1)}%")
+
+      (box :width "${round(core.nice_percent, 0)}"
+        :class "cpu-bar-nice"
+        :tooltip "Nice: ${round(core.nice_percent, 1)}%")
+
+      (box :width "${round(core.iowait_percent, 0)}"
+        :class "cpu-bar-iowait"
+        :tooltip "IOWait: ${round(core.iowait_percent, 1)}%")
+
+      ;; The rest of the bar is idle
+      (box :width "${round(core.idle_percent, 0)}"
+        :class "cpu-bar-idle"
+        :tooltip "Idle: ${round(core.idle_percent, 1)}%")
+    )
+
+    ;; --- Total Usage Label (Keeps verbosity) ---
+    (label
+      :xalign 1
+      :halign "end"
+      :text "${round(core.total_usage_percent, 1)}%"
+      :class "bar-total-label"
+    )
+  ))

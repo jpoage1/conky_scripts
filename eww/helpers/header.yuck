@@ -1,0 +1,4 @@
+; ./helpers/header.yuck
+
+(defwidget header [text]
+  (label :text text :class "header" :halign "start"))

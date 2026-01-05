@@ -1,0 +1,18 @@
+; ./metrics/core-bar.yuck
+
+(defwidget core-bar [core]
+  (box :orientation "horizontal" :space-evenly false :class "bar"
+    (label
+      :xalign 0
+      :text {core.core_id == 0 ? "Avg" : "Core ${core.core_id - 1}"}
+      :class "bar-label-wide"
+    )
+    (progress
+      :value {core.total_usage_percent}
+      :active false
+    )
+    (label
+      :xalign 0
+      :text "${round(core.total_usage_percent, 1)}%"
+    )
+  ))

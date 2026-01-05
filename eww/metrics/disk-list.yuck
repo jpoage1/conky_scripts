@@ -1,0 +1,59 @@
+; ./metrics/disk-list.yuck
+(include "./helpers/header.yuck")
+
+(defwidget disk-list [disks]
+  (box :orientation "vertical" :space-evenly false :class "column"
+    (header :text "Disk Usage (GiB)")
+
+    ;; Header Row
+    (box :orientation "horizontal" :class "proc-header" :space-evenly false :spacing 10 :hexpand true
+      (label :text "Mount" :xalign 0 :width 150)
+      (label :text "Total" :xalign 1 :width 60)
+      (label :text "Used"  :xalign 1 :width 60)
+      (label :text "Free"  :xalign 1 :width 60)
+      (label :text "Used %" :xalign 1 :width 70)
+      (label :text "Read kb/s"  :xalign 1 :width 60)
+      (label :text "Write kb/s" :xalign 1 :width 70)
+    )
+
+    ;; Data Rows
+    (for disk in {disks}
+      (box :orientation "horizontal" :space-evenly false :spacing 10 :hexpand true
+
+        ;; Label: Displays RAW mount_point. Empty string if mount_point is empty.
+        (label :text "${disk.mount_point}"
+          :xalign 0
+        :width 150)
+
+        ;; Total Size (Bytes to GiB)
+        (label :text "${round(disk.usage.size_bytes / 1073741824, 1)}"
+          :xalign 1
+        :width 60)
+
+        ;; Used Size (Bytes to GiB)
+        (label :text "${round(disk.usage.used_bytes / 1073741824, 1)}"
+          :xalign 1
+        :width 60)
+
+        ;; Free Size (Bytes to GiB)
+        (label :text "${round((disk.usage.size_bytes - disk.usage.used_bytes) / 1073741824, 1)}"
+          :xalign 1
+        :width 60)
+
+        ;; Used Percentage
+        (label :text "${round((disk.usage.used_bytes / disk.usage.size_bytes) * 100, 2)}%"
+          :xalign 1
+        :width 70)
+
+        ;; Read/s (Bytes to MiB)
+        (label :text "${round(disk.io.read_bytes_per_sec / powi(1024,1), 2)}"
+          :xalign 1
+        :width 60)
+
+        ;; Write/s (Bytes to MiB)
+        (label :text "${round(disk.io.write_bytes_per_sec / powi(1024,1), 2)}"
+          :xalign 1
+        :width 60)
+      )
+    )
+  ))

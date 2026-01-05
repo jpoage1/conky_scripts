@@ -1,0 +1,10 @@
+; ./windows/conky.yuck
+(include "./telemetry.yuck")
+(defwindow conky
+  :monitor 0
+  :windowtype "desktop"
+  :stacking "bottom"
+  :wm-ignore true
+  :geometry (geometry :x "20px" :y "30px"
+  :width "700px" :height "900px")
+  (conky :metrics {system-data[0]}))

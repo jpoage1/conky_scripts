@@ -1,0 +1,35 @@
+; ./metrics/disk-io.yuck
+(include "./helpers/header.yuck")
+
+(defwidget disk-io [disk_io]
+  (box :orientation "vertical" :space-evenly false :class "column" :spacing 5
+    (header :text "Disk I/O (KiB/s)")
+
+    ;; Header Row
+    (box :orientation "horizontal" :class "proc-header" :space-evenly false :spacing 10 :hexpand true
+      (label :text "Device" :xalign 0 :width 100)
+      (label :text "Read Mb/s" :xalign 1 :width 100)
+      (label :text "Write Mb/s" :xalign 1 :width 100)
+    )
+
+    ;; Data Rows
+    (for io in {disk_io}
+      (box :orientation "horizontal" :space-evenly false :spacing 10 :hexpand true
+        ;; Device Name
+        (label :text "${io.device_name}"
+          :xalign 0
+          :limit-width 100
+        :width 100)
+
+        ;; Read KiB/s
+        (label :text "${round(io.read_bytes_per_sec / 1024, 2)}"
+          :xalign 1
+        :width 100)
+
+        ;; Write KiB/s
+        (label :text "${round(io.write_bytes_per_sec / 1024, 2)}"
+          :xalign 1
+        :width 100)
+      )
+    )
+  ))

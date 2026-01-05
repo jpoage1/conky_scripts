@@ -1,0 +1,37 @@
+
+
+(include "./metrics/realtime-processinfo.yuck")
+(include "./metrics/disk-list.yuck")
+(include "./metrics/cpu-cores.yuck")
+(include "./metrics/disk-io.yuck")
+(include "./metrics/mem-swap.yuck")
+(include "./metrics/network.yuck")
+(include "./metrics/sys-info.yuck")
+
+
+(defwidget conky [metrics]
+  (box
+    :orientation "vertical"
+    :space-evenly false
+    :spacing 15
+    :class "main-widget"
+    :visible {metrics.node_name != "" && metrics != "null"}
+
+    ;; TOP ROW: System Info, CPU Cores, and Memory/Swap in three columns
+    (box :orientation "horizontal" :space-evenly true :spacing 15
+      (sys-info :metrics {metrics})
+      (network :network_interfaces {metrics.network_interfaces})
+      (mem-swap :meminfo {metrics.meminfo} :swapinfo {metrics.swapinfo})
+    )
+
+    (cpu-cores :cores {metrics.cores})
+    ;; Middle Top Row (Previously the second row, now the second major section)
+
+
+
+   ;; (avg-processinfo  :metrics {metrics})
+    (realtime-processinfo :metrics {metrics})
+    (disk-list  :disks {metrics.disks})
+    (disk-io  :disk_io {metrics.disk_io})
+
+  ))

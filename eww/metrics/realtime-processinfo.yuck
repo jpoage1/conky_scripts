@@ -1,0 +1,12 @@
+; ./metrics/realtime-processinfo.yuck
+(include "./helpers/proc-list.yuck")
+
+(defwidget realtime-processinfo [metrics]
+(box :orientation "horizontal" :space-evenly true :spacing 15
+      (proc-list
+        :title "Top Realtime CPU"
+      :procs {metrics.top_processes_real_cpu})
+      (proc-list
+        :title "Top Realtime Mem"
+      :procs {metrics.top_processes_real_mem})
+    ))

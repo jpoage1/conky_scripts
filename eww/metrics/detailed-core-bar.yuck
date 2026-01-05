@@ -1,0 +1,31 @@
+; ./metrics/detailed-core-bar.yuck
+
+(defwidget detailed-core-bar [core]
+  (box :orientation "vertical" :space-evenly false :spacing 0 :class "core-detail-box"
+
+    ;; Row 1: Core ID and Total Usage Bar
+    (box :orientation "horizontal" :space-evenly false :class "bar"
+      (label
+        :xalign 0
+        :text {core.core_id == 0 ? "Avg" : "Core ${core.core_id}"}
+        :class "bar-label-wide"
+      )
+      (progress
+        :value {core.total_usage_percent}
+        :active false
+      )
+      (label
+        :xalign 0
+        :text "${round(core.total_usage_percent, 1)}%"
+      )
+    )
+
+    ;; Row 2: Detailed Percentages
+    (box :orientation "horizontal" :space-evenly true :class "core-breakdown" :hexpand true
+      (label :text "User: ${round(core.user_percent, 1)}%" :xalign 0)
+      (label :text "Sys: ${round(core.system_percent, 1)}%" :xalign 0)
+      (label :text "IOW: ${round(core.iowait_percent, 1)}%" :xalign 0)
+      (label :text "Nice: ${round(core.nice_percent, 1)}%" :xalign 0)
+      (label :text "Idle: ${round(core.idle_percent, 1)}%" :xalign 0)
+    )
+  ))
