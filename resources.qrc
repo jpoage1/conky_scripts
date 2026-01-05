@@ -1,5 +1,19 @@
 <RCC>
     <qresource prefix="/">
         <file>qt/qml/main.qml</file>
+        <file>qt/qml/helpers/DefaultText.qml</file>
+        <file>qt/qml/helpers/MetricBar.qml</file>
+        <file>qt/qml/helpers/MemoryBar.qml</file>
+        <file>qt/qml/helpers/SectionHeader.qml</file>
+        <file>qt/qml/metrics/CoreStat.qml</file>
+        <file>qt/qml/windows/Splash.qml</file>
+        <file>qt/qml/windows/Telemetry.qml</file>
+        <file>qt/qml/metrics/TopCPUProcesses.qml</file>
+        <file>qt/qml/metrics/TopMemProcesses.qml</file>
+        <file>qt/qml/metrics/SystemInfo.qml</file>
+        <file>qt/qml/metrics/NetworkInfo.qml</file>
+        <file>qt/qml/metrics/MemInfo.qml</file>
+        <file>qt/qml/metrics/DiskUsage.qml</file>
+        <file>qt/qml/metrics/DiskIO.qml</file>
     </qresource>
 </RCC>

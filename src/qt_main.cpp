@@ -47,6 +47,8 @@ int main(int argc, char* argv[]) {
     QObject::connect(&timer, &QTimer::timeout, [&]() { controller->tick(); });
     timer.start(1000);
 
+    engine.addImportPath("qrc:/qt/qml");
+    
     // Ensure path matches CMake qt_add_qml_module URI if used
     const QUrl url(QStringLiteral("qrc:/qt/qml/main.qml"));
     engine.load(url);

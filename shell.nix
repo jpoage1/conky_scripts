@@ -57,20 +57,26 @@ pkgs.mkShell {
 
   # Shell-specific settings
   shellHook = ''
+    clean_qt_cache() {
+      rm -rf ~/.cache/qmlcache/
+      rm -rf ~/.cache/*telemetry*
+      rm -rf ~/.cache/*widgets*
+    }
+
     PROJECT_DIR=$(pwd)
     BUILD_DIR="$PROJECT_DIR/build"
     
-    alias build="cmake --build \"$BUILD_DIR\""
-    alias build-target="cmake --build \"$BUILD_DIR\" --target"
+    alias build="clean_qt_cache; cmake --build \"$BUILD_DIR\""
+    alias build-target="clean_qt_cache; cmake --build \"$BUILD_DIR\" --target"
     alias install-component="cmake --install \"$BUILD_DIR\" --component"
     alias install="cmake --install \"$BUILD_DIR\""
 
     alias waybard="time \"$BUILD_DIR/waybard\" ~/.config/telemetry/filesystems.txt"
     alias json="time \"$BUILD_DIR/telemetry\" ~/.config/telemetry/filesystems.txt"
-    alias widgets="time \"$BUILD_DIR/widgets\" --config ~/.config/telemetry/widgets.lua"
+    alias widgets="\"$BUILD_DIR/widgets\" --config ~/.config/telemetry/widgets.lua"
     alias lua-config="time \"$BUILD_DIR/telemetry\" --config ~/.config/telemetry/config.lua"
     alias lua-settings="time \"$BUILD_DIR/telemetry\" --settings ~/.config/telemetry/settings.lua"
-    alias clean="cmake --build \"$BUILD_DIR\" --target clean"
+    alias clean="clean_qt_cache; cmake --build \"$BUILD_DIR\" --target clean"
 
     echo "Entering a Nix development shell for telemetry..."
     echo "C++ compiler available: $(which g++)"
