@@ -1,5 +1,6 @@
 { pkgs ? import <nixpkgs> { } }:
 let
+  telemetry-pkg = pkgs.callPackage ./package.nix { };
   help-command = "telemetry-help";
   dev-help = pkgs.writeShellScriptBin help-command ''
     # Using ANSI escape codes directly for maximum compatibility
@@ -10,93 +11,75 @@ let
     R="\033[0m"
 
     echo -e "''${G}============================================================''${R}"
-    echo -e "''${BOLD}             TELEMETRY DEVELOPMENT HELP                  ''${R}"
+    echo -e "''${BOLD} TELEMETRY DEVELOPMENT HELP ''${R}"
     echo -e "''${G}============================================================''${R}"
     echo ""
     echo -e "''${Y}[ BUILD COMMANDS ]''${R}"
-    echo -e "  ''${BOLD}build-telemetry''${R}    : Builds the telemetry target"
-    echo -e "  ''${BOLD}build-target <T>''${R}  : Build specific CMake target (e.g. rootwars)"
-    echo -e "  ''${BOLD}clean''${R}           : Runs cmake --build clean"
+    echo -e " ''${BOLD}build-telemetry''${R} : Builds the telemetry target"
+    echo -e " ''${BOLD}build-target <T>''${R} : Build specific CMake target (e.g. rootwars)"
+    echo -e " ''${BOLD}clean''${R} : Runs cmake --build clean"
     echo ""
     echo -e "''${Y}[ RUNTIME TESTS ]''${R}"
-    echo -e "  ''${BOLD}lua-config''${R}      : Run using standard conky lua config"
-    echo -e "  ''${BOLD}lua-settings''${R}    : Run using settings-specific lua path"
-    echo -e "  ''${BOLD}waybard''${R}           : Launch the Waybar-compatible data stream"
-    echo -e "  ''${BOLD}json''${R}              : Raw JSON metrics dump for file systems"
+    echo -e " ''${BOLD}lua-config''${R} : Run using standard telemetry lua config"
+    echo -e " ''${BOLD}lua-settings''${R} : Run using settings-specific lua path"
+    echo -e " ''${BOLD}waybard''${R} : Launch the Waybar-compatible data stream"
+    echo -e " ''${BOLD}json''${R} : Raw JSON metrics dump for file systems"
     echo ""
     echo -e "''${Y}[ GIT & HASHING ]''${R}"
-    echo -e "  ''${BOLD}get_commit_message''${R} : HTML diff to clipboard for LLM"
-    echo -e "  ''${BOLD}nix_hash''${R}           : Get SHA256 of current HEAD"
-    echo -e "  ''${BOLD}get-diff''${R}           : Generate and clip HTML diff"
+    echo -e " ''${BOLD}get_commit_message''${R} : HTML diff to clipboard for LLM"
+    echo -e " ''${BOLD}nix_hash''${R} : Get SHA256 of current HEAD"
+    echo -e " ''${BOLD}get-diff''${R} : Generate and clip HTML diff"
     echo ""
     echo -e "''${Y}[ DIRECTORIES ]''${R}"
-    echo -e "  ''${BOLD}Config Path''${R}      : ~/.config/conky/"
-    echo -e "  ''${BOLD}Build Path''${R}       : ./build/"
+    echo -e " ''${BOLD}Config Path''${R} : ~/.config/telemetry/"
+    echo -e " ''${BOLD}Build Path''${R} : ./build/"
     echo ""
     echo -e "''${G}============================================================''${R}"
     echo -e "''${DIM}Type ''${R}''${BOLD}${help-command}''${R}''${DIM} at any time to see this message again.''${R}"
   '';
+  libs = pkgs.lib.makeLibraryPath telemetry-pkg.buildInputs;
 in
 pkgs.mkShell {
   name = "telemetry-dev-env";
 
-  # C++ Toolchain and Build System
-  buildInputs = with pkgs; [
+  inputsFrom = [ telemetry-pkg ];
+
+  nativeBuildInputs = with pkgs;[
     # Compiler
     gcc
     gnumake
     valgrind
     clang-tools
     python3
-    kdePackages.qtbase
-    kdePackages.qtdeclarative
-    kdePackages.wrapQtAppsHook
-    qtcreator
-    gtest
     ninja
     mold
 
-
     # Build system
     cmake
-    libssh
-    libssh2
-    nlohmann_json
-    gtkmm4
     pkg-config
-    spdlog
-
-    lua
-    sol2
-
+    qt6.wrapQtAppsHook
+    makeWrapper
     which
     aha
-    # openssl
     dev-help
-    sysprof
-    fmt
+    patchelf
   ];
-
 
   # Shell-specific settings
   shellHook = ''
+    export NIX_LDFLAGS="-rpath ${libs} $NIX_LDFLAGS"
+
+    # Set up the runtime environment for the current session
+    export LD_LIBRARY_PATH="${libs}:$LD_LIBRARY_PATH"
+
     # Set the Qt Plugin Path (needed for platform integration, e.g. xcb/wayland)
-    export QT_PLUGIN_PATH="${pkgs.qt6.qtbase}/${pkgs.qt6.qtbase.qtPluginPrefix}"
+    export QT_PLUGIN_PATH="${telemetry-pkg.qt6.qtbase}/${telemetry-pkg.qt6.qtbase.qtPluginPrefix}"
 
     # Set the QML Import Path (needed for QtQuick.Controls, etc.)
-    export QML2_IMPORT_PATH="${pkgs.qt6.qtdeclarative}/${pkgs.qt6.qtbase.qtQmlPrefix}"
-    export LD_LIBRARY_PATH="$(nix-build --no-out-link '<nixpkgs>' -A stdenv.cc.cc.lib)/lib:$(nix-build --no-out-link '<nixpkgs>' -A qt6.qtbase)/lib:$LD_LIBRARY_PATH"
-    export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
-    pkgs.libssh
-    pkgs.libssh2
-    pkgs.gtkmm4
-    pkgs.spdlog
-    pkgs.lua
-    pkgs.stdenv.cc.cc.lib
-    pkgs.qt6.qtbase
-    pkgs.fmt
-  ]}:$LD_LIBRARY_PATH"
-    #export LD_PRELOAD=$(gcc -print-file-name=libasan.so) build/telemetry
+    export QML2_IMPORT_PATH="${telemetry-pkg.qt6.qtdeclarative}/${telemetry-pkg.qt6.qtbase.qtQmlPrefix}"
+
+    export CMAKE_PREFIX_PATH="${pkgs.lib.makeSearchPath "lib/cmake" telemetry-pkg.buildInputs}:$CMAKE_PREFIX_PATH"
+    export PKG_CONFIG_PATH="${pkgs.lib.makeSearchPath "lib/pkgconfig" telemetry-pkg.buildInputs}:$PKG_CONFIG_PATH"
 
     clip() {
       if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
@@ -115,7 +98,7 @@ pkgs.mkShell {
         return 1
       fi
       msg="Analyze the provided diff. Identify the functional logic delta. Ignore all previous conversational history and prior commit messages. Describe the atomic changes in the added and removed lines. Output only the alphanumeric message text. No headers, no markdown, no filler. Terminate immediately after delivery."
-      # msg="I need a commit message, no formatting. just plain, alphanumeric text with proper punctuation. Do not ask follow up questions.  Please do not repeat previous commit messages."
+      # msg="I need a commit message, no formatting. just plain, alphanumeric text with proper punctuation. Do not ask follow up questions. Please do not repeat previous commit messages."
       prompt=("''\$msg" "\`\`\`''\$git_diff\`\`\`")
       printf "%s\n" "''\${prompt[@]}" | clip
     }
@@ -133,20 +116,20 @@ pkgs.mkShell {
     alias install="cmake --install build --prefix $HOME/.config/telemetry"
     alias install="cmake --install build --prefix $HOME/.config/telemetry/bin"
 
-    alias waybard="time ./build/waybard ~/.config/conky/file-systems.txt"
-    alias json="time ./build/json ~/.config/conky/file-systems.txt"
-    alias lua-config="time ./build/json --config ~/.config/conky/config.lua"
-    alias lua-settings="time ./build/json --settings ~/.config/conky/settings.lua"
+    alias waybard="time ./build/waybard ~/.config/telemetry/file-systems.txt"
+    alias json="time ./build/json ~/.config/telemetry/file-systems.txt"
+    alias lua-config="time ./build/json --config ~/.config/telemetry/config.lua"
+    alias lua-settings="time ./build/json --settings ~/.config/telemetry/settings.lua"
     alias clean="cmake --build build --target clean"
 
     alias get-diff="git diff main|aha > diff.html && clip.sh diff.html"
 
-    echo "Entering a Nix development shell for conkyd..."
+    echo "Entering a Nix development shell for telemetry..."
     echo "C++ compiler available: $(which g++)"
     echo "Build system available: $(which cmake)"
     echo "pkg-config available: $(which pkg-config)"
     echo "libssh headers and library are now available for your project."
-  
+
     unset NIX_ENFORCE_NO_NATIVE
     ${help-command}
     PS1="$PS1 telemetry shell) "
