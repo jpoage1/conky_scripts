@@ -1,4 +1,6 @@
-# default.nix
 { pkgs ? import <nixpkgs> { } }:
 
-pkgs.callPackage ./package.nix { }
+{
+  telemetry = pkgs.callPackage ./telemetry.nix { };
+  ws_bridge = pkgs.callPackage ./ws_bridge.nix { };
+}

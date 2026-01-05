@@ -107,6 +107,7 @@ target_link_libraries(telemetry_widgets PUBLIC
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 qt6_add_resources(WIDGET_RESOURCES resources.qrc)
+set_property(SOURCE ${WIDGET_RESOURCES} PROPERTY SKIP_AUTORCC ON)
 
 # --- Executable: telemetry ---
 add_executable(telemetry src/telemetry.cpp)

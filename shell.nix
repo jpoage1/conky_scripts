@@ -1,6 +1,8 @@
 { pkgs ? import <nixpkgs> { } }:
 let
-  telemetry-pkg = pkgs.callPackage ./package.nix { };
+  project = pkgs.callPackage ./default.nix { };
+  telemetry-pkg = project.telemetry;
+  ws-bridge = project.ws_bridge;
   help-command = "telemetry-help";
   dev-help = pkgs.writeShellScriptBin help-command ''
     # Using ANSI escape codes directly for maximum compatibility
@@ -38,12 +40,14 @@ let
     echo -e "''${G}============================================================''${R}"
     echo -e "''${DIM}Type ''${R}''${BOLD}${help-command}''${R}''${DIM} at any time to see this message again.''${R}"
   '';
-  libs = pkgs.lib.makeLibraryPath telemetry-pkg.buildInputs;
+  libs = pkgs.lib.makeLibraryPath telemetry-pkg.buildInputs ++ pkgs.lib.makeLibraryPath ws-bridge.buildInputs;
 in
 pkgs.mkShell {
   name = "telemetry-dev-env";
 
-  inputsFrom = [ telemetry-pkg ];
+  inputsFrom = [
+    telemetry-pkg  ws-bridge
+  ];
 
   # C++ Toolchain and Build System
   nativeBuildInputs = with pkgs; [
@@ -53,18 +57,20 @@ pkgs.mkShell {
 
   # Shell-specific settings
   shellHook = ''
+    PROJECT_DIR=$(pwd)
+    BUILD_DIR="$PROJECT_DIR/build"
     
-    alias build="cmake --build build"
-    alias build-target="cmake --build build --target"
-    alias install-component="cmake --install ./build/ --component"
-    alias install="cmake --install ./build/"
+    alias build="cmake --build \"$BUILD_DIR\""
+    alias build-target="cmake --build \"$BUILD_DIR\" --target"
+    alias install-component="cmake --install \"$BUILD_DIR\" --component"
+    alias install="cmake --install \"$BUILD_DIR\""
 
-    alias waybard="time ./build/waybard ~/.config/telemetry/filesystems.txt"
-    alias json="time ./build/telemetry ~/.config/telemetry/filesystems.txt"
-    alias widgets="time ./build/widgets --config ~/.config/telemetry/widgets.lua"
-    alias lua-config="time ./build/telemetry --config ~/.config/telemetry/config.lua"
-    alias lua-settings="time ./build/telemetry --settings ~/.config/telemetry/settings.lua"
-    alias clean="cmake --build build --target clean"
+    alias waybard="time \"$BUILD_DIR/waybard\" ~/.config/telemetry/filesystems.txt"
+    alias json="time \"$BUILD_DIR/telemetry\" ~/.config/telemetry/filesystems.txt"
+    alias widgets="time \"$BUILD_DIR/widgets\" --config ~/.config/telemetry/widgets.lua"
+    alias lua-config="time \"$BUILD_DIR/telemetry\" --config ~/.config/telemetry/config.lua"
+    alias lua-settings="time \"$BUILD_DIR/telemetry\" --settings ~/.config/telemetry/settings.lua"
+    alias clean="cmake --build \"$BUILD_DIR\" --target clean"
 
     echo "Entering a Nix development shell for telemetry..."
     echo "C++ compiler available: $(which g++)"

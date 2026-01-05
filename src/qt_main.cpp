@@ -2,55 +2,53 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QTimer>
-
-// Existing headers
 #include "controller.hpp"
 #include "configuration_builder.hpp"
 #include "cli_parser.hpp"
+#include "system_metrics_proxy.hpp"
 #include "json_serializer.hpp"
+#include "types.hpp"
 #include "config_types.hpp"
-#include "metrics.hpp"
 
-// THE MISSING LINK
-#include "system_metrics_proxy.hpp" 
-
-// Define the factory logic
 PipelineFactory widget_factory(SystemMetricsProxy* proxy) {
     return [proxy](const MetricSettings& settings) -> OutputPipeline {
         auto serializer = std::make_shared<JsonSerializer>(settings);
         return [serializer, proxy](const std::list<SystemMetrics>& results) {
-            if (results.empty() || !proxy) return;
-            // Push the serialized front-most metric task to the UI
-            proxy->updateData(serializer->serialize(results.front()));
+            if (!proxy) return;
+            nlohmann::json json_data = nlohmann::json::array();
+            for (const auto& m : results) {
+                json_data.push_back(serializer->serialize(m));
+            }
+            // std::cout << json_data.dump() ;
+            proxy->updateData(json_data);
         };
     };
 }
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
-
     SystemMetricsProxy proxy;
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("backend", &proxy);
 
-    // Register before building config so configure_renderer() finds it
+    // Set context property before loading QML
+    engine.rootContext()->setContextProperty("systemData", &proxy);
+
+    // Register factory first
     ParsedConfig::register_pipeline(OutputMode::WIDGETS, widget_factory(&proxy));
 
     ProgramOptions options = parse_cli(argc, argv);
     ParsedConfig config = build_config_from_options(options);
     config.set_output_mode(OutputMode::WIDGETS);
-    
+
     auto controller = std::make_unique<Controller>();
     controller->initialize(config);
 
     QTimer timer;
-    QObject::connect(&timer, &QTimer::timeout, [&]() {
-        controller->tick(); 
-        std::cerr << "Test";
-    });
+    QObject::connect(&timer, &QTimer::timeout, [&]() { controller->tick(); });
     timer.start(1000);
 
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    // Ensure path matches CMake qt_add_qml_module URI if used
+    const QUrl url(QStringLiteral("qrc:/qt/qml/main.qml"));
     engine.load(url);
     if (engine.rootObjects().isEmpty()) return -1;
 
