@@ -16,8 +16,8 @@ Rectangle {
     ScrollView {
         anchors.fill: parent
         anchors.margins: 5
-        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOn
+        ScrollBar.vertical.policy: ScrollBar.AlwaysOn
         clip: true
 
         ColumnLayout {

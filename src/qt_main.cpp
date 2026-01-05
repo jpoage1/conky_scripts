@@ -10,6 +10,8 @@
 #include "types.hpp"
 #include "config_types.hpp"
 
+#include <unistd.h>
+
 PipelineFactory widget_factory(SystemMetricsProxy* proxy) {
     return [proxy](const MetricSettings& settings) -> OutputPipeline {
         auto serializer = std::make_shared<JsonSerializer>(settings);
@@ -26,6 +28,21 @@ PipelineFactory widget_factory(SystemMetricsProxy* proxy) {
 }
 
 int main(int argc, char* argv[]) {
+
+    // 1. Fork the process
+    pid_t pid = fork();
+
+    if (pid < 0) {
+        std::cerr << "Fork failed" << std::endl;
+        return 1;
+    }
+
+    // 2. Terminate the parent process
+    if (pid > 0) {
+        // Parent exits, shell returns prompt to user
+        return 0;
+    }
+    
     QApplication app(argc, argv);
     SystemMetricsProxy proxy;
     QQmlApplicationEngine engine;

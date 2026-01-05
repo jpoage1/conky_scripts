@@ -10,14 +10,19 @@ Window {
     id: root
     visible: true
     
+    // Set initial size
     width: 800 
     height: 950
-    minimumWidth: 800
-    maximumWidth: 800
-    minimumHeight: 950
-    maximumHeight: 950
     
+    // Set minimums to prevent layout collapse
+    minimumWidth: 400
+    minimumHeight: 300
+
     color: "transparent"
+    
+    // Note: FramelessWindowHint often disables OS-level resizing. 
+    // If you want to keep the frame gone, you must handle resizing via QML 
+    // or use a window manager that allows it (like tiling WMs).
     flags: Qt.FramelessWindowHint | Qt.WindowStaysAtBottomHint
 
     readonly property var metrics: (systemData && systemData.data && systemData.data.length > 0) 
@@ -31,10 +36,13 @@ Window {
     readonly property int headerFontSize: 10 
 
     Telemetry {
+        // Force the Telemetry component to follow the Window's size
+        anchors.fill: parent
         visible: root.metrics !== null
     }
 
     Splash {
+        anchors.fill: parent
         visible: root.metrics === null
     }
 }
