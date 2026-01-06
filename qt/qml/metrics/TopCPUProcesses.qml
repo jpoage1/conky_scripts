@@ -16,6 +16,17 @@ ColumnLayout {
             spacing: 10
             DefaultText { text: modelData.name; Layout.preferredWidth: 120; elide: Text.ElideRight }
             DefaultText { text: modelData.pid; Layout.preferredWidth: 50 }
+            DefaultText {
+                text: "fd:" + modelData.open_fds;
+                Layout.preferredWidth: 40;
+                color: modelData.open_fds > 500 ? "orange" : "#aaa"
+            }
+
+            DefaultText {
+                text: "w:" + (modelData.io_write_bytes / 1024).toFixed(0) + "k";
+                Layout.preferredWidth: 60;
+                horizontalAlignment: Text.AlignRight
+            }
             DefaultText { text: modelData.cpu_percent.toFixed(1) + "%"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight }
         }
     }

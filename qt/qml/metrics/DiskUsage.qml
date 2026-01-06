@@ -15,6 +15,8 @@ ColumnLayout {
         DefaultText { text: "Used";  Layout.preferredWidth: 60; color: "#aaa"; font.bold: true; horizontalAlignment: Text.AlignRight }
         DefaultText { text: "Free";  Layout.preferredWidth: 60; color: "#aaa"; font.bold: true; horizontalAlignment: Text.AlignRight }
         DefaultText { text: "Used %"; Layout.preferredWidth: 70; color: "#aaa"; font.bold: true; horizontalAlignment: Text.AlignRight }
+        DefaultText { text: "Read";  Layout.preferredWidth: 70; color: root.cyan; font.bold: true; horizontalAlignment: Text.AlignRight }
+        DefaultText { text: "Write"; Layout.preferredWidth: 70; color: "#ff7777"; font.bold: true; horizontalAlignment: Text.AlignRight }
     }
 
     Repeater {
@@ -27,6 +29,17 @@ ColumnLayout {
             DefaultText { text: (modelData.usage.used_bytes / 1073741824).toFixed(1); Layout.preferredWidth: 60; horizontalAlignment: Text.AlignRight }
             DefaultText { text: ((modelData.usage.size_bytes - modelData.usage.used_bytes) / 1073741824).toFixed(1); Layout.preferredWidth: 60; color: root.cyan; horizontalAlignment: Text.AlignRight }
             DefaultText { text: ((modelData.usage.used_bytes / modelData.usage.size_bytes) * 100).toFixed(2) + "%"; Layout.preferredWidth: 70; horizontalAlignment: Text.AlignRight }
+            DefaultText {
+                text: (modelData.io.read_bytes_per_sec / 1048576).toFixed(2) + "MB/s"
+                Layout.preferredWidth: 70
+                horizontalAlignment: Text.AlignRight
+            }
+
+            DefaultText {
+                text: (modelData.io.write_bytes_per_sec / 1048576).toFixed(2) + "MB/s"
+                Layout.preferredWidth: 70
+                horizontalAlignment: Text.AlignRight
+            }
         }
     }
 }

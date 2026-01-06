@@ -32,6 +32,8 @@ Rectangle {
                 spacing: 20
 
                 SystemInfo {}
+                StabilityInfo {}
+                BatteryInfo { }
                 NetworkInfo {}
                 MemInfo {}
             }

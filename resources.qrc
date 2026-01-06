@@ -15,5 +15,7 @@
         <file>qt/qml/metrics/MemInfo.qml</file>
         <file>qt/qml/metrics/DiskUsage.qml</file>
         <file>qt/qml/metrics/DiskIO.qml</file>
+        <file>qt/qml/metrics/StabilityInfo.qml</file>
+        <file>qt/qml/metrics/BatteryInfo.qml</file>
     </qresource>
 </RCC>
