@@ -119,6 +119,18 @@ local_settings.storage.io_devices = {
     "sda",
     "sdb",
 }
+local_settings.window.type = "desktop" -- desktop, dock, normal
+local_settings.window.stacking = "bottom" -- fg, bottom
+local_settings.window.wmIgnore = true -- true, false
+local_settings.window.x = 20
+local_settings.window.y = 30
+local_settings.window.width = 800
+local_settings.window.height = 950
+local_settings.window.vertical_scroll = "on" -- on, off, auto
+local_settings.window.horizontal_scroll = "on" -- on, off, auto
+local_settings.window.visible = true -- true, false
+local_settings.window.resizable = true -- true, false
+
 -- === SSH MODE ===
 local ssh_settings = inherit(default_settings)
 
