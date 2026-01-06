@@ -4,7 +4,8 @@
 
 struct RunnerContext;
 
-OutputPipeline configure_conky_pipeline(const MetricSettings& settings);
+void register_conky_pipeline();
+OutputPipeline configure_conky_pipeline(const MetricSettings &settings);
 int conky_main(const RunnerContext &context);
 
 #endif

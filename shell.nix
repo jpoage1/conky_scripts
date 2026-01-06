@@ -46,12 +46,15 @@ pkgs.mkShell {
   name = "telemetry-dev-env";
 
   inputsFrom = [
-    telemetry-pkg  ws-bridge
+    telemetry-pkg
+    ws-bridge
   ];
 
   # C++ Toolchain and Build System
   nativeBuildInputs = with pkgs; [
     dev-help
+    yazi
+    tmux
   ];
 
 
@@ -62,18 +65,28 @@ pkgs.mkShell {
       rm -rf ~/.cache/*telemetry*
       rm -rf ~/.cache/*widgets*
     }
+    build() {
+      local cwd=$(pwd)
+      mkdir -p "$BUILD_DIR"
+      cd "$BUILD_DIR"
+      clean_qt_cache
+      cmake ..
+      cmake --build "$BUILD_DIR"
+      cd "$cwd"
+    }
 
     PROJECT_DIR=$(pwd)
-    BUILD_DIR="$PROJECT_DIR/build"
+
+    PATH="$PROJECT_DIR/bin:$PATH"
+    export BUILD_DIR="$PROJECT_DIR/build"
     
-    alias build="clean_qt_cache; cmake --build \"$BUILD_DIR\""
     alias build-target="clean_qt_cache; cmake --build \"$BUILD_DIR\" --target"
     alias install-component="cmake --install \"$BUILD_DIR\" --component"
     alias install="cmake --install \"$BUILD_DIR\""
 
-    alias waybard="time \"$BUILD_DIR/waybard\" ~/.config/telemetry/filesystems.txt"
+    alias waybard="time \"$BUILD_DIR/telemetry\" ~/.config/telemetry/filesystems.txt"
     alias json="time \"$BUILD_DIR/telemetry\" ~/.config/telemetry/filesystems.txt"
-    alias widgets="\"$BUILD_DIR/widgets\" --config ~/.config/telemetry/widgets.lua"
+    alias widgets="\"$BUILD_DIR/telemetry\" --config ~/.config/telemetry/widgets.lua"
     alias lua-config="time \"$BUILD_DIR/telemetry\" --config ~/.config/telemetry/config.lua"
     alias lua-settings="time \"$BUILD_DIR/telemetry\" --settings ~/.config/telemetry/settings.lua"
     alias clean="clean_qt_cache; cmake --build \"$BUILD_DIR\" --target clean"

@@ -10,17 +10,18 @@ class SystemMetrics;
 class MetricSettings;
 class Controller;
 class SystemMetricsProxy;
+class SystemMetricsQtProxy;
 
 using OutputMode = std::string;
 
-
 using ControllerPtr = std::unique_ptr<Controller>;
 using SystemMetricsProxyPtr = std::shared_ptr<SystemMetricsProxy>;
+using SystemMetricsQtProxyPtr = std::shared_ptr<SystemMetricsQtProxy>;
 
-using OutputPipeline = std::function<void(const std::list<SystemMetrics>&)>;
-using PipelineFactory = std::function<OutputPipeline(const MetricSettings&)>;
+using OutputPipeline = std::function<void(const std::list<SystemMetrics> &)>;
+using PipelineFactory = std::function<OutputPipeline(const MetricSettings &)>;
 using PipelineRegistry = std::map<OutputMode, PipelineEntry>;
-using MainOutput = std::function<int(const RunnerContext&)>;
+using MainOutput = std::function<int(const RunnerContext &)>;
 
 enum class RunMode {
   RUN_ONCE,
@@ -35,10 +36,9 @@ struct PipelineEntry {
 };
 
 struct ActivePipeline {
-    OutputPipeline processor;
-    MainOutput entry_point = nullptr;
-    SystemMetricsProxyPtr proxy = nullptr;
+  OutputPipeline processor;
+  MainOutput entry_point = nullptr;
+  SystemMetricsProxyPtr proxy = nullptr;
 };
-
 
 #endif

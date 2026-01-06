@@ -10,6 +10,7 @@
 
 class ParsedConfig {
   friend class Controller;
+
  private:
   std::chrono::nanoseconds polling_interval = std::chrono::milliseconds(500);
   OutputMode _output_mode = "json";
@@ -59,8 +60,7 @@ class ParsedConfig {
   bool reload_if_changed(std::list<SystemMetrics>& tasks);
   void set_filename(std::string filename);
   static void register_pipeline(const PipelineEntry pipeline);
-  int main(RunnerContext&);
-
+  int main(const RunnerContext&);
 };
 
 #endif

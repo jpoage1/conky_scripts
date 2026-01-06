@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
-project(ConkyWidgets VERSION 1.0 LANGUAGES CXX)
+project(Telemetry VERSION 1.0 LANGUAGES CXX)
+
+# --- Build Options ---
+option(ENABLE_QT "Enable Qt output mode" ON)
+option(ENABLE_JSON "Enable JSON output mode" ON)
+option(ENABLE_CONKY "Enable Conky output mode" OFF)
+option(ENABLE_GTK "Enable GTK output mode" OFF)
+option(ENABLE_TESTS "Build unit tests" ON)
 
 # --- Configuration ---
 set(CMAKE_CXX_STANDARD 17)
@@ -7,17 +14,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # --- Dependencies ---
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
 pkg_check_modules(LIBSSH REQUIRED libssh)
 
 find_package(Lua REQUIRED)
-
 find_package(GTest REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets)
-
 
 # --- Compiler Flags ---
 add_compile_options(-Wall -Wextra -O3 -march=native)
@@ -32,8 +36,8 @@ include_directories(
     src/widgets
 )
 
+
 # --- Library: Telemetry Core ---
-# Merges systeminfo, data, and runners to resolve circular dependencies
 add_library(telemetry_core STATIC
     # Data & Streams
     src/data/data.cpp
@@ -57,16 +61,6 @@ add_library(telemetry_core STATIC
     src/systeminfo/hwmonitor.cpp
     src/systeminfo/batteryinfo.cpp
     
-    # Conky
-    src/conky/conky_format.cpp
-    src/conky/conky_output.cpp
-    src/conky/conky_pipeline.cpp
-
-    # JSON
-    src/json/json_pipeline.cpp
-    src/json/json_serializer.cpp
-    src/json/json_definitions.cpp
-
     # Logging
     src/logging/io.cpp
     src/logging/rotate_file_sync.cpp
@@ -82,15 +76,8 @@ add_library(telemetry_core STATIC
     src/core/cli_parser.cpp
     src/core/runner.cpp
     src/core/runner_context.cpp
-
-    # Runners
-    src/json/json_main.cpp
 )
 
-add_library(telemetry_unit_tests STATIC
-    tests/unit_corestat.cpp
-    tests/unit_json_order.cpp
-)
 
 # Link external deps to the core library
 target_link_libraries(telemetry_core PUBLIC
@@ -99,52 +86,75 @@ target_link_libraries(telemetry_core PUBLIC
     spdlog::spdlog
 )
 target_include_directories(telemetry_core PUBLIC ${LIBSSH_INCLUDE_DIRS} ${LUA_INCLUDE_DIR})
+add_executable(telemetry src/main.cpp)
+target_link_libraries(telemetry PRIVATE telemetry_core)
 
+if(ENABLE_CONKY)
+    add_library(telemetry_conky STATIC
+        src/conky/conky_format.cpp
+        src/conky/conky_output.cpp
+        src/conky/conky_pipeline.cpp
+        src/conky/conky_main.cpp
+        src/main.cpp
+    )
+    target_link_libraries(telemetry_conky PUBLIC telemetry_core)
+    target_compile_definitions(telemetry_conky PUBLIC OUTPUT_MODE_CONKY)
+    target_link_libraries(telemetry PRIVATE telemetry_conky)
+endif()
 
+if(ENABLE_JSON)
+    add_library(telemetry_json STATIC
+        src/json/json_pipeline.cpp
+        src/json/json_serializer.cpp
+        src/json/json_definitions.cpp
+        src/json/json_main.cpp
+    )
+    target_link_libraries(telemetry_json PUBLIC telemetry_core)
+    target_compile_definitions(telemetry_json PUBLIC OUTPUT_MODE_JSON)
+    target_link_libraries(telemetry PRIVATE telemetry_json)
+endif()
 
-add_library(telemetry_widgets STATIC
-    includes/system_metrics_qt_proxy.hpp
-)
-target_link_libraries(telemetry_widgets PUBLIC
-    telemetry_core
-    Qt6::Quick 
-    Qt6::Widgets
-)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-qt6_add_resources(WIDGET_RESOURCES resources.qrc)
-set_property(SOURCE ${WIDGET_RESOURCES} PROPERTY SKIP_AUTORCC ON)
+if(ENABLE_QT)
+    find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+    #set_property(SOURCE ${QT_RESOURCES} PROPERTY SKIP_AUTORCC ON)
+    qt6_add_resources(QT_RESOURCES resources.qrc)
+    add_library(telemetry_qt STATIC
+        src/qt_widgets/qt_pipeline.cpp
+        src/qt_widgets/qt_main.cpp
+        includes/window_settings.hpp
+        includes/system_metrics_proxy.hpp
+        includes/system_metrics_qt_proxy.hpp
+        ${QT_RESOURCES}
+    )
+    target_link_libraries(telemetry_qt PUBLIC
+        telemetry_core
+        Qt6::Core
+        Qt6::Quick 
+        Qt6::Widgets
+    )
+    target_compile_definitions(telemetry_qt PUBLIC OUTPUT_MODE_QT)
+    target_link_libraries(telemetry PRIVATE telemetry_qt telemetry_qt)
+endif()
 
-# --- Executable: telemetry ---
-#add_executable(telemetry src/main.cpp)
-#target_link_libraries(telemetry PRIVATE telemetry_core)
+if(ENABLE_GTK)
+    pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
+    target_compile_definitions(telemetry_gtk PUBLIC OUTPUT_MODE_GTK)
+endif()
 
-# --- Executable: widgets ---
-add_executable(widgets
-    ${WIDGET_RESOURCES}
-    src/qt_widgets/qt_pipeline.cpp
-    src/qt_widgets/qt_main.cpp
-    includes/window_settings.hpp
-    includes/system_metrics_qt_proxy.hpp
-)
-target_link_libraries(widgets PRIVATE
-    telemetry_widgets
-    Qt6::Gui 
-    Qt6::Quick 
-    Qt6::Qml
-)
+if(ENABLE_TESTS)
+    add_library(telemetry_unit_tests STATIC
+        tests/unit_corestat.cpp
+        tests/unit_json_order.cpp
+    )
 
-enable_testing()
-add_executable(unit_tests tests/main.cpp)
-target_link_libraries(unit_tests PRIVATE
-    telemetry_core 
-    telemetry_unit_tests
-    GTest::gtest
-)
-
-# --- Install ---
-#install(TARGETS telemetry COMPONENT widgets RUNTIME DESTINATION bin)
-
-enable_testing()
-
-add_test(NAME AllUnits COMMAND unit_tests)
+    enable_testing()
+    add_executable(unit_tests tests/main.cpp)
+    target_link_libraries(unit_tests PRIVATE
+        telemetry_core 
+        telemetry_unit_tests
+        GTest::gtest
+    )
+    add_test(NAME AllUnits COMMAND unit_tests)
+endif()

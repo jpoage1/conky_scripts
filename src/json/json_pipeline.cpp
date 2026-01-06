@@ -1,11 +1,13 @@
 // json_pipeline.cpp
 #include "cli_parser.hpp"
-#include "conky_output.hpp"
 #include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 #include "log.hpp"
+#include "output_mode_json.hpp"
+#include "parsed_config.hpp"
 #include "polling.hpp"
+#include "types.hpp"
 #include "uptime.hpp"
 
 // First:
@@ -13,6 +15,11 @@
 
 // Last:
 #include "json_serializer.hpp"
+
+void register_json_pipeline() {
+  PipelineEntry pipeline{"json", configure_json_pipeline, json_main, nullptr};
+  ParsedConfig::register_pipeline(pipeline);
+}
 
 // --- JSON FACTORY ---
 OutputPipeline configure_json_pipeline(const MetricSettings& settings) {

@@ -1,0 +1,4 @@
+[opener]
+edit = [
+    { run = 'yazi-to-vim.sh "$@"', block = true, desc = "Open in Nvim Pane" }
+]

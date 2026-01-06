@@ -4,8 +4,15 @@
 #include "controller.hpp"
 #include "json_serializer.hpp"
 #include "parsed_config.hpp"
+#include "qt.hpp"
 #include "system_metrics_qt_proxy.hpp"
 #include "types.hpp"
+
+void register_qt_pipeline() {
+  auto proxy = std::make_shared<SystemMetricsQtProxy>();
+  PipelineEntry pipeline{"qt", qt_widget_factory(proxy.get()), qt_main, proxy};
+  ParsedConfig::register_pipeline(pipeline);
+}
 
 PipelineFactory qt_widget_factory(SystemMetricsQtProxy* proxy) {
   return [proxy](const MetricSettings& settings) -> OutputPipeline {

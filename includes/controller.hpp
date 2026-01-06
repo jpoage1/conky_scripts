@@ -28,7 +28,7 @@ class Controller {
 
   void inject_task(MetricsContext&& context);
 
-  int main(RunnerContext &context);
+  int main(const RunnerContext& context);
   SystemMetricsProxyPtr get_proxy();
 
  private:

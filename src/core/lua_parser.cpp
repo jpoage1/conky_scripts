@@ -1,11 +1,11 @@
 #include "lua_parser.hpp"
 
 #include "cli_parser.hpp"
-#include "parsed_config.hpp"
 #include "context.hpp"
 #include "log.hpp"
+#include "parsed_config.hpp"
 
-sol::state load_lua_file(const std::string& filename) {
+sol::state load_lua_file(const std::string &filename) {
   sol::state lua;
 
   // 1. Open standard libraries
@@ -15,14 +15,14 @@ sol::state load_lua_file(const std::string& filename) {
   // 2. Load the file safely
   try {
     lua.script_file(filename);
-  } catch (const sol::error& e) {
+  } catch (const sol::error &e) {
     std::cerr << "Lua Config Error: " << e.what() << std::endl;
   }
 
   return lua;
 }
 
-ParsedConfig load_lua_config(const std::string& filename) {
+ParsedConfig load_lua_config(const std::string &filename) {
   ParsedConfig config;
   sol::state lua = load_lua_file(filename);
 
@@ -38,7 +38,7 @@ ParsedConfig load_lua_config(const std::string& filename) {
   return config;
 }
 
-MetricsContext load_lua_settings(const std::string& filename) {
+MetricsContext load_lua_settings(const std::string &filename) {
   MetricsContext context;
   sol::state lua = load_lua_file(filename);
 
@@ -88,7 +88,7 @@ ParsedConfig parse_config(sol::table lua_config) {
     std::vector<sol::table> settings_list =
         lua_config["settings"].get<std::vector<sol::table>>();
 
-    for (auto& settings : settings_list) {
+    for (auto &settings : settings_list) {
       MetricsContext context = parse_settings(settings);
       config.tasks.push_back(std::move(context));
     }
@@ -99,7 +99,7 @@ ParsedConfig parse_config(sol::table lua_config) {
 
 MetricsContext parse_settings(sol::table lua_settings) {
   MetricsContext context;
-  MetricSettings& settings = context.settings;
+  MetricSettings &settings = context.settings;
 
   // System Name (Calculated in Lua)
   if (lua_settings["name"].valid()) {
@@ -175,7 +175,7 @@ MetricsContext parse_settings(sol::table lua_settings) {
 
     // Iterate over the array part of the table
     // sol::table iteration returns {key, value} pairs
-    for (const auto& kv : batteries_list) {
+    for (const auto &kv : batteries_list) {
       sol::object value = kv.second;
 
       // Ensure the item is actually a table (e.g. { name=..., path=... })

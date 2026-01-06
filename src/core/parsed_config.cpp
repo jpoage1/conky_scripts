@@ -1,11 +1,12 @@
 // parsed_config.cpp
-#include "cli_parser.hpp"
 #include "parsed_config.hpp"
+
+#include "cli_parser.hpp"
 #include "conky_output.hpp"
 #include "context.hpp"
 #include "log.hpp"
-#include "qt.hpp"
 #include "polling.hpp"
+#include "qt.hpp"
 PipelineRegistry ParsedConfig::pipeline_registry = {};
 
 bool ParsedConfig::run_mode(RunMode mode) const { return _run_mode == mode; }
@@ -26,20 +27,21 @@ void ParsedConfig::set_run_mode(std::string mode) {
   }
 }
 void ParsedConfig::set_output_mode(std::string mode) {
-    if (pipeline_registry.find(mode) != pipeline_registry.end()) {
-        _output_mode = mode;
-    } else {
-        std::cerr << "Error: invalid output mode `" << mode << "`" << std::endl;
-        show_output_modes();
-    }
+  if (pipeline_registry.find(mode) != pipeline_registry.end()) {
+    SPDLOG_INFO("Output Mode: {}", mode);
+    _output_mode = mode;
+  } else {
+    std::cerr << "Error: invalid output mode `" << mode << "`" << std::endl;
+    show_output_modes();
+  }
 }
 void ParsedConfig::show_output_modes() {
-        // List available modes
-        std::cerr << "Available: ";
-        for (const auto& [name, pipeline] : pipeline_registry) {
-            std::cerr << pipeline.mode << " ";
-        }
-        std::cerr << std::endl;
+  // List available modes
+  std::cerr << "Available: ";
+  for (const auto &[name, pipeline] : pipeline_registry) {
+    std::cerr << pipeline.mode << " ";
+  }
+  std::cerr << std::endl;
 }
 void ParsedConfig::sleep() {
   sleep_until += get_polling_interval<std::chrono::milliseconds>();
@@ -47,25 +49,29 @@ void ParsedConfig::sleep() {
 }
 
 void ParsedConfig::configure_renderer() {
-    if (tasks.empty()) return;
+  if (tasks.empty())
+    return;
 
-    auto it = pipeline_registry.find(_output_mode);
-    if (it != pipeline_registry.end()) {
-        // 1. Call the factory to create the PROCESSOR
-        this->active_pipeline.processor = it->second.factory(tasks.front().settings);
-        // 2. Store the ENTRY POINT
-        this->active_pipeline.entry_point = it->second.out;
-    } else {
-        std::cerr << "Fatal: Output mode '" << _output_mode << "' not registered." << std::endl;
-        show_output_modes();
-    }
+  auto it = pipeline_registry.find(_output_mode);
+  if (it != pipeline_registry.end()) {
+    // 1. Call the factory to create the PROCESSOR
+    this->active_pipeline.processor =
+        it->second.factory(tasks.front().settings);
+    // 2. Store the ENTRY POINT
+    this->active_pipeline.entry_point = it->second.out;
+    this->active_pipeline.proxy = it->second.proxy;
+  } else {
+    std::cerr << "Fatal: Output mode '" << _output_mode << "' not registered."
+              << std::endl;
+    show_output_modes();
+  }
 }
 void ParsedConfig::register_pipeline(const PipelineEntry pipeline) {
-    SPDLOG_DEBUG("Registering pipeline: {}", pipeline.mode);
-    ParsedConfig::pipeline_registry[pipeline.mode] = pipeline;
+  SPDLOG_DEBUG("Registering pipeline: {}", pipeline.mode);
+  ParsedConfig::pipeline_registry[pipeline.mode] = pipeline;
 }
 
-int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
+int ParsedConfig::initialize(std::list<SystemMetrics> &tasks) {
   this->configure_renderer();
 
   if (this->tasks.empty()) {
@@ -74,8 +80,8 @@ int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
   }
   sleep_until = std::chrono::steady_clock::now();
   /* Perform these steps only once */
-  for (MetricsContext& task : this->tasks) {
-    SystemMetrics& new_task = tasks.emplace_back(task);
+  for (MetricsContext &task : this->tasks) {
+    SystemMetrics &new_task = tasks.emplace_back(task);
 
     DEBUG_PTR("Initialize context", task);
     DEBUG_PTR("New task", new_task);
@@ -84,7 +90,7 @@ int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
                 << std::endl;
       // Optional: tasks.pop_back(); // Remove failed task if strict
     }
-    for (std::unique_ptr<IPollingTask>& polling_task : new_task.polling_tasks) {
+    for (std::unique_ptr<IPollingTask> &polling_task : new_task.polling_tasks) {
       DEBUG_PTR("Polling task address", polling_task);
       polling_task->take_initial_snapshot();
     }
@@ -92,14 +98,15 @@ int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
 
   return 0;
 }
-void ParsedConfig::done(std::list<SystemMetrics>& result) {
-    // Call the processor (the result of the factory)
-    if (this->active_pipeline.processor) {
-        this->active_pipeline.processor(result);
-    }
+void ParsedConfig::done(std::list<SystemMetrics> &result) {
+  // Call the processor (the result of the factory)
+  if (this->active_pipeline.processor) {
+    this->active_pipeline.processor(result);
+  }
 }
-bool ParsedConfig::reload_if_changed(std::list<SystemMetrics>& active_tasks) {
-  if (config_path.empty()) return false;
+bool ParsedConfig::reload_if_changed(std::list<SystemMetrics> &active_tasks) {
+  if (config_path.empty())
+    return false;
 
   std::error_code ec;
   auto current_time = std::filesystem::last_write_time(config_path, ec);
@@ -143,7 +150,7 @@ bool ParsedConfig::reload_if_changed(std::list<SystemMetrics>& active_tasks) {
       SPDLOG_INFO("Hot reload complete.");
       return true;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       SPDLOG_ERROR("Hot reload failed: {}", e.what());
       // We keep the old tasks running if the new config is broken
       return false;
@@ -157,10 +164,10 @@ void ParsedConfig::set_filename(std::string filename) {
   last_write_time = std::filesystem::last_write_time(filename);
 }
 
-int ParsedConfig::main(RunnerContext& ctx) {
-    // Check if the current mode has a GUI entry point (like qt_main)
-    if (active_pipeline.entry_point) {
-        return active_pipeline.entry_point(ctx);
-    }
-    return 1;
+int ParsedConfig::main(const RunnerContext &ctx) {
+  // Check if the current mode has a GUI entry point (like qt_main)
+  if (active_pipeline.entry_point) {
+    return active_pipeline.entry_point(ctx);
+  }
+  return 1;
 }

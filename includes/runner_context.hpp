@@ -8,12 +8,11 @@
 class SystemMetricsProxy;
 
 struct RunnerContext {
-   int& argc;
+  int& argc;
   char** const argv;
-  ControllerPtr& controller;
+  const ControllerPtr& controller;
   std::shared_ptr<SystemMetricsProxy> proxy = nullptr;
-  RunnerContext(int argc, char** argv, ControllerPtr& c);
-  void attach(SystemMetricsProxyPtr& proxy);
+  RunnerContext(int argc, char** argv, const ControllerPtr& c);
 };
 
 #endif
