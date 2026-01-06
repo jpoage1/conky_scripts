@@ -4,16 +4,16 @@
 
 #include "context.hpp"
 #include "diskstat.hpp"
+#include "metric_settings.hpp"
 #include "metrics.hpp"
 #include "pcn.hpp"
 #include "provider.hpp"
-
 // struct MetricSettings;
 
 class SystemMetrics;
 
-using callback = std::function<int(DataStreamProviderPtr&, const std::string&,
-                                   SystemMetrics&)>;
+using callback = std::function<int(DataStreamProviderPtr &, const std::string &,
+                                   SystemMetrics &)>;
 using DiskStatConfig = std::set<DiskStatSettings>;
 
 struct MetricsContext {
@@ -34,11 +34,11 @@ struct MetricsContext {
   std::vector<std::string> io_devices;
   DiskStatConfig disk_stat_config;
 
-  MetricsContext(MetricsContext&&) noexcept = default;
-  MetricsContext& operator=(MetricsContext&&) noexcept = default;
+  MetricsContext(MetricsContext &&) noexcept = default;
+  MetricsContext &operator=(MetricsContext &&) noexcept = default;
 
-  MetricsContext(const MetricsContext&) = delete;
-  MetricsContext& operator=(const MetricsContext&) = delete;
+  MetricsContext(const MetricsContext &) = delete;
+  MetricsContext &operator=(const MetricsContext &) = delete;
 
   MetricsContext() = default;
 };

@@ -7,6 +7,7 @@
 #include "data_ssh.hpp"
 #include "diskstat.hpp"
 #include "filesystems.hpp"
+#include "frag_stats.hpp"
 #include "load_avg.hpp"
 #include "log.hpp"
 #include "networkstats.hpp"
@@ -21,38 +22,39 @@
 
 void SystemMetrics::complete() {}
 
-void SystemMetrics::configure_provider(MetricsContext& context) {
+void SystemMetrics::configure_provider(MetricsContext &context) {
   std::unique_ptr<DataStreamProvider> _provider;
   switch (context.provider) {
-    case DataStreamProviders::LocalDataStream: {
-      _provider = std::make_unique<LocalDataStreams>();
-    } break;
-    case DataStreamProviders::ProcDataStream: {
-      // Check for specific host/user
-      if (context.host != "" && context.user != "") {
-        _provider =
-            std::make_unique<ProcDataStreams>(context.host, context.user);
-      } else {
-        _provider = std::make_unique<ProcDataStreams>();
-      }
-    } break;
+  case DataStreamProviders::LocalDataStream: {
+    _provider = std::make_unique<LocalDataStreams>();
+  } break;
+  case DataStreamProviders::ProcDataStream: {
+    // Check for specific host/user
+    if (context.host != "" && context.user != "") {
+      _provider = std::make_unique<ProcDataStreams>(context.host, context.user);
+    } else {
+      _provider = std::make_unique<ProcDataStreams>();
+    }
+  } break;
   }
   provider = std::move(_provider);
 }
 
-SystemMetrics::SystemMetrics(MetricsContext& context) {
+SystemMetrics::SystemMetrics(MetricsContext &context) {
   configure_provider(context);
   create_pipeline(context);
   configure_polling_pipeline(context);
 }
-void SystemMetrics::create_pipeline(MetricsContext& context) {
+void SystemMetrics::create_pipeline(MetricsContext &context) {
   auto settings = context.settings;
 
   // Task: Battery Info
-  task_pipeline.emplace_back([this, &context]() {
-    this->battery_info =
-        provider->get_battery_status(context.settings.batteries);
-  });
+  if (settings.enable_battery_info) {
+    task_pipeline.emplace_back([this, &context]() {
+      this->battery_info =
+          provider->get_battery_status(context.settings.batteries);
+    });
+  }
 
   // Task: CPU Temp
   if (settings.enable_cpu_temp) {
@@ -90,36 +92,33 @@ void SystemMetrics::create_pipeline(MetricsContext& context) {
 
 int SystemMetrics::read_data() {
   // The loop is now dumb; it just executes whatever was configured.
-  for (const auto& task : task_pipeline) {
+  for (const auto &task : task_pipeline) {
     task();
   }
   return 0;
 }
 
-void SystemMetrics::configure_polling_pipeline(MetricsContext& context) {
+void SystemMetrics::configure_polling_pipeline(MetricsContext &context) {
   auto settings = context.settings;
-  std::unique_ptr<IPollingTask>* new_task;
+  std::unique_ptr<IPollingTask> *new_task;
+#define CREATE_POLLING_TASK(TASK_NAME, POLLING_TASK, CONDITION)                \
+  do {                                                                         \
+    if (CONDITION) {                                                           \
+      new_task = &polling_tasks.emplace_back(                                  \
+          std::make_unique<POLLING_TASK>(*provider, *this, context));          \
+      DEBUG_PTR(TASK_NAME, new_task);                                          \
+    }                                                                          \
+  } while (0);
 
-  if (settings.enable_cpuinfo) {
-    new_task = &polling_tasks.emplace_back(
-        std::make_unique<CpuPollingTask>(*provider, *this, context));
-    DEBUG_PTR("cpuinfo", new_task);
-  }
-
-  if (settings.enable_network_stats) {
-    new_task = &polling_tasks.emplace_back(
-        std::make_unique<NetworkPollingTask>(*provider, *this, context));
-    DEBUG_PTR("networkstats", new_task);
-  }
-  if (settings.enable_diskstat) {
-    new_task = &polling_tasks.emplace_back(
-        std::make_unique<DiskPollingTask>(*provider, *this, context));
-    DEBUG_PTR("new_task", new_task);
-  }
-  if (settings.enable_processinfo()) {
-    new_task = &polling_tasks.emplace_back(
-        std::make_unique<ProcessPollingTask>(*provider, *this, context));
-    DEBUG_PTR("processinfo", new_task);
-  }
+  CREATE_POLLING_TASK("cpuinfo", CpuPollingTask, settings.enable_cpuinfo);
+  CREATE_POLLING_TASK("stability", SystemStabilityPollingTask,
+                      settings.enable_stability_info);
+  CREATE_POLLING_TASK("networkstats", NetworkPollingTask,
+                      settings.enable_network_stats);
+  CREATE_POLLING_TASK("diskstat", DiskPollingTask, settings.enable_diskstat);
+  CREATE_POLLING_TASK("processinfo", ProcessPollingTask,
+                      settings.enable_processinfo());
+  CREATE_POLLING_TASK("fragmentation", MemoryFragmentationTask,
+                      settings.enable_processinfo());
   (void)new_task;
 }

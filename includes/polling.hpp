@@ -28,7 +28,7 @@ using DiskStatConfig = std::set<DiskStatSettings>;
 struct ProcessSnapshot {
   long pid;
   long vmRssKb;
-  long cumulative_cpu_jiffies;  // The raw reading from /proc/[pid]/stat
+  long cumulative_cpu_jiffies; // The raw reading from /proc/[pid]/stat
   std::string name;
 };
 
@@ -37,29 +37,29 @@ using ProcessSnapshotList = std::vector<ProcessSnapshot>;
 struct ProcessRawSnapshot {
   std::string name;
   long vmRssKb = 0;
-  long cumulative_cpu_time = 0;  // Jiffies (Local) or Seconds*100 (SSH)
+  long cumulative_cpu_time = 0; // Jiffies (Local) or Seconds*100 (SSH)
   unsigned long long start_time =
-      0;  // Field 22 (Jiffies) or Elapsed Seconds (SSH)
+      0; // Field 22 (Jiffies) or Elapsed Seconds (SSH)
 };
 
-using ProcessSnapshotMap = std::map<long, ProcessRawSnapshot>;  // Key = PID
+using ProcessSnapshotMap = std::map<long, ProcessRawSnapshot>; // Key = PID
 
 class IPollingTask {
- protected:
-  DataStreamProvider& provider;
-  SystemMetrics& metrics;
+protected:
+  DataStreamProvider &provider;
+  SystemMetrics &metrics;
   std::string name;
   std::chrono::steady_clock::time_point timestamp;
   double time_delta_seconds;
 
- public:
+public:
   /**
    * @brief Constructs a task by storing references to its context.
    * * We use an initializer list (the ': ...') because references
    * MUST be initialized, they cannot be assigned later.
    */
-  IPollingTask(DataStreamProvider& provider, SystemMetrics& metrics,
-               MetricsContext&);
+  IPollingTask(DataStreamProvider &provider, SystemMetrics &metrics,
+               MetricsContext &);
   //   : provider(provider), metrics(metrics) {};
 
   //   IPollingTask(DataStreamProvider& _provider, SystemMetrics& _metrics)
@@ -96,40 +96,40 @@ class CpuPollingTask : public IPollingTask {
 
   FRIEND_TEST(CpuCoverageTest, AggregateIsZeroIndex);
 
- private:
+private:
   CpuSnapshotList prev_snapshots;
   CpuSnapshotList current_snapshots;
 
- public:
-  CpuPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
+public:
+  CpuPollingTask(DataStreamProvider &, SystemMetrics &, MetricsContext &);
   void configure() override {};
   void take_initial_snapshot() override;
   void take_new_snapshot() override;
   void calculate() override;
   void commit() override;
-  CpuSnapshotList read_data(std::istream&);
+  CpuSnapshotList read_data(std::istream &);
 };
 using CpuPollingTaskPtr = std::unique_ptr<CpuPollingTask>;
 
 class NetworkPollingTask : public IPollingTask {
- private:
+private:
   NetworkSnapshotMap prev_snapshot;
   NetworkSnapshotMap current_snapshot;
 
- public:
-  NetworkPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
+public:
+  NetworkPollingTask(DataStreamProvider &, SystemMetrics &, MetricsContext &);
   void configure() override {};
   void take_initial_snapshot() override;
   void take_new_snapshot() override;
   void calculate() override;
   void commit() override;
 
-  NetworkSnapshotMap read_data(std::istream&);
+  NetworkSnapshotMap read_data(std::istream &);
 };
 using NetworkPollingTaskPtr = std::unique_ptr<NetworkPollingTask>;
 
 class DiskPollingTask : public IPollingTask {
- private:
+private:
   DiskIoSnapshotMap prev_snapshots;
   DiskIoSnapshotMap current_snapshots;
   // A set of the kernel device names we actually care about (e.g., "dm-0",
@@ -137,13 +137,13 @@ class DiskPollingTask : public IPollingTask {
   std::set<std::string> target_kernel_names;
   // A map to link logical paths to kernel names (e.g., "/dev/vg0/lv0" ->
   // "dm-0")
-  std::map<std::string, DeviceInfo*> kernel_to_device_map;
-  DevicePaths load_device_paths(const std::string& config_file);
+  std::map<std::string, DeviceInfo *> kernel_to_device_map;
+  DevicePaths load_device_paths(const std::string &config_file);
   std::set<std::string> allowed_io_devices;
   DiskStatConfig config;
 
- public:
-  DiskPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
+public:
+  DiskPollingTask(DataStreamProvider &, SystemMetrics &, MetricsContext &);
   void configure() override;
   void take_initial_snapshot() override;
   void take_new_snapshot() override;
@@ -151,32 +151,65 @@ class DiskPollingTask : public IPollingTask {
   void calculate() override;
   void commit() override;
 
-  DiskIoSnapshotMap read_data(std::istream&);
+  DiskIoSnapshotMap read_data(std::istream &);
 };
 using DiskPollingTaskPtr = std::unique_ptr<DiskPollingTask>;
 class ProcessPollingTask : public IPollingTask {
- private:
+private:
   long unsigned int process_count = 10;
   std::vector<std::string> ignore_list;
   bool only_user_processes = true;
   ProcessSnapshotMap prev_snapshots;
   ProcessSnapshotMap current_snapshots;
-  std::vector<std::function<void(std::vector<ProcessInfo>&)>> output_pipeline;
-  void populate_top_ps(std::vector<ProcessInfo>& source,
-                       std::vector<ProcessInfo>& dest, SortMode mode);
+  std::vector<std::function<void(std::vector<ProcessInfo> &)>> output_pipeline;
+  void populate_top_ps(std::vector<ProcessInfo> &source,
+                       std::vector<ProcessInfo> &dest, SortMode mode);
 
- public:
-  ProcessPollingTask(DataStreamProvider&, SystemMetrics&, MetricsContext&);
+public:
+  ProcessPollingTask(DataStreamProvider &, SystemMetrics &, MetricsContext &);
   void configure() override {};
   void take_initial_snapshot() override;
   void take_new_snapshot() override;
-  void calculate() override;  // time_delta_seconds is not strictly needed here
+  void calculate() override; // time_delta_seconds is not strictly needed here
   void commit() override;
 
   // This internal helper reads the /proc directory and returns the raw snapshot
   // list
   ProcessSnapshotMap read_data();
   void set_process_count(int);
+  void audit_process_list(std::vector<ProcessInfo> &list);
 };
 using ProcessPollingTaskPtr = std::unique_ptr<ProcessPollingTask>;
+
+class BatteryPollingTask : public IPollingTask {
+private:
+  std::vector<BatteryConfig> configs;
+  std::vector<BatteryStatus> current_status;
+
+public:
+  BatteryPollingTask(DataStreamProvider &p, SystemMetrics &m,
+                     MetricsContext &ctx);
+
+  void configure() override;
+  void take_initial_snapshot() override;
+  void take_new_snapshot() override;
+  void calculate() override;
+  void commit() override;
+};
+using BatteryPollingTaskPtr = std::unique_ptr<BatteryPollingTask>;
+
+class SystemStabilityPollingTask : public IPollingTask {
+public:
+  SystemStabilityPollingTask(DataStreamProvider &p, SystemMetrics &m,
+                             MetricsContext &ctx);
+
+  void configure() override;
+  void take_initial_snapshot() override;
+  void take_new_snapshot() override;
+  void calculate() override;
+  void commit() override;
+};
+using SystemStabilityPollingTaskPtr =
+    std::unique_ptr<SystemStabilityPollingTask>;
+
 #endif

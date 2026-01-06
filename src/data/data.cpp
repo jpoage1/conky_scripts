@@ -19,15 +19,16 @@
 #include "sysinfo.hpp"
 #include "uptime.hpp"
 
-void dump_fstream(std::istream& stream) {
+void dump_fstream(std::istream &stream) {
   std::stringstream buffer;
   buffer << stream.rdbuf();
   std::cerr << "Dumping buffer: " << std::endl;
   std::cerr << buffer.str() << std::endl;
   std::cerr << "Done" << std::endl;
 }
-IPollingTask::IPollingTask(DataStreamProvider& _provider,
-                           SystemMetrics& _metrics, MetricsContext& /*context*/)
+IPollingTask::IPollingTask(DataStreamProvider &_provider,
+                           SystemMetrics &_metrics,
+                           MetricsContext & /*context*/)
     : provider(_provider), metrics(_metrics) {
   //   dump_fstream(provider.get_stat_stream());
 }
@@ -50,9 +51,10 @@ void log_stream_state(const std::string time, const std::string stream_name,
 //     LOG_NOTICE(msg);  // Will respect global log level
 //   }
 // }
-void log_stream_state(const std::istream& stream, const LogLevel log_level,
+void log_stream_state(const std::istream &stream, const LogLevel log_level,
                       const std::string time, const std::string stream_name) {
-  if (log_level == LogLevel::None) return;
+  if (log_level == LogLevel::None)
+    return;
   const std::string streamName =
       stream_name != "" ? "`" + stream_name + "` " : "";
   if (log_level == LogLevel::Debug) {
@@ -81,12 +83,12 @@ void log_stream_state(const std::istream& stream, const LogLevel log_level,
     log_stream_state(time, streamName, "fail");
   }
 }
-void log_stream_state(std::istream& stream, const LogLevel log_level,
+void log_stream_state(std::istream &stream, const LogLevel log_level,
                       const std::string time) {
   const std::string stream_name = "";
   log_stream_state(stream, log_level, time, stream_name);
 }
-void DataStreamProvider::rewind(std::istream& stream, std::string stream_name) {
+void DataStreamProvider::rewind(std::istream &stream, std::string stream_name) {
   LogLevel log_level = LogLevel::Warning;
   log_stream_state(stream, log_level, static_cast<std::string>("before"),
                    stream_name);
@@ -97,4 +99,4 @@ void DataStreamProvider::rewind(std::istream& stream, std::string stream_name) {
   log_stream_state(stream, log_level, static_cast<std::string>("after"),
                    stream_name);
 }
-void DataStreamProvider::rewind(std::istream& stream) { rewind(stream, ""); }
+void DataStreamProvider::rewind(std::istream &stream) { rewind(stream, ""); }

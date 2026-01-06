@@ -21,24 +21,24 @@
 using json = nlohmann::json;
 
 // --- Battery ---
-void to_json(json& j, const BatteryStatus& s) {
+void to_json(json &j, const BatteryStatus &s) {
   j = json{
       {"name", s.name}, {"percentage", s.percentage}, {"status", s.status}};
 }
-void from_json(const json& j, BatteryStatus& s) {
+void from_json(const json &j, BatteryStatus &s) {
   j.at("name").get_to(s.name);
   j.at("percentage").get_to(s.percentage);
   j.at("status").get_to(s.status);
 }
 
 // --- Time / Uptime ---
-void to_json(json& j, const Time& t) {
+void to_json(json &j, const Time &t) {
   j = json{
       {"days", t.days},           {"hours", t.hours}, {"minutes", t.minutes},
       {"seconds", t.seconds},     {"raw", t.raw},     {"text", t.to_str()},
       {"clock", t.to_clock_str()}};
 }
-void from_json(const json& j, Time& t) {
+void from_json(const json &j, Time &t) {
   j.at("days").get_to(t.days);
   j.at("hours").get_to(t.hours);
   j.at("minutes").get_to(t.minutes);
@@ -47,32 +47,32 @@ void from_json(const json& j, Time& t) {
 }
 
 // --- Storage ---
-void to_json(json& j, const DiskUsage& s) {
+void to_json(json &j, const DiskUsage &s) {
   j = json{{"used_bytes", s.used_bytes}, {"size_bytes", s.size_bytes}};
 }
-void from_json(const json& j, DiskUsage& s) {
+void from_json(const json &j, DiskUsage &s) {
   j.at("used_bytes").get_to(s.used_bytes);
   j.at("size_bytes").get_to(s.size_bytes);
 }
 
 // --- Disk IO
-void to_json(json& j, const DiskIoStats& s) {
+void to_json(json &j, const DiskIoStats &s) {
   j = json{{"read_bytes_per_sec", s.read_bytes_per_sec},
            {"write_bytes_per_sec", s.write_bytes_per_sec}};
 }
-void from_json(const json& j, DiskIoStats& s) {
+void from_json(const json &j, DiskIoStats &s) {
   j.at("read_bytes_per_sec").get_to(s.read_bytes_per_sec);
   j.at("write_bytes_per_sec").get_to(s.write_bytes_per_sec);
 }
 
 // --- Disk Info
-void to_json(json& j, const DeviceInfo& s) {
+void to_json(json &j, const DeviceInfo &s) {
   j = json{{"device_path", s.device_path},
            {"mount_point", s.mount_point},
            {"usage", s.usage},
            {"io", s.io}};
 }
-void from_json(const json& j, DeviceInfo& s) {
+void from_json(const json &j, DeviceInfo &s) {
   j.at("device_path").get_to(s.device_path);
   j.at("mount_point").get_to(s.mount_point);
   j.at("usage").get_to(s.usage);
@@ -80,19 +80,19 @@ void from_json(const json& j, DeviceInfo& s) {
 }
 
 // --- HDD IO
-void to_json(json& j, const HdIoStats& s) {
+void to_json(json &j, const HdIoStats &s) {
   j = json{{"device_name", s.device_name},
            {"read_bytes_per_sec", s.read_bytes_per_sec},
            {"write_bytes_per_sec", s.write_bytes_per_sec}};
 }
-void from_json(const json& j, HdIoStats& s) {
+void from_json(const json &j, HdIoStats &s) {
   j.at("device_name").get_to(s.device_name);
   j.at("read_bytes_per_sec").get_to(s.read_bytes_per_sec);
   j.at("write_bytes_per_sec").get_to(s.write_bytes_per_sec);
 }
 
 // --- CPU ---
-void to_json(json& j, const CoreStats& s) {
+void to_json(json &j, const CoreStats &s) {
   j = json{{"core_id", s.core_id},
            {"user_percent", s.user_percent},
            {"nice_percent", s.nice_percent},
@@ -101,7 +101,7 @@ void to_json(json& j, const CoreStats& s) {
            {"idle_percent", s.idle_percent},
            {"total_usage_percent", s.total_usage_percent}};
 }
-void from_json(const json& j, CoreStats& s) {
+void from_json(const json &j, CoreStats &s) {
   j.at("core_id").get_to(s.core_id);
   j.at("user_percent").get_to(s.user_percent);
   j.at("nice_percent").get_to(s.nice_percent);
@@ -112,51 +112,58 @@ void from_json(const json& j, CoreStats& s) {
 }
 
 // --- Network ---
-void to_json(json& j, const NetworkInterfaceStats& s) {
+void to_json(json &j, const NetworkInterfaceStats &s) {
   j = json{{"interface_name", s.interface_name},
            {"rx_bytes_per_sec", s.rx_bytes_per_sec},
            {"tx_bytes_per_sec", s.tx_bytes_per_sec}};
 }
-void from_json(const json& j, NetworkInterfaceStats& s) {
+void from_json(const json &j, NetworkInterfaceStats &s) {
   j.at("interface_name").get_to(s.interface_name);
   j.at("rx_bytes_per_sec").get_to(s.rx_bytes_per_sec);
   j.at("tx_bytes_per_sec").get_to(s.tx_bytes_per_sec);
 }
 
 // --- Memory ---
-void to_json(json& j, const MemInfo& s) {
+void to_json(json &j, const MemInfo &s) {
   j = json{
       {"used_kb", s.used_kb}, {"total_kb", s.total_kb}, {"percent", s.percent}};
 }
-void from_json(const json& j, MemInfo& s) {
+void from_json(const json &j, MemInfo &s) {
   j.at("used_kb").get_to(s.used_kb);
   j.at("total_kb").get_to(s.total_kb);
   j.at("percent").get_to(s.percent);
 }
 
 // --- ProcessInfo ---
-void to_json(json& j, const ProcessInfo& p) {
+void to_json(json &j, const ProcessInfo &p) {
   j = json{{"pid", p.pid},
            {"vmRssKb", p.vmRssKb},
            {"cpu_percent", p.cpu_percent},
            {"mem_percent", p.mem_percent},
-           {"name", p.name}};
+           {"name", p.name},
+           {"open_fds", p.open_fds},
+           {"io_read_bytes", p.io_read_bytes},
+           {"io_write_bytes", p.io_write_bytes}};
 }
-void from_json(const json& j, ProcessInfo& p) {
+void from_json(const json &j, ProcessInfo &p) {
   j.at("pid").get_to(p.pid);
   j.at("vmRssKb").get_to(p.vmRssKb);
   j.at("cpu_percent").get_to(p.cpu_percent);
   j.at("mem_percent").get_to(p.mem_percent);
   j.at("name").get_to(p.name);
+  j.at("open_fds").get_to(p.open_fds);
+  j.at("io_read_bytes").get_to(p.io_read_bytes);
+  j.at("io_write_bytes").get_to(p.io_write_bytes);
 }
 
 // System Metrics
-void to_json(json& j, const SystemMetrics& s) {
+void to_json(json &j, const SystemMetrics &s) {
   j = json{
       {"cores", s.cores},
       {"cpu_frequency_ghz", s.cpu_frequency_ghz},
       {"cpu_temp_c", s.cpu_temp_c},
       {"meminfo", s.meminfo},
+      {"stability", s.stability},
       {"swapinfo", s.swapinfo},
       {"disks", s.disks},
       {"uptime", s.uptime},
@@ -177,18 +184,19 @@ void to_json(json& j, const SystemMetrics& s) {
       // Note: polling_tasks is intentionally omitted
   };
   j["disk_io"] = json::array();
-  for (const auto& pair : s.disk_io) {
+  for (const auto &pair : s.disk_io) {
     SPDLOG_TRACE("Serializing {}", pair.second.device_name);
     j["disk_io"].push_back(
-        pair.second);  // pair.second is the DiskIoStats object
+        pair.second); // pair.second is the DiskIoStats object
   }
 }
 
-void from_json(const json& j, SystemMetrics& s) {
+void from_json(const json &j, SystemMetrics &s) {
   j.at("cores").get_to(s.cores);
   j.at("cpu_frequency_ghz").get_to(s.cpu_frequency_ghz);
   j.at("cpu_temp_c").get_to(s.cpu_temp_c);
   j.at("meminfo").get_to(s.meminfo);
+  j.at("stability").get_to(s.stability);
   j.at("swapinfo").get_to(s.swapinfo);
   j.at("disks").get_to(s.disks);
   j.at("uptime").get_to(s.uptime);
@@ -208,4 +216,45 @@ void from_json(const json& j, SystemMetrics& s) {
   j.at("top_processes_real_cpu").get_to(s.top_processes_real_cpu);
   j.at("disk_io").get_to(s.disk_io);
   // Note: polling_tasks is intentionally omitted
+}
+
+void to_json(json &j, const SystemStability &s) {
+  j = json{
+      {"file_descriptors",
+       {{"allocated", s.file_descriptors_allocated},
+        {"max", s.file_descriptors_max}}},
+      {"pressure",
+       {{"memory",
+         {{"some", s.memory_pressure_some}, {"full", s.memory_pressure_full}}},
+        {"io", {{"some", s.io_pressure_some}, {"full", s.io_pressure_full}}}}},
+      {"memory_fragmentation_index", s.memory_fragmentation_index}};
+}
+
+void from_json(const json &j, SystemStability &s) {
+  // Parsing nested file_descriptors
+  if (j.contains("file_descriptors")) {
+    const auto &fd = j.at("file_descriptors");
+    fd.at("allocated").get_to(s.file_descriptors_allocated);
+    fd.at("max").get_to(s.file_descriptors_max);
+  }
+
+  // Parsing nested pressure
+  if (j.contains("pressure")) {
+    const auto &pr = j.at("pressure");
+
+    if (pr.contains("memory")) {
+      const auto &mem = pr.at("memory");
+      mem.at("some").get_to(s.memory_pressure_some);
+      mem.at("full").get_to(s.memory_pressure_full);
+    }
+
+    if (pr.contains("io")) {
+      const auto &io = pr.at("io");
+      io.at("some").get_to(s.io_pressure_some);
+      io.at("full").get_to(s.io_pressure_full);
+    }
+  }
+
+  // Parsing top-level fragmentation index
+  j.at("memory_fragmentation_index").get_to(s.memory_fragmentation_index);
 }

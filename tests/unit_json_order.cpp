@@ -1,24 +1,24 @@
 // tests/unit_json_order.cpp
-#include <gtest/gtest.h>
 #include "json_serializer.hpp"
+#include "metric_settings.hpp"
 #include "mock_context.hpp"
-#include "processinfo.hpp"
 #include "polling.hpp"
+#include "processinfo.hpp"
+#include <gtest/gtest.h>
 
-class JsonOrderTest : public MockLocalContext{
-};
-
+class JsonOrderTest : public MockLocalContext {};
 
 TEST_F(JsonOrderTest, FeatureGatingMismatchFix) {
-    MetricSettings settings;
-    settings.enable_sysinfo = false;
-    settings.enable_cpuinfo = true; // CPU ON, SYS OFF
-    
-    metrics.cores.push_back({0, 50.0f, 0.0f, 0.0f, 0.0f, 50.0f, 50.0f});
+  MetricSettings settings;
+  settings.enable_sysinfo = false;
+  settings.enable_cpuinfo = true; // CPU ON, SYS OFF
 
-    JsonSerializer serializer(settings);
-    nlohmann::json result = serializer.serialize(metrics);
+  metrics.cores.push_back({0, 50.0f, 0.0f, 0.0f, 0.0f, 50.0f, 50.0f});
 
-    EXPECT_FALSE(result.contains("sys_name"));
-    EXPECT_TRUE(result.contains("cores")); // Verification: cores now gated by enable_cpuinfo
+  JsonSerializer serializer(settings);
+  nlohmann::json result = serializer.serialize(metrics);
+
+  EXPECT_FALSE(result.contains("sys_name"));
+  EXPECT_TRUE(result.contains(
+      "cores")); // Verification: cores now gated by enable_cpuinfo
 }

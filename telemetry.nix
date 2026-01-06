@@ -24,6 +24,9 @@
 , libthai
 , gtest
 , ninja
+, libsoup_3
+, websocketpp
+, libwebsockets
 , mold
 , valgrind
 , clang-tools
@@ -36,11 +39,12 @@ stdenv.mkDerivation rec {
 
   # src = ./.;
   src = lib.cleanSourceWith {
-    filter = name: type: let baseName = baseNameOf (toString name); in ! (
-      (type == "directory" && baseName == "build") ||
-      (type == "directory" && baseName == ".git") ||
-      (baseName == "result")
-    );
+    filter = name: type:
+      let baseName = baseNameOf (toString name); in ! (
+        (type == "directory" && baseName == "build") ||
+        (type == "directory" && baseName == ".git") ||
+        (baseName == "result")
+      );
     src = ./.;
   };
 
@@ -74,6 +78,10 @@ stdenv.mkDerivation rec {
     gtest
     stdenv.cc.cc.lib # Mandatory for libstdc++.so.6
     libglvnd
+    qt6.qtwebsockets
+    libsoup_3
+    websocketpp
+    libwebsockets
   ];
 
   passthru = {

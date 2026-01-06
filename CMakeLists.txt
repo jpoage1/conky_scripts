@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 3.16)
 project(Telemetry VERSION 1.0 LANGUAGES CXX)
 
 # --- Build Options ---
+option(ENABLE_QT_SOCKETS "Enable Qt sockets" ON)
 option(ENABLE_QT "Enable Qt output mode" ON)
 option(ENABLE_JSON "Enable JSON output mode" ON)
 option(ENABLE_CONKY "Enable Conky output mode" OFF)
 option(ENABLE_GTK "Enable GTK output mode" OFF)
+option(ENABLE_GTK_SOCKETS "Enable GTK sockets" OFF)
 option(ENABLE_TESTS "Build unit tests" ON)
 
 # --- Configuration ---
@@ -60,6 +62,8 @@ add_library(telemetry_core STATIC
     src/systeminfo/sysinfo.cpp
     src/systeminfo/hwmonitor.cpp
     src/systeminfo/batteryinfo.cpp
+    src/systeminfo/system_stability.cpp
+    src/systeminfo/frag_stats.cpp
     
     # Logging
     src/logging/io.cpp
@@ -143,13 +147,23 @@ if(ENABLE_GTK)
     target_compile_definitions(telemetry_gtk PUBLIC OUTPUT_MODE_GTK)
 endif()
 
+if (USE_QT_SOCKETS)
+    target_sources(telemetry_core PRIVATE src/network/qt_socket_impl.cpp)
+    target_link_libraries(telemetry_core PUBLIC Qt5::WebSockets)
+elseif (USE_GTK_SOCKETS)
+    target_sources(telemetry_core PRIVATE src/network/soup_socket_impl.cpp)
+    target_link_libraries(telemetry_core PUBLIC libsoup-3.0)
+endif()
+
 if(ENABLE_TESTS)
+    enable_testing()
     add_library(telemetry_unit_tests STATIC
+        tests/unit_json_definitions.cpp
         tests/unit_corestat.cpp
         tests/unit_json_order.cpp
+        tests/unit_stability.cpp
     )
 
-    enable_testing()
     add_executable(unit_tests tests/main.cpp)
     target_link_libraries(unit_tests PRIVATE
         telemetry_core 

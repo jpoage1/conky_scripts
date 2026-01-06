@@ -3,6 +3,7 @@
 #include "cli_parser.hpp"
 #include "context.hpp"
 #include "log.hpp"
+#include "metric_settings.hpp"
 #include "parsed_config.hpp"
 
 sol::state load_lua_file(const std::string &filename) {
@@ -103,7 +104,6 @@ MetricsContext parse_settings(sol::table lua_settings) {
 
   // System Name (Calculated in Lua)
   if (lua_settings["name"].valid()) {
-    // Assuming you have a name field in MetricSettings, or use it for context
     context.source_name = lua_settings.get<std::string>("name");
   }
 
@@ -113,7 +113,6 @@ MetricsContext parse_settings(sol::table lua_settings) {
   if (lua_settings["features"].valid()) {
     sol::table features = lua_settings["features"];
 
-    // CORRECT SYNTAX: get<optional>().value_or()
     settings.enable_sysinfo =
         features.get<sol::optional<bool>>("enable_sysinfo").value_or(true);
     settings.enable_uptime =

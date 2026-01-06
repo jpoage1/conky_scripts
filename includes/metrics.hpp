@@ -10,6 +10,7 @@
 #include "pcn.hpp"
 #include "provider.hpp"
 #include "stream_provider.hpp"
+#include "system_stability.hpp"
 #include "uptime.hpp"
 
 struct DeviceInfo;
@@ -18,7 +19,9 @@ struct DiskUsage;
 struct LocalDataStreams;
 struct ProcDataStreams;
 struct MetricsContext;
+struct SystemStability;
 struct NetworkInterfaceStats;
+
 class DataStreamProvider;
 class IPollingTask;
 
@@ -26,35 +29,8 @@ using PollingTaskList = std::vector<std::unique_ptr<IPollingTask>>;
 using DevicePaths = std::vector<std::string>;
 using DataStreamProviderPtr = std::unique_ptr<DataStreamProvider>;
 
-struct MetricSettings {
-  bool enable_sysinfo = true;
-  bool enable_load_and_process_stats = true;
-  bool enable_uptime = true;
-  bool enable_memory = true;
-  bool enable_cpu_temp = true;
-
-  bool enable_cpuinfo = true;
-  bool enable_network_stats = true;
-  bool enable_diskstat = true;
-
-  bool enable_avg_processinfo_cpu = true;
-  bool enable_avg_processinfo_mem = true;
-  bool enable_realtime_processinfo_cpu = true;
-  bool enable_realtime_processinfo_mem = true;
-  long unsigned int process_count = true;
-  bool only_user_processes = false;
-  std::vector<BatteryConfig> batteries;
-
-  std::vector<std::string> ignore_list;
-
-  bool enable_processinfo() {
-    return enable_avg_processinfo_cpu || enable_avg_processinfo_mem ||
-           enable_realtime_processinfo_cpu || enable_realtime_processinfo_mem;
-  }
-};
-
 class SystemMetrics {
- public:
+public:
   std::vector<std::function<void()>> task_pipeline;
   std::unique_ptr<DataStreamProvider> provider;
   PollingTaskList polling_tasks;
@@ -67,6 +43,7 @@ class SystemMetrics {
   MemInfo swapinfo;
   Time uptime;
   std::vector<BatteryStatus> battery_info;
+  SystemStability stability;
 
   double load_avg_1m = 0.0;
   double load_avg_5m = 0.0;
@@ -86,31 +63,31 @@ class SystemMetrics {
   std::vector<ProcessInfo> top_processes_real_cpu;
 
   SystemMetrics();
-  SystemMetrics(MetricsContext& context);
+  SystemMetrics(MetricsContext &context);
 
   int read_data();
   void complete();
   int get_metrics_from_provider();
-  SystemMetrics(SystemMetrics&&) noexcept = default;
-  SystemMetrics& operator=(SystemMetrics&&) noexcept = default;
+  SystemMetrics(SystemMetrics &&) noexcept = default;
+  SystemMetrics &operator=(SystemMetrics &&) noexcept = default;
 
-  SystemMetrics(const SystemMetrics&) = delete;
-  SystemMetrics& operator=(const SystemMetrics&) = delete;
+  SystemMetrics(const SystemMetrics &) = delete;
+  SystemMetrics &operator=(const SystemMetrics &) = delete;
 
-  void configure_polling_pipeline(MetricsContext& context);
-  void create_pipeline(MetricsContext& context);
-  void configure_provider(MetricsContext& context);
+  void configure_polling_pipeline(MetricsContext &context);
+  void create_pipeline(MetricsContext &context);
+  void configure_provider(MetricsContext &context);
 };
 
-int get_local_metrics(DataStreamProviderPtr&, const std::string& config_file,
-                      SystemMetrics& metrics);
-int get_metrics_from_provider(DataStreamProviderPtr&,
-                              const std::string& config_file,
-                              SystemMetrics& metrics);
-int get_server_metrics(DataStreamProviderPtr&, const std::string& config_file,
-                       SystemMetrics& metrics);
+int get_local_metrics(DataStreamProviderPtr &, const std::string &config_file,
+                      SystemMetrics &metrics);
+int get_metrics_from_provider(DataStreamProviderPtr &,
+                              const std::string &config_file,
+                              SystemMetrics &metrics);
+int get_server_metrics(DataStreamProviderPtr &, const std::string &config_file,
+                       SystemMetrics &metrics);
 
-int get_server_metrics(DataStreamProviderPtr&, const std::string& config_file,
-                       SystemMetrics& metrics, const std::string& host,
-                       const std::string& user);
+int get_server_metrics(DataStreamProviderPtr &, const std::string &config_file,
+                       SystemMetrics &metrics, const std::string &host,
+                       const std::string &user);
 #endif

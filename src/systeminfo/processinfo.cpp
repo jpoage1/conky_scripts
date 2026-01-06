@@ -43,7 +43,7 @@
 // --- HELPER FUNCTIONS ---
 
 // Reads VmRSS from /proc/[pid]/status
-long read_proc_vmrss(const std::string& pid_dir) {
+long read_proc_vmrss(const std::string &pid_dir) {
   std::ifstream status_file(pid_dir + "/status");
   std::string line;
   while (std::getline(status_file, line)) {
@@ -62,7 +62,8 @@ long read_proc_vmrss(const std::string& pid_dir) {
 long read_proc_jiffies(long pid) {
   std::string path = "/proc/" + std::to_string(pid) + "/stat";
   std::ifstream stat_file(path);
-  if (!stat_file.is_open()) return 0;
+  if (!stat_file.is_open())
+    return 0;
 
   std::string line;
   std::getline(stat_file, line);
@@ -70,39 +71,45 @@ long read_proc_jiffies(long pid) {
 
   // Skip 13 fields to get to utime (14) and stime (15)
   std::string garbage;
-  for (int i = 0; i < 13; ++i) ss >> garbage;
+  for (int i = 0; i < 13; ++i)
+    ss >> garbage;
 
   long utime, stime;
-  if (ss >> utime >> stime) return utime + stime;
+  if (ss >> utime >> stime)
+    return utime + stime;
   return 0;
 }
 // Returns pair: {cumulative_jiffies, start_time_jiffies}
 std::pair<long, unsigned long long> read_proc_stat_values(long pid) {
   std::string path = "/proc/" + std::to_string(pid) + "/stat";
   std::ifstream stat_file(path);
-  if (!stat_file.is_open()) return {0, 0};
+  if (!stat_file.is_open())
+    return {0, 0};
 
   std::string line;
   std::getline(stat_file, line);
 
   // Fast-forward past the command name (which is in parens) to handle spaces
   size_t last_paren = line.find_last_of(')');
-  if (last_paren == std::string::npos) return {0, 0};
+  if (last_paren == std::string::npos)
+    return {0, 0};
 
   std::stringstream data_ss(line.substr(last_paren + 1));
   std::string garbage;
 
   // Skip fields 3-13 to get to utime(14)
-  for (int i = 0; i < 11; ++i) data_ss >> garbage;
+  for (int i = 0; i < 11; ++i)
+    data_ss >> garbage;
 
   long utime, stime;
-  data_ss >> utime >> stime;  // Fields 14, 15
+  data_ss >> utime >> stime; // Fields 14, 15
 
   // Skip fields 16-21 to get to starttime(22)
-  for (int i = 0; i < 6; ++i) data_ss >> garbage;
+  for (int i = 0; i < 6; ++i)
+    data_ss >> garbage;
 
   unsigned long long starttime;
-  data_ss >> starttime;  // Field 22
+  data_ss >> starttime; // Field 22
 
   return {utime + stime, starttime};
 }
@@ -119,21 +126,22 @@ long get_system_uptime_jiffies() {
 // --- DATA PROVIDERS ---
 
 // 1. LOCAL: High-performance direct /proc parsing
-ProcessSnapshotMap LocalDataStreams::get_process_snapshots(
-    bool only_user_processes) {
+ProcessSnapshotMap
+LocalDataStreams::get_process_snapshots(bool only_user_processes) {
   namespace fs = std::filesystem;
   ProcessSnapshotMap snapshots;
 
-  for (const auto& entry : fs::directory_iterator("/proc")) {
+  for (const auto &entry : fs::directory_iterator("/proc")) {
     const std::string pid_str = entry.path().filename().string();
 
     // Fast check: is it a PID directory?
-    if (!entry.is_directory() || !isdigit(pid_str[0])) continue;
+    if (!entry.is_directory() || !isdigit(pid_str[0]))
+      continue;
 
     struct stat stats;
     if (::stat(entry.path().c_str(), &stats) == 0) {
       if (only_user_processes && stats.st_uid != getuid()) {
-        continue;  // Skip processes not owned by me
+        continue; // Skip processes not owned by me
       }
     }
 
@@ -156,7 +164,8 @@ ProcessSnapshotMap LocalDataStreams::get_process_snapshots(
 
       std::ifstream comm_file(entry.path() / "comm");
       std::getline(comm_file, snap.name);
-      if (!snap.name.empty() && snap.name.back() == '\n') snap.name.pop_back();
+      if (!snap.name.empty() && snap.name.back() == '\n')
+        snap.name.pop_back();
 
       snapshots[pid] = snap;
     }
@@ -165,8 +174,8 @@ ProcessSnapshotMap LocalDataStreams::get_process_snapshots(
 }
 
 // 2. REMOTE (SSH): Fallback using 'ps' command to reduce network overhead
-ProcessSnapshotMap ProcDataStreams::get_process_snapshots(
-    bool /*only_user_processes*/) {
+ProcessSnapshotMap
+ProcDataStreams::get_process_snapshots(bool /*only_user_processes*/) {
   ProcessSnapshotMap snapshots;
 
   // Command: Get PID, RSS(kb), Cumulative CPU Time(seconds), Command Name
@@ -199,7 +208,8 @@ ProcessSnapshotMap ProcDataStreams::get_process_snapshots(
 
       // Trim leading space from name
       size_t first = snap.name.find_first_not_of(" ");
-      if (first != std::string::npos) snap.name = snap.name.substr(first);
+      if (first != std::string::npos)
+        snap.name = snap.name.substr(first);
 
       snapshots[pid] = snap;
     }
@@ -208,8 +218,8 @@ ProcessSnapshotMap ProcDataStreams::get_process_snapshots(
 }
 
 // --- POLLING TASK LOGIC ---
-ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
-                                       MetricsContext& context)
+ProcessPollingTask::ProcessPollingTask(DataStreamProvider &p, SystemMetrics &m,
+                                       MetricsContext &context)
     : IPollingTask(p, m, context) {
   auto settings = context.settings;
 
@@ -225,7 +235,7 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
     DEBUG_PTR("Pipeline vector", output_pipeline);
 
     output_pipeline.emplace_back(
-        [this, need_real, need_avg](std::vector<ProcessInfo>& data) {
+        [this, need_real, need_avg](std::vector<ProcessInfo> &data) {
           DEBUG_PTR("ProcessPollingTask lambda this", this);
           DEBUG_PTR("ProcessPollingTask lambda metrics", metrics);
           if (need_real) {
@@ -255,7 +265,7 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider& p, SystemMetrics& m,
     bool need_avg = settings.enable_avg_processinfo_mem;
 
     output_pipeline.emplace_back(
-        [this, need_real, need_avg](std::vector<ProcessInfo>& data) {
+        [this, need_real, need_avg](std::vector<ProcessInfo> &data) {
           DEBUG_PTR("ProcessPollingTask lambda this", this);
           DEBUG_PTR("ProcessPollingTask lambda metrics", metrics);
           // Always sort by Memory (RSS)
@@ -297,21 +307,21 @@ void ProcessPollingTask::commit() {
 }
 
 // Helper lambda for sorting and assigning top 10
-void ProcessPollingTask::populate_top_ps(std::vector<ProcessInfo>& source,
-                                         std::vector<ProcessInfo>& dest,
+void ProcessPollingTask::populate_top_ps(std::vector<ProcessInfo> &source,
+                                         std::vector<ProcessInfo> &dest,
                                          SortMode mode) {
   SPDLOG_TRACE("  Sort: Start. Size: {}", source.size());
   dest.reserve(process_count);
 
   // Define the comparator based on the mode
-  auto sorter = [mode](const ProcessInfo& a, const ProcessInfo& b) {
+  auto sorter = [mode](const ProcessInfo &a, const ProcessInfo &b) {
     switch (mode) {
-      case SortMode::MEM:
-        return a.vmRssKb > b.vmRssKb;
-      case SortMode::CPU_REAL:
-        return a.cpu_percent > b.cpu_percent;
-      case SortMode::CPU_AVG:
-        return a.cpu_avg_percent > b.cpu_avg_percent;
+    case SortMode::MEM:
+      return a.vmRssKb > b.vmRssKb;
+    case SortMode::CPU_REAL:
+      return a.cpu_percent > b.cpu_percent;
+    case SortMode::CPU_AVG:
+      return a.cpu_avg_percent > b.cpu_avg_percent;
     }
     return false;
   };
@@ -335,7 +345,8 @@ void ProcessPollingTask::calculate() {
 
   DEBUG_PTR("Pipeline vector", output_pipeline);
 
-  if (time_delta_seconds <= 0.0) return;
+  if (time_delta_seconds <= 0.0)
+    return;
 
   static const long CLK_TCK = sysconf(_SC_CLK_TCK);
   double total_jiffies_available =
@@ -347,7 +358,7 @@ void ProcessPollingTask::calculate() {
   all_procs.reserve(current_snapshots.size());
 
   // 2. Calculate Real-Time Delta for ALL processes
-  for (const auto& [pid, current_snap] : current_snapshots) {
+  for (const auto &[pid, current_snap] : current_snapshots) {
     if (std::find(ignore_list.begin(), ignore_list.end(), current_snap.name) !=
         ignore_list.end()) {
       continue;
@@ -355,7 +366,7 @@ void ProcessPollingTask::calculate() {
 
     auto prev_it = prev_snapshots.find(pid);
     if (prev_it != prev_snapshots.end()) {
-      const auto& prev_snap = prev_it->second;
+      const auto &prev_snap = prev_it->second;
 
       ProcessInfo info;
       info.pid = pid;
@@ -411,7 +422,7 @@ void ProcessPollingTask::calculate() {
                output_pipeline.size());
 
   int step_index = 0;
-  for (const auto& task : output_pipeline) {
+  for (const auto &task : output_pipeline) {
     SPDLOG_TRACE(" [Step {}] Invoking task...", step_index);
 
     // EXECUTE
@@ -424,3 +435,31 @@ void ProcessPollingTask::calculate() {
   SPDLOG_TRACE("Pipeline complete.");
 }
 void ProcessPollingTask::set_process_count(int count) { process_count = count; }
+void ProcessPollingTask::audit_process_list(std::vector<ProcessInfo> &list) {
+  for (auto &proc : list) {
+    std::string pid_path = "/proc/" + std::to_string(proc.pid);
+
+    // 1. Count Open File Descriptors
+    try {
+      auto fd_path = std::filesystem::path(pid_path) / "fd";
+      if (std::filesystem::exists(fd_path)) {
+        proc.open_fds =
+            std::distance(std::filesystem::directory_iterator(fd_path),
+                          std::filesystem::directory_iterator{});
+      }
+    } catch (...) {
+      proc.open_fds = -1;
+    }
+
+    // 2. Read IO Stats
+    std::ifstream io_file(pid_path + "/io");
+    std::string label;
+    while (io_file >> label) {
+      if (label == "read_bytes:")
+        io_file >> proc.io_read_bytes;
+      else if (label == "write_bytes:")
+        io_file >> proc.io_write_bytes;
+      io_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+  }
+}
