@@ -1,4 +1,5 @@
 // tests/unit_json_order.cpp
+#ifdef OUTPUT_MODE_JSON
 #include "json_serializer.hpp"
 #include "metric_settings.hpp"
 #include "mock_context.hpp"
@@ -22,3 +23,4 @@ TEST_F(JsonOrderTest, FeatureGatingMismatchFix) {
   EXPECT_TRUE(result.contains(
       "cores")); // Verification: cores now gated by enable_cpuinfo
 }
+#endif

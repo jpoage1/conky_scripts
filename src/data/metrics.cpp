@@ -19,6 +19,13 @@
 #include "stream_provider.hpp"
 #include "sysinfo.hpp"
 #include "uptime.hpp"
+#include <stdexcept>
+
+// Satisfies the linker, prevents accidental usage
+SystemMetrics::SystemMetrics() {
+  throw std::runtime_error("SystemMetrics default constructor called: This "
+                           "object requires a MetricsContext.");
+}
 
 void SystemMetrics::complete() {}
 

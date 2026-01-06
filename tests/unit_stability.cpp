@@ -28,15 +28,22 @@ TEST_F(StabilityValidation, FDAuditConsistency) {
 }
 
 // Validate Process IO expansion actually populates values
-TEST_F(StabilityValidation, ProcessIOExpansionPopulated) {
-  // Manually push a known PID (the current process) into top_processes
-  ProcessInfo self;
-  self.pid = getpid();
-  metrics.top_processes_real_cpu.push_back(self);
+TEST_F(StabilityValidation, ProcessIOPopulated) {
+  // 1. MANUALLY populate the list with the current process
+  ProcessInfo mock_proc;
+  mock_proc.pid = getpid(); // Audit ourselves
+  mock_proc.name = "unit_tests";
+  metrics.top_processes_real_cpu.push_back(mock_proc);
 
-  ProcessPollingTask task(provider, metrics, context);
-  task.take_new_snapshot();
+  // 2. Run the IO expansion logic
+  // Ensure you use the specific class name you implemented for IO/FD auditing
+  ProcessPollingTask io_task(provider, metrics, context);
+  io_task.take_new_snapshot();
+  io_task.calculate();
 
-  // The first process in the list should now have an FD count > 0
+  // 3. Verify the vector is no longer empty and data is populated
+  ASSERT_FALSE(metrics.top_processes_real_cpu.empty());
+
+  // Check that open_fds is now > 0 (it was 0 in your JSON output)
   EXPECT_GT(metrics.top_processes_real_cpu[0].open_fds, 0);
 }

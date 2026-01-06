@@ -432,7 +432,12 @@ void ProcessPollingTask::calculate() {
     step_index++;
   }
 
-  SPDLOG_TRACE("Pipeline complete.");
+  audit_process_list(metrics.top_processes_avg_mem);
+  audit_process_list(metrics.top_processes_avg_cpu);
+  audit_process_list(metrics.top_processes_real_mem);
+  audit_process_list(metrics.top_processes_real_cpu);
+
+  SPDLOG_TRACE("Pipeline complete with IO/FD audit.");
 }
 void ProcessPollingTask::set_process_count(int count) { process_count = count; }
 void ProcessPollingTask::audit_process_list(std::vector<ProcessInfo> &list) {
