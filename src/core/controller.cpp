@@ -4,7 +4,7 @@
 #include <list>
 #include <memory>
 
-#include "config_types.hpp"
+#include "parsed_config.hpp"
 #include "log.hpp"
 #include "metrics.hpp"
 #include "polling.hpp"
@@ -64,4 +64,19 @@ void Controller::sleep() { tasks_pimpl->config->sleep(); }
 
 void Controller::inject_task(MetricsContext&& context) {
   tasks_pimpl->config->tasks.push_back(std::move(context));
+}
+
+int Controller::main(RunnerContext& context) {
+    // Access m_config (ParsedConfig) to resolve the pipeline entry point
+    if (tasks_pimpl && tasks_pimpl->config) {
+        return tasks_pimpl->config->main(context);
+    }
+    return 1;
+}
+
+SystemMetricsProxyPtr Controller::get_proxy() {
+    if (tasks_pimpl && tasks_pimpl->config) {
+        return tasks_pimpl->config->active_pipeline.proxy;
+    }
+    return nullptr;
 }

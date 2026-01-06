@@ -5,14 +5,15 @@
 #include "controller.hpp"
 #include "configuration_builder.hpp"
 #include "cli_parser.hpp"
-#include "system_metrics_proxy.hpp"
+#include "system_metrics_qt_proxy.hpp"
 #include "json_serializer.hpp"
 #include "types.hpp"
-#include "config_types.hpp"
-#include "telemetry.hpp"
+#include "parsed_config.hpp"
+#include "runner_context.hpp"
+
 #include <unistd.h>
 
-PipelineFactory widget_factory(SystemMetricsProxy* proxy) {
+PipelineFactory qt_widget_factory(SystemMetricsProxy* proxy) {
     return [proxy](const MetricSettings& settings) -> OutputPipeline {
         auto serializer = std::make_shared<JsonSerializer>(settings);
         return [serializer, proxy](const std::list<SystemMetrics>& results) {
@@ -28,7 +29,6 @@ PipelineFactory widget_factory(SystemMetricsProxy* proxy) {
 }
 
 int main(int argc, char* argv[]) {
-    std::unique_ptr<Controller> controller = intitialize(argc, argv);
 
     // 1. Fork the process
     pid_t pid = fork();
@@ -45,11 +45,18 @@ int main(int argc, char* argv[]) {
     }
     
     QApplication app(argc, argv);
-    QQmlApplicationEngine engine;
     SystemMetricsProxy proxy;
+    QQmlApplicationEngine engine;
 
     // Set context property before loading QML
     engine.rootContext()->setContextProperty("systemData", &proxy);
+
+    ProgramOptions options = parse_cli(argc, argv);
+    ParsedConfig config = build_config_from_options(options);
+    ParsedConfig::register_pipeline("qt", OutputMode::QT_WIDGETS, widget_factory(&proxy));
+
+    auto controller = std::make_unique<Controller>();
+    controller->initialize(config);
 
     QTimer timer;
     QObject::connect(&timer, &QTimer::timeout, [&]() { controller->tick(); });

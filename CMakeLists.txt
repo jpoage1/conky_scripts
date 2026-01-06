@@ -81,6 +81,10 @@ add_library(telemetry_core STATIC
     src/core/lua_parser.cpp
     src/core/cli_parser.cpp
     src/core/runner.cpp
+    src/core/runner_context.cpp
+
+    # Runners
+    src/json/json_main.cpp
 )
 
 add_library(telemetry_unit_tests STATIC
@@ -99,7 +103,7 @@ target_include_directories(telemetry_core PUBLIC ${LIBSSH_INCLUDE_DIRS} ${LUA_IN
 
 
 add_library(telemetry_widgets STATIC
-    includes/system_metrics_proxy.hpp
+    includes/system_metrics_qt_proxy.hpp
 )
 target_link_libraries(telemetry_widgets PUBLIC
     telemetry_core
@@ -112,8 +116,8 @@ qt6_add_resources(WIDGET_RESOURCES resources.qrc)
 set_property(SOURCE ${WIDGET_RESOURCES} PROPERTY SKIP_AUTORCC ON)
 
 # --- Executable: telemetry ---
-add_executable(telemetry src/json/json_main.cpp)
-target_link_libraries(telemetry PRIVATE telemetry_core)
+#add_executable(telemetry src/main.cpp)
+#target_link_libraries(telemetry PRIVATE telemetry_core)
 
 # --- Executable: widgets ---
 add_executable(widgets
@@ -121,7 +125,7 @@ add_executable(widgets
     src/qt_widgets/qt_pipeline.cpp
     src/qt_widgets/qt_main.cpp
     includes/window_settings.hpp
-    includes/system_metrics_proxy.hpp
+    includes/system_metrics_qt_proxy.hpp
 )
 target_link_libraries(widgets PRIVATE
     telemetry_widgets
@@ -139,8 +143,7 @@ target_link_libraries(unit_tests PRIVATE
 )
 
 # --- Install ---
-install(TARGETS telemetry COMPONENT telemetry RUNTIME DESTINATION bin)
-install(TARGETS telemetry COMPONENT widgets RUNTIME DESTINATION bin)
+#install(TARGETS telemetry COMPONENT widgets RUNTIME DESTINATION bin)
 
 enable_testing()
 

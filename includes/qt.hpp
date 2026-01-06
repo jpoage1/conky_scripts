@@ -1,5 +1,8 @@
 #include "types.hpp"
 
-class SystemMetricsProxy;
+class SystemMetricsQtProxy;
+struct RunnerContext;
 
-PipelineFactory widget_factory(SystemMetricsProxy* proxy) ;
+PipelineFactory qt_widget_factory(SystemMetricsQtProxy* proxy);
+
+int qt_main(const RunnerContext& ctx);

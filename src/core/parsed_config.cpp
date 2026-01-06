@@ -1,11 +1,12 @@
 // parsed_config.cpp
 #include "cli_parser.hpp"
-#include "config_types.hpp"
+#include "parsed_config.hpp"
 #include "conky_output.hpp"
 #include "context.hpp"
 #include "log.hpp"
-#include "pipeline.hpp"
+#include "qt.hpp"
 #include "polling.hpp"
+PipelineRegistry ParsedConfig::pipeline_registry = {};
 
 bool ParsedConfig::run_mode(RunMode mode) const { return _run_mode == mode; }
 bool ParsedConfig::output_mode(OutputMode mode) const {
@@ -13,20 +14,8 @@ bool ParsedConfig::output_mode(OutputMode mode) const {
 }
 RunMode ParsedConfig::run_mode() const { return _run_mode; }
 OutputMode ParsedConfig::get_output_mode() const { return _output_mode; }
-void ParsedConfig::set_run_mode(RunMode mode) { _run_mode = mode; }
-void ParsedConfig::set_output_mode(OutputMode mode) { _output_mode = mode; }
 
-void ParsedConfig::set_output_mode(std::string mode) {
-  if (mode == "json") {
-    _output_mode = OutputMode::JSON;
-  } else if (mode == "conky") {
-    _output_mode = OutputMode::CONKY;
-  } else if (mode == "widgets") {
-    _output_mode = OutputMode::WIDGETS;
-  } else {
-    std ::cerr << "Error: invalid output mode `" << mode << "`" << std::endl;
-  }
-}
+void ParsedConfig::set_run_mode(RunMode mode) { _run_mode = mode; }
 void ParsedConfig::set_run_mode(std::string mode) {
   if (mode == "persistent") {
     _run_mode = RunMode::PERSISTENT;
@@ -36,48 +25,44 @@ void ParsedConfig::set_run_mode(std::string mode) {
     std ::cerr << "Error: invalid run mode `" << mode << "`" << std::endl;
   }
 }
+void ParsedConfig::set_output_mode(std::string mode) {
+    if (pipeline_registry.find(mode) != pipeline_registry.end()) {
+        _output_mode = mode;
+    } else {
+        std::cerr << "Error: invalid output mode `" << mode << "`" << std::endl;
+        show_output_modes();
+    }
+}
+void ParsedConfig::show_output_modes() {
+        // List available modes
+        std::cerr << "Available: ";
+        for (const auto& [name, pipeline] : pipeline_registry) {
+            std::cerr << pipeline.mode << " ";
+        }
+        std::cerr << std::endl;
+}
 void ParsedConfig::sleep() {
   sleep_until += get_polling_interval<std::chrono::milliseconds>();
   std::this_thread::sleep_until(sleep_until);
 }
 
 void ParsedConfig::configure_renderer() {
+    if (tasks.empty()) return;
 
-  if (tasks.empty()) {
-        std::cerr << "Error: Cannot configure renderer with empty task list." << std::endl;
-        return;
-    }
-
-  for (MetricsContext& task : tasks) {
-
-    // Lookup the factory in the registry
     auto it = pipeline_registry.find(_output_mode);
-    
     if (it != pipeline_registry.end()) {
-      // We use the settings from the first task to build the pipeline
-      if (!tasks.empty()) {
-          this->active_pipeline = it->second(tasks.front().settings);
-      }
+        // 1. Call the factory to create the PROCESSOR
+        this->active_pipeline.processor = it->second.factory(tasks.front().settings);
+        // 2. Store the ENTRY POINT
+        this->active_pipeline.entry_point = it->second.out;
     } else {
-      switch (_output_mode) {
-        case OutputMode::JSON: {
-          this->active_pipeline = configure_json_pipeline(task.settings);
-          break;
-        }
-        case OutputMode::CONKY: {
-          this->active_pipeline = configure_conky_pipeline(task.settings);
-          break;
-        }
-        default:
-          std::cerr << "Fatal: OutputMode [" << static_cast<int>(_output_mode) 
-                        << "] is not in the dynamic registry and has no legacy implementation." << std::endl;
-      }
+        std::cerr << "Fatal: Output mode '" << _output_mode << "' not registered." << std::endl;
+        show_output_modes();
     }
-  } 
 }
-std::map<OutputMode, PipelineFactory> ParsedConfig::pipeline_registry = {};
-void ParsedConfig::register_pipeline(OutputMode mode, PipelineFactory factory) {
-    ParsedConfig::pipeline_registry[mode] = factory;
+void ParsedConfig::register_pipeline(const PipelineEntry pipeline) {
+    SPDLOG_DEBUG("Registering pipeline: {}", pipeline.mode);
+    ParsedConfig::pipeline_registry[pipeline.mode] = pipeline;
 }
 
 int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
@@ -108,15 +93,10 @@ int ParsedConfig::initialize(std::list<SystemMetrics>& tasks) {
   return 0;
 }
 void ParsedConfig::done(std::list<SystemMetrics>& result) {
-  // 2. Simply execute it.
-  // The 'active_pipeline' already knows what to do and holds the necessary
-  // settings/serializer.
-
-  if (this->active_pipeline) {
-    DEBUG_PTR("Active pipeline", this->active_pipeline);
-    DEBUG_PTR("Active pipeline result", result);
-    this->active_pipeline(result);
-  }
+    // Call the processor (the result of the factory)
+    if (this->active_pipeline.processor) {
+        this->active_pipeline.processor(result);
+    }
 }
 bool ParsedConfig::reload_if_changed(std::list<SystemMetrics>& active_tasks) {
   if (config_path.empty()) return false;
@@ -175,4 +155,12 @@ bool ParsedConfig::reload_if_changed(std::list<SystemMetrics>& active_tasks) {
 void ParsedConfig::set_filename(std::string filename) {
   config_path = filename;
   last_write_time = std::filesystem::last_write_time(filename);
+}
+
+int ParsedConfig::main(RunnerContext& ctx) {
+    // Check if the current mode has a GUI entry point (like qt_main)
+    if (active_pipeline.entry_point) {
+        return active_pipeline.entry_point(ctx);
+    }
+    return 1;
 }

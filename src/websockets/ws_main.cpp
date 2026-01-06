@@ -1,6 +1,6 @@
 
 #include "cli_parser.hpp"
-#include "config_types.hpp"
+#include "parsed_config.hpp"
 #include "configuration_builder.hpp"
 #include "context.hpp"
 #include "controller.hpp"

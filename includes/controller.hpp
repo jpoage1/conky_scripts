@@ -5,10 +5,13 @@
 #include <list>
 #include <memory>
 
+#include "types.hpp"
+
 // Forward Declarations
 class ParsedConfig;
 struct MetricsContext;
 struct SystemMetrics;
+struct RunnerContext;
 
 class Controller {
  public:
@@ -24,6 +27,9 @@ class Controller {
   void sleep();
 
   void inject_task(MetricsContext&& context);
+
+  int main(RunnerContext &context);
+  SystemMetricsProxyPtr get_proxy();
 
  private:
   std::unique_ptr<ParsedConfig> m_config;

@@ -1,6 +1,6 @@
 // cli_parser.hpp
-#ifndef CONFIG_TYPES_HPP
-#define CONFIG_TYPES_HPP
+#ifndef PARSED_CONFIG_HPP
+#define PARSED_CONFIG_HPP
 
 #include "context.hpp"
 #include "lua_parser.hpp"
@@ -9,17 +9,20 @@
 #include "types.hpp"
 
 class ParsedConfig {
+  friend class Controller;
  private:
   std::chrono::nanoseconds polling_interval = std::chrono::milliseconds(500);
-  OutputMode _output_mode = OutputMode::JSON;
+  OutputMode _output_mode = "json";
   RunMode _run_mode = RunMode::RUN_ONCE;
-  OutputPipeline active_pipeline;
+  ActivePipeline active_pipeline;
   std::chrono::time_point<std::chrono::steady_clock> sleep_until;
   std::string config_path;
   std::filesystem::file_time_type last_write_time;
+  static PipelineRegistry pipeline_registry;
+
+  void show_output_modes();
 
  public:
-  static std::map<OutputMode, PipelineFactory> pipeline_registry;
   std::vector<MetricsContext> tasks;
 
   /**
@@ -47,7 +50,6 @@ class ParsedConfig {
   OutputMode get_output_mode() const;
   void set_run_mode(RunMode mode);
   void set_output_mode(OutputMode mode);
-  void set_output_mode(std::string mode);
   void set_run_mode(std::string mode);
   void configure_renderer();
   void sleep();
@@ -56,7 +58,9 @@ class ParsedConfig {
   void done(std::list<SystemMetrics>& result);
   bool reload_if_changed(std::list<SystemMetrics>& tasks);
   void set_filename(std::string filename);
-  static void register_pipeline(OutputMode mode, PipelineFactory factory);
+  static void register_pipeline(const PipelineEntry pipeline);
+  int main(RunnerContext&);
+
 };
 
 #endif

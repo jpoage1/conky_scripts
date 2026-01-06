@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "cli_parser.hpp"
-#include "config_types.hpp"
+#include "parsed_config.hpp"
 #include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
