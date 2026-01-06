@@ -14,24 +14,24 @@ struct SystemMetrics;
 struct RunnerContext;
 
 class Controller {
- public:
+public:
   // Constructor and Destructor must be declared here
   // but defined in the .cpp to support unique_ptr with forward declarations.
   Controller();
-  ~Controller();
+  virtual ~Controller();
 
-  void initialize(ParsedConfig& config);
-  void tick();
+  virtual void initialize(ParsedConfig &config);
+  virtual void tick();
 
-  bool is_persistent() const;
-  void sleep();
+  virtual bool is_persistent() const;
+  virtual void sleep();
 
-  void inject_task(MetricsContext&& context);
+  void inject_task(MetricsContext &&context);
 
-  int main(const RunnerContext& context);
-  SystemMetricsProxyPtr get_proxy();
+  virtual int main(const RunnerContext &context);
+  virtual SystemMetricsProxyPtr get_proxy();
 
- private:
+protected:
   std::unique_ptr<ParsedConfig> m_config;
 
   // Note: std::list requires the type to be complete in some implementations.

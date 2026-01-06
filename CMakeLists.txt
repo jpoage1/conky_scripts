@@ -8,6 +8,7 @@ option(ENABLE_JSON "Enable JSON output mode" ON)
 option(ENABLE_CONKY "Enable Conky output mode" OFF)
 option(ENABLE_GTK "Enable GTK output mode" OFF)
 option(ENABLE_GTK_SOCKETS "Enable GTK sockets" OFF)
+option(ENABLE_LIBWEBSOCKETS "Enable web socket support using libwebsockets" ON)
 option(ENABLE_TESTS "Build unit tests" ON)
 
 # --- Configuration ---
@@ -107,11 +108,15 @@ if(ENABLE_TESTS)
         tests/unit_stability.cpp
         tests/unit_frag_stats.cpp
         tests/unit_process_io.cpp
+        tests/unit_lws_main.cpp
+        tests/unit_lws_proxy.cpp
         tests/main.cpp
     )
     target_link_libraries(telemetry_tests PRIVATE
         telemetry_core 
         GTest::gtest
+        GTest::gmock
+        GTest::gmock_main
     )
     add_test(NAME AllUnits COMMAND telemetry_tests)
 endif()
@@ -170,6 +175,22 @@ endif()
 if(ENABLE_GTK)
     pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
     target_compile_definitions(telemetry_gtk PUBLIC OUTPUT_MODE_GTK)
+endif()
+
+if (ENABLE_LIBWEBSOCKETS)
+    find_package(Libwebsockets REQUIRED)
+    add_library(telemetry_libwebsockets STATIC
+        src/libwebsockets/lws_server.cpp
+        src/libwebsockets/lws_main.cpp
+        src/libwebsockets/lws_pipeline.cpp
+        src/libwebsockets/lws_proxy.cpp
+    )
+    target_link_libraries(telemetry_libwebsockets PUBLIC
+        telemetry_core
+        websockets)
+    target_compile_definitions(telemetry_libwebsockets PUBLIC OUTPUT_MODE_LIBWEBSOCKETS_SOCKETS)
+    target_link_libraries(telemetry PRIVATE telemetry_libwebsockets)
+    target_link_libraries(telemetry_tests PRIVATE telemetry_libwebsockets)
 endif()
 
 if (ENABLE_QT_SOCKETS)

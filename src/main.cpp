@@ -12,6 +12,10 @@
 #include "output_mode_json.hpp"
 #endif
 
+#ifdef OUTPUT_MODE_LIBWEBSOCKETS
+#include "libwebsockets.hpp"
+#endif
+
 #ifdef OUTPUT_MODE_CONKY
 #include "output_mode_conky.hpp"
 #endif
@@ -35,6 +39,10 @@ int main(int argc, char *argv[]) {
 
 #ifdef OUTPUT_MODE_QT
   REGISTER_OUTPUT_MODE("qt", register_qt_pipeline);
+#endif
+
+#ifdef OUTPUT_MODE_LIBWEBSOCKETS
+  REGISTER_OUTPUT_MODE("libwebsockets", register_libwebsockets_pipeline);
 #endif
 
   if (pipeline_count == 0) {
