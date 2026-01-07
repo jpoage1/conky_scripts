@@ -8,19 +8,22 @@
 #include "system_metrics_qt_proxy.hpp"
 #include "types.hpp"
 
+namespace telemetry {
+
 void register_qt_pipeline() {
   auto proxy = std::make_shared<SystemMetricsQtProxy>();
   PipelineEntry pipeline{"qt", qt_widget_factory(proxy.get()), qt_main, proxy};
   ParsedConfig::register_pipeline(pipeline);
 }
 
-PipelineFactory qt_widget_factory(SystemMetricsQtProxy* proxy) {
-  return [proxy](const MetricSettings& settings) -> OutputPipeline {
+PipelineFactory qt_widget_factory(SystemMetricsQtProxy *proxy) {
+  return [proxy](const MetricSettings &settings) -> OutputPipeline {
     auto serializer = std::make_shared<JsonSerializer>(settings);
-    return [serializer, proxy](const std::list<SystemMetrics>& results) {
-      if (!proxy) return;
+    return [serializer, proxy](const std::list<SystemMetrics> &results) {
+      if (!proxy)
+        return;
       nlohmann::json json_data = nlohmann::json::array();
-      for (const auto& m : results) {
+      for (const auto &m : results) {
         json_data.push_back(serializer->serialize(m));
       }
       // std::cout << json_data.dump() ;
@@ -28,3 +31,4 @@ PipelineFactory qt_widget_factory(SystemMetricsQtProxy* proxy) {
     };
   };
 }
+}; // namespace telemetry

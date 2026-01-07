@@ -14,9 +14,10 @@
 #include "stream_provider.hpp"
 #include "telemetry.hpp"
 #include "types.hpp"
+namespace telemetry {
 
-int json_main(const RunnerContext& context) {
-  const ControllerPtr& controller = context.controller;
+int json_main(const RunnerContext &context) {
+  const ControllerPtr &controller = context.controller;
   do {
     controller->sleep();
     controller->tick();
@@ -24,3 +25,5 @@ int json_main(const RunnerContext& context) {
 
   return 0;
 }
+
+}; // namespace telemetry

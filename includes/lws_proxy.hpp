@@ -6,6 +6,8 @@
 #include <shared_mutex>
 #include <string>
 
+namespace telemetry {
+
 class SystemMetricsLwsProxy : public SystemMetricsProxy {
 public:
   void updateData(const nlohmann::json &data) override;
@@ -20,4 +22,5 @@ private:
   bool has_new_data = false;
 };
 
+}; // namespace telemetry
 #endif

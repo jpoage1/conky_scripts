@@ -1,8 +1,9 @@
 // systemdata_provider.hpp
+namespace telemetry {
 class SystemDataProvider : public QObject {
   Q_OBJECT
   Q_PROPERTY(QVariantMap data READ data NOTIFY dataChanged)
- public:
+public:
   void start() {
     process.start("./run-conkyd.sh");
     connect(&process, &QProcess::readyReadStandardOutput, [this]() {
@@ -13,7 +14,8 @@ class SystemDataProvider : public QObject {
     });
   }
 
- private:
+private:
   QProcess process;
   QVariantMap m_data;
 };
+}; // namespace telemetry

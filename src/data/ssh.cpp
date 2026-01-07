@@ -5,11 +5,14 @@
 
 #include "data_ssh.hpp"
 
+namespace telemetry {
+
 static ssh_session session = NULL;
 
 int ProcDataStreams::setup_ssh_session() {
   return setup_ssh_session("192.168.1.200", "conky");
 }
+
 int ProcDataStreams::ssh_connection() {
   return ssh_connection("192.168.1.200", "conky");
 }
@@ -17,7 +20,7 @@ int ProcDataStreams::ssh_connection() {
 int ProcDataStreams::setup_ssh_session(const std::string host,
                                        const std::string user) {
   if (session != NULL) {
-    return 0;  // Session already exists
+    return 0; // Session already exists
   }
 
   session = ssh_new();
@@ -49,9 +52,9 @@ int ProcDataStreams::setup_ssh_session(const std::string host,
   return 0;
 }
 
-std::string ProcDataStreams::execute_ssh_command(const std::string& command) {
+std::string ProcDataStreams::execute_ssh_command(const std::string &command) {
   if (session == NULL) {
-    return "";  // Session not initialized
+    return ""; // Session not initialized
   }
 
   ssh_channel channel = ssh_channel_new(session);
@@ -89,6 +92,7 @@ void ProcDataStreams::cleanup_ssh_session() {
     session = NULL;
   }
 }
+
 int ProcDataStreams::ssh_connection(const std::string host,
                                     const std::string user) {
   ssh_session session;
@@ -139,7 +143,7 @@ int ProcDataStreams::ssh_connection(const std::string host,
     return 1;
   }
 
-  rc = ssh_channel_request_exec(channel, "ls -l");  // Command to execute
+  rc = ssh_channel_request_exec(channel, "ls -l"); // Command to execute
   if (rc != SSH_OK) {
     std::cerr << "Failed to execute command." << std::endl;
     ssh_channel_close(channel);
@@ -164,3 +168,4 @@ int ProcDataStreams::ssh_connection(const std::string host,
 
   return 0;
 }
+}; // namespace telemetry

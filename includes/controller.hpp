@@ -7,6 +7,7 @@
 
 #include "types.hpp"
 
+namespace telemetry {
 // Forward Declarations
 class ParsedConfig;
 struct MetricsContext;
@@ -41,4 +42,5 @@ protected:
   std::unique_ptr<SystemMetricsImpl> tasks_pimpl;
 };
 
+}; // namespace telemetry
 #endif

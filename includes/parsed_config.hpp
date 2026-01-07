@@ -8,10 +8,12 @@
 #include "pcn.hpp"
 #include "types.hpp"
 
+namespace telemetry {
+
 class ParsedConfig {
   friend class Controller;
 
- private:
+private:
   std::chrono::nanoseconds polling_interval = std::chrono::milliseconds(500);
   OutputMode _output_mode = "json";
   RunMode _run_mode = RunMode::RUN_ONCE;
@@ -23,7 +25,7 @@ class ParsedConfig {
 
   void show_output_modes();
 
- public:
+public:
   std::vector<MetricsContext> tasks;
 
   /**
@@ -31,7 +33,7 @@ class ParsedConfig {
    * It accepts any std::chrono duration and converts it to nanoseconds.
    */
   template <typename DurationType>
-  void set_polling_interval(const DurationType& interval) {
+  void set_polling_interval(const DurationType &interval) {
     polling_interval =
         std::chrono::duration_cast<std::chrono::nanoseconds>(interval);
   }
@@ -40,8 +42,7 @@ class ParsedConfig {
    * @brief A single template getter.
    * It returns the interval cast to whatever type the caller asks for.
    */
-  template <typename DurationType>
-  DurationType get_polling_interval() const {
+  template <typename DurationType> DurationType get_polling_interval() const {
     return std::chrono::duration_cast<DurationType>(polling_interval);
   }
 
@@ -55,12 +56,13 @@ class ParsedConfig {
   void configure_renderer();
   void sleep();
 
-  int initialize(std::list<SystemMetrics>& tasks);
-  void done(std::list<SystemMetrics>& result);
-  bool reload_if_changed(std::list<SystemMetrics>& tasks);
+  int initialize(std::list<SystemMetrics> &tasks);
+  void done(std::list<SystemMetrics> &result);
+  bool reload_if_changed(std::list<SystemMetrics> &tasks);
   void set_filename(std::string filename);
   static void register_pipeline(const PipelineEntry pipeline);
-  int main(const RunnerContext&);
+  int main(const RunnerContext &);
 };
 
+}; // namespace telemetry
 #endif

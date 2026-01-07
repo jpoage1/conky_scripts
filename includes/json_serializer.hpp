@@ -6,24 +6,26 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
+namespace telemetry {
+
 struct MetricSettings;
 
 class SystemMetrics;
 
 class JsonSerializer {
- public:
+public:
   using PipelineTask =
-      std::function<void(nlohmann::json&, const SystemMetrics&)>;
+      std::function<void(nlohmann::json &, const SystemMetrics &)>;
 
- private:
+private:
   std::vector<PipelineTask> pipeline;
 
- public:
+public:
   // Constructor builds the pipeline ONCE based on settings
-  JsonSerializer(const MetricSettings& settings);
+  JsonSerializer(const MetricSettings &settings);
 
   // The runtime function - No "if" checks here
-  nlohmann::json serialize(const SystemMetrics& metrics) const;
+  nlohmann::json serialize(const SystemMetrics &metrics) const;
 };
-
+}; // namespace telemetry
 #endif

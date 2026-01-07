@@ -9,10 +9,13 @@
 #include "parsed_config.hpp"
 #include "polling.hpp"
 
+namespace telemetry {
+
 struct Controller::SystemMetricsImpl {
   std::unique_ptr<ParsedConfig> config;
   std::list<SystemMetrics> tasks; // Matches your signature perfectly
 };
+
 Controller::Controller() : tasks_pimpl(std::make_unique<SystemMetricsImpl>()) {}
 Controller::~Controller() = default;
 
@@ -82,3 +85,4 @@ SystemMetricsProxyPtr Controller::get_proxy() {
   }
   return nullptr;
 }
+} // namespace telemetry

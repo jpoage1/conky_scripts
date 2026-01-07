@@ -4,22 +4,25 @@
 #include "data_local.hpp"
 #include "provider.hpp"
 
+namespace telemetry {
+
 double LocalDataStreams::get_cpu_temperature() {
   const std::string hwmon_base = "/sys/class/hwmon";
-  std::optional<double> fallback_temp;  // Fallback to first core/sensor
+  std::optional<double> fallback_temp; // Fallback to first core/sensor
 
   try {
-    for (const auto& hwmon_dir :
+    for (const auto &hwmon_dir :
          std::filesystem::directory_iterator(hwmon_base)) {
-      if (!hwmon_dir.is_directory()) continue;
+      if (!hwmon_dir.is_directory())
+        continue;
 
       auto name = read_sysfs_file(hwmon_dir.path() / "name");
       if (!name || (name.value() != "coretemp" && name.value() != "k10temp" &&
                     name.value() != "zenpower")) {
-        continue;  // Not a known CPU sensor
+        continue; // Not a known CPU sensor
       }
 
-      for (const auto& file :
+      for (const auto &file :
            std::filesystem::directory_iterator(hwmon_dir.path())) {
         std::string filename = file.path().filename().string();
 
@@ -31,13 +34,14 @@ double LocalDataStreams::get_cpu_temperature() {
           auto label = read_sysfs_file(hwmon_dir.path() / label_filename);
           auto temp_str = read_sysfs_file(file.path());
 
-          if (!temp_str) continue;
+          if (!temp_str)
+            continue;
 
           double temp_celsius = std::stod(temp_str.value()) / 1000.0;
 
           if (label) {
             if (label.value() == "Tdie" || label.value() == "Package id 0") {
-              return temp_celsius;  // Found package temp
+              return temp_celsius; // Found package temp
             }
           }
           if (!fallback_temp) {
@@ -46,7 +50,7 @@ double LocalDataStreams::get_cpu_temperature() {
         }
       }
     }
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     std::cerr << "Error reading temperature: " << e.what() << std::endl;
     return -1.0;
   }
@@ -55,5 +59,6 @@ double LocalDataStreams::get_cpu_temperature() {
     return fallback_temp.value();
   }
 
-  return -1.0;  // Not found
+  return -1.0; // Not found
 }
+}; // namespace telemetry

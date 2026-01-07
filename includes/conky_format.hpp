@@ -5,9 +5,11 @@
 #include <cstdint>
 #include <string>
 
+namespace telemetry {
 struct ColoredString;
 
-ColoredString conky_color(const std::string&, const std::string&);
+ColoredString conky_color(const std::string &, const std::string &);
 
 ColoredString format_size(uint64_t bytes);
+}; // namespace telemetry
 #endif

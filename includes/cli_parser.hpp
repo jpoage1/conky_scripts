@@ -3,7 +3,7 @@
 #define CLI_PARSER_HPP
 
 #include "pcn.hpp"
-
+namespace telemetry {
 struct MetricSettings;
 struct ProgramOptions;
 
@@ -11,7 +11,7 @@ class SystemMetrics;
 class ParsedConfig;
 
 using OutputPipeline =
-    std::function<void(const std::__cxx11::list<SystemMetrics>&)>;
+    std::function<void(const std::__cxx11::list<SystemMetrics> &)>;
 
 enum class CommandType { LOCAL, SETTINGS, SSH, SOCKETS };
 
@@ -26,8 +26,8 @@ struct CommandRequest {
 
 struct ProgramOptions {
   // Global Flags
-  std::optional<std::string> global_config_file;  // --config
-  bool persistent = false;                        // --persistent
+  std::optional<std::string> global_config_file; // --config
+  bool persistent = false;                       // --persistent
 
   // The list of tasks to execute
   std::vector<CommandRequest> commands;
@@ -40,12 +40,12 @@ struct ProgramOptions {
  * @return A vector containing the results (MetricsContext). Empty if critical
  * errors occur.
  */
-ParsedConfig parse_arguments(int argc, char* argv[]);
+ParsedConfig parse_arguments(int argc, char *argv[]);
 
-void print_usage(const char* prog_name);
+void print_usage(const char *prog_name);
 
-std::set<std::string> parse_interface_list(const std::string& list_str);
-ProgramOptions parse_token_stream(int argc, char* argv[]);
-ProgramOptions parse_cli(int argc, char* argv[]);
-
+std::set<std::string> parse_interface_list(const std::string &list_str);
+ProgramOptions parse_token_stream(int argc, char *argv[]);
+ProgramOptions parse_cli(int argc, char *argv[]);
+}; // namespace telemetry
 #endif

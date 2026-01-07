@@ -1,7 +1,10 @@
 // types.hpp
 #ifndef TYPES_HPP
 #define TYPES_HPP
+
 #include "pcn.hpp"
+
+namespace telemetry {
 
 struct RunnerContext;
 struct PipelineEntry;
@@ -40,5 +43,7 @@ struct ActivePipeline {
   MainOutput entry_point = nullptr;
   SystemMetricsProxyPtr proxy = nullptr;
 };
+
+}; // namespace telemetry
 
 #endif

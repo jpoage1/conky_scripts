@@ -5,7 +5,7 @@
 #include <fstream>
 
 #include "io.hpp"
-
+namespace telemetry {
 static thread_local bool is_logging = false;
 
 std::string RotatingFileSink::get_formatted_prefix() {
@@ -28,10 +28,12 @@ std::string RotatingFileSink::get_formatted_prefix() {
   return result;
 }
 std::streambuf::int_type RotatingFileSink::overflow(int_type c) {
-  if (c == traits_type::eof()) return traits_type::not_eof(c);
+  if (c == traits_type::eof())
+    return traits_type::not_eof(c);
 
   // Prevent recursion
-  if (is_logging) return c;
+  if (is_logging)
+    return c;
   is_logging = true;
 
   std::lock_guard<std::mutex> lock(mtx);
@@ -63,11 +65,8 @@ std::streambuf::int_type RotatingFileSink::overflow(int_type c) {
 RotatingFileSink::RotatingFileSink(fs::path path, bool rotate,
                                    unsigned int max_files, std::string ts_fmt,
                                    std::string entry_fmt)
-    : base_path(std::move(path)),
-      do_rotate(rotate),
-      log_num(max_files),
-      timestamp_fmt(std::move(ts_fmt)),
-      log_fmt(std::move(entry_fmt)) {
+    : base_path(std::move(path)), do_rotate(rotate), log_num(max_files),
+      timestamp_fmt(std::move(ts_fmt)), log_fmt(std::move(entry_fmt)) {
   if (do_rotate) {
     rotate_logs();
   }
@@ -88,7 +87,8 @@ RotatingFileSink::~RotatingFileSink() {
 
 void RotatingFileSink::rotate_logs() {
   std::error_code ec;
-  if (!fs::exists(base_path, ec)) return;
+  if (!fs::exists(base_path, ec))
+    return;
 
   for (int i = static_cast<int>(log_num) - 1; i >= 1; --i) {
     fs::path old_log = base_path.string() + "." + std::to_string(i);
@@ -113,3 +113,4 @@ int RotatingFileSink::sync() {
   }
   return 0;
 }
+}; // namespace telemetry

@@ -1,6 +1,10 @@
 #ifndef SYSTEM_STABILITY_HPP
 #define SYSTEM_STABILITY_HPP
+
+namespace telemetry {
+
 double parse_avg10(const std::string &line);
+
 struct SystemStability {
   long file_descriptors_allocated = 0;
   long file_descriptors_max = 0;
@@ -12,4 +16,7 @@ struct SystemStability {
   double io_pressure_full = 0.0;
   double memory_fragmentation_index = 0.0;
 };
+
+}; // namespace telemetry
+   //
 #endif

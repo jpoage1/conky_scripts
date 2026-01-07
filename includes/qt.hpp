@@ -4,6 +4,8 @@
 
 #include "types.hpp"
 
+namespace telemetry {
+
 class SystemMetricsQtProxy;
 struct RunnerContext;
 
@@ -11,4 +13,6 @@ void register_qt_pipeline();
 PipelineFactory qt_widget_factory(SystemMetricsQtProxy *proxy);
 
 int qt_main(const RunnerContext &ctx);
+
+}; // namespace telemetry
 #endif

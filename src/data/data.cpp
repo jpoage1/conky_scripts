@@ -9,7 +9,9 @@
 #include "filesystems.hpp"
 #include "hwmonitor.hpp"
 #include "load_avg.hpp"
+#include "lua_generator.hpp"
 #include "meminfo.hpp"
+#include "metric_settings.hpp"
 #include "metrics.hpp"
 #include "networkstats.hpp"
 #include "polling.hpp"
@@ -18,6 +20,8 @@
 #include "stream_provider.hpp"
 #include "sysinfo.hpp"
 #include "uptime.hpp"
+
+namespace telemetry {
 
 void dump_fstream(std::istream &stream) {
   std::stringstream buffer;
@@ -100,3 +104,41 @@ void DataStreamProvider::rewind(std::istream &stream, std::string stream_name) {
                    stream_name);
 }
 void DataStreamProvider::rewind(std::istream &stream) { rewind(stream, ""); }
+
+std::string LuaProviderSettings::serialize(int indentation_level) const {
+  LuaConfigGenerator gen(indentation_level); // Anonymous table
+  gen.lua_string("type", type);
+  gen.lua_string("name", name);
+  gen.lua_bool("enabled", enabled);
+
+  // Sub-table for custom provider parameters
+  std::stringstream params_ss;
+  for (auto const &[key, val] : parameters) {
+    LuaConfigGenerator p_gen(indentation_level + 2);
+    p_gen.lua_string(key, val);
+    params_ss << p_gen.raw_str();
+  }
+  gen.lua_append(gen.lua_mklist("parameters", params_ss.str()));
+
+  return gen.str();
+}
+
+void LuaProviderSettings::deserialize(const sol::table &provider_table) {
+  if (!provider_table.valid())
+    return;
+
+  type = provider_table.get_or("type", std::string("local"));
+  name = provider_table.get_or("name", std::string("default"));
+  enabled = provider_table.get_or("enabled", true);
+
+  if (provider_table["parameters"].valid()) {
+    sol::table params = provider_table["parameters"];
+    for (auto &kv : params) {
+      if (kv.first.is<std::string>() && kv.second.is<std::string>()) {
+        parameters[kv.first.as<std::string>()] = kv.second.as<std::string>();
+      }
+    }
+  }
+}
+
+}; // namespace telemetry

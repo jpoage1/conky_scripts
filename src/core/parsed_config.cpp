@@ -7,6 +7,9 @@
 #include "log.hpp"
 #include "polling.hpp"
 #include "qt.hpp"
+
+namespace telemetry {
+
 PipelineRegistry ParsedConfig::pipeline_registry = {};
 
 bool ParsedConfig::run_mode(RunMode mode) const { return _run_mode == mode; }
@@ -66,6 +69,7 @@ void ParsedConfig::configure_renderer() {
     show_output_modes();
   }
 }
+
 void ParsedConfig::register_pipeline(const PipelineEntry pipeline) {
   SPDLOG_DEBUG("Registering pipeline: {}", pipeline.mode);
   ParsedConfig::pipeline_registry[pipeline.mode] = pipeline;
@@ -98,12 +102,14 @@ int ParsedConfig::initialize(std::list<SystemMetrics> &tasks) {
 
   return 0;
 }
+
 void ParsedConfig::done(std::list<SystemMetrics> &result) {
   // Call the processor (the result of the factory)
   if (this->active_pipeline.processor) {
     this->active_pipeline.processor(result);
   }
 }
+
 bool ParsedConfig::reload_if_changed(std::list<SystemMetrics> &active_tasks) {
   if (config_path.empty())
     return false;
@@ -171,3 +177,4 @@ int ParsedConfig::main(const RunnerContext &ctx) {
   }
   return 1;
 }
+}; // namespace telemetry

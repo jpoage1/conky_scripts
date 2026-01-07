@@ -17,6 +17,8 @@
 #include <QQmlContext>
 #include <QTimer>
 
+namespace telemetry {
+
 int qt_main(const RunnerContext &ctx) {
   // std::cerr << "Starting qt main" << std::endl;
   /*
@@ -97,3 +99,6 @@ int qt_main(const RunnerContext &ctx) {
 
     return app.exec();
   }
+}
+
+}; // namespace telemetry

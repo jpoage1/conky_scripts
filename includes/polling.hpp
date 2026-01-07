@@ -10,6 +10,8 @@
 #include "processinfo.hpp"
 #include "provider.hpp"
 
+namespace telemetry {
+
 struct NetworkSnapshot;
 struct NetworkInterfaceStats;
 struct MetricsContext;
@@ -183,7 +185,7 @@ using ProcessPollingTaskPtr = std::unique_ptr<ProcessPollingTask>;
 
 class BatteryPollingTask : public IPollingTask {
 private:
-  std::vector<BatteryConfig> configs;
+  Batteries configs;
   std::vector<BatteryStatus> current_status;
 
 public:
@@ -211,5 +213,5 @@ public:
 };
 using SystemStabilityPollingTaskPtr =
     std::unique_ptr<SystemStabilityPollingTask>;
-
+}; // namespace telemetry
 #endif

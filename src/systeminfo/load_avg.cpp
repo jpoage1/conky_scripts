@@ -3,8 +3,8 @@
 
 #include <iomanip>
 #include <map>
-#include <memory>  // For std::unique_ptr
-#include <thread>  // For sleep_for
+#include <memory> // For std::unique_ptr
+#include <thread> // For sleep_for
 #include <type_traits>
 #include <vector>
 
@@ -13,15 +13,18 @@
 #include "metrics.hpp"
 #include "stream_provider.hpp"
 
-std::istream& LocalDataStreams::get_loadavg_stream() {
+namespace telemetry {
+
+std::istream &LocalDataStreams::get_loadavg_stream() {
   return create_stream_from_file(loadavg, "/proc/loadavg");
 }
-std::istream& ProcDataStreams::get_loadavg_stream() {
+
+std::istream &ProcDataStreams::get_loadavg_stream() {
   return create_stream_from_command(loadavg, "cat /proc/loadavg");
 }
 
-void get_load_and_process_stats(std::istream& stat_stream,
-                                SystemMetrics& metrics) {
+void get_load_and_process_stats(std::istream &stat_stream,
+                                SystemMetrics &metrics) {
   // 1. Get Load Average
   stat_stream >> metrics.load_avg_1m >> metrics.load_avg_5m >>
       metrics.load_avg_15m;
@@ -46,3 +49,5 @@ void get_load_and_process_stats(std::istream& stat_stream,
     }
   }
 }
+
+}; // namespace telemetry

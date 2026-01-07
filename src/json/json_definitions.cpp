@@ -17,6 +17,8 @@
 #include "stream_provider.hpp"
 #include "uptime.hpp"
 
+namespace telemetry {
+
 // Use the nlohmann namespace for convenience
 using json = nlohmann::json;
 
@@ -258,3 +260,4 @@ void from_json(const json &j, SystemStability &s) {
   // Parsing top-level fragmentation index
   j.at("memory_fragmentation_index").get_to(s.memory_fragmentation_index);
 }
+}; // namespace telemetry

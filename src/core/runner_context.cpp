@@ -5,5 +5,9 @@
 #include "system_metrics_proxy.hpp"
 #include "types.hpp"
 
-RunnerContext::RunnerContext(int argc, char** argv, const ControllerPtr& c)
+namespace telemetry {
+
+RunnerContext::RunnerContext(int argc, char **argv, const ControllerPtr &c)
     : argc(argc), argv(argv), controller(c) {}
+
+}; // namespace telemetry

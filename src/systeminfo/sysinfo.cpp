@@ -5,13 +5,16 @@
 #include "metrics.hpp"
 #include "stream_provider.hpp"
 
+namespace telemetry {
+
 // Helper to read a single line from a file
-std::string read_line(const std::string& path) {
+std::string read_line(const std::string &path) {
   std::ifstream f(path);
   std::string line;
   if (std::getline(f, line)) {
     // Remove trailing newline if present
-    if (!line.empty() && line.back() == '\n') line.pop_back();
+    if (!line.empty() && line.back() == '\n')
+      line.pop_back();
     return line;
   }
   return "";
@@ -23,7 +26,7 @@ std::string get_real_machine_type() {
   }
   return "Unknown";
 }
-void get_system_info(SystemMetrics& metrics) {
+void get_system_info(SystemMetrics &metrics) {
   // 1. Try to read from standard kernel interfaces (VFS-friendly)
   std::string hostname = read_line("/proc/sys/kernel/hostname");
   std::string release = read_line("/proc/sys/kernel/osrelease");
@@ -55,3 +58,4 @@ void get_system_info(SystemMetrics& metrics) {
     }
   }
 }
+}; // namespace telemetry

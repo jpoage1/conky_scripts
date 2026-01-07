@@ -4,16 +4,18 @@
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 
-std::istream& LocalDataStreams::get_meminfo_stream() {
+namespace telemetry {
+
+std::istream &LocalDataStreams::get_meminfo_stream() {
   return create_stream_from_file(meminfo, "/proc/meminfo");
 }
 
-std::istream& ProcDataStreams::get_meminfo_stream() {
+std::istream &ProcDataStreams::get_meminfo_stream() {
   return create_stream_from_command(meminfo, "cat /proc/meminfo");
 }
 
-void get_mem_usage(std::istream& input_stream, MemInfo& meminfo,
-                   MemInfo& swapinfo) {
+void get_mem_usage(std::istream &input_stream, MemInfo &meminfo,
+                   MemInfo &swapinfo) {
   std::string label;
   long mem_total = -1, mem_available = -1, swap_total = -1, swap_free = -1;
   while (input_stream >> label) {
@@ -42,3 +44,5 @@ void get_mem_usage(std::istream& input_stream, MemInfo& meminfo,
                          ? 0
                          : (100 * swapinfo.used_kb / swapinfo.total_kb);
 }
+
+}; // namespace telemetry

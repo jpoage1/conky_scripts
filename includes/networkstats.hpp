@@ -4,7 +4,10 @@
 
 #include "pcn.hpp"
 
+namespace telemetry {
+
 struct NetworkSnapshot {
+
   std::string interface_name;
   unsigned long long rx_bytes = 0;
   unsigned long long rx_packets = 0;
@@ -32,6 +35,23 @@ struct NetworkInterfaceStats {
  * @param initialized Reference to the boolean tracking initialization.
  */
 
-std::string get_ip_address(const std::string& interface_name);
+std::string get_ip_address(const std::string &interface_name);
+
+struct Network {
+  std::vector<std::string> interfaces; // fixme, need a default
+  std::string ping_target = "8.8.8.8";
+  bool enable_ping = false;
+
+  Network();
+  ~Network() = default;
+  bool has_interfaces() const;
+}; // end Network struct
+
+struct LuaNetwork : public Network {
+  std::string serialize(unsigned indentation_level = 0) const;
+  void deserialize(sol::table net);
+};
+
+}; // namespace telemetry
 
 #endif

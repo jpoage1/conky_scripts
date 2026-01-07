@@ -4,6 +4,7 @@
 
 #include "pcn.hpp"
 #include "stream_provider.hpp"
+namespace telemetry {  
 struct Deviceinfo;
 // A simple reusable progress bar (eww 'bar')
 class SimpleBar : public Gtk::Box {
@@ -105,3 +106,4 @@ class MemSwap : public Gtk::Frame {
   SimpleBar m_swap_bar;
   Gtk::Label m_label_swap_details;
 };
+namespace telemetry {

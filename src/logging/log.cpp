@@ -4,25 +4,22 @@
 #include <algorithm>
 #include <cctype>
 #include <iostream>
-
+namespace telemetry {
 // --- Helper Functions to extract the "Real" Address ---
 
 // 1. For Pointers (T*)
-template <typename T>
-const void* get_real_addr(T* ptr) {
-  return static_cast<const void*>(ptr);
+template <typename T> const void *get_real_addr(T *ptr) {
+  return static_cast<const void *>(ptr);
 }
 
 // 2. For Smart Pointers (std::unique_ptr, std::shared_ptr)
-template <typename T>
-const void* get_real_addr(const std::unique_ptr<T>& ptr) {
-  return static_cast<const void*>(ptr.get());
+template <typename T> const void *get_real_addr(const std::unique_ptr<T> &ptr) {
+  return static_cast<const void *>(ptr.get());
 }
 
 // 3. For References / Regular Objects (T&)
-template <typename T>
-const void* get_real_addr(const T& obj) {
-  return static_cast<const void*>(&obj);
+template <typename T> const void *get_real_addr(const T &obj) {
+  return static_cast<const void *>(&obj);
 }
 
 void configure_log_level(std::string level) {
@@ -50,3 +47,4 @@ void configure_log_level(std::string level) {
   }
   std::cerr << "Log level: " << level << std::endl;
 }
+}; // namespace telemetry

@@ -8,6 +8,8 @@
 
 #include "pcn.hpp"
 
+namespace telemetry {
+
 class DataStreamProvider;
 
 enum DiskStatSettings {
@@ -43,15 +45,45 @@ struct DeviceInfo {
   DiskIoStats io;
 };
 using DeviceMap = std::map<std::string, DeviceInfo>;
-
 using DiskStatConfig = std::set<DiskStatSettings>;
 
-int read_device_paths(const std::string& path, std::vector<std::string>&);
+int read_device_paths(const std::string &path, std::vector<std::string> &);
+void diskstat(const std::string &config_file);
+int diskstat(DataStreamProvider &provider, const std::string &config_file);
 
-void diskstat(const std::string& config_file);
+std::string get_mount_point(const std::string &device_path);
+std::string get_mount_point(std::istream &, const std::string &device_path);
 
-int diskstat(DataStreamProvider& provider, const std::string& config_file);
+struct Filters {
+  bool enable_loopback = true;
+  bool enable_mapper = true;
+  bool enable_partitions = false;
+};
+struct Storage {
+  std::vector<std::string> filesystems;
+  std::vector<std::string> io_devices;
+  Filters filters;
+  Storage();
 
-std::string get_mount_point(const std::string& device_path);
-std::string get_mount_point(std::istream&, const std::string& device_path);
+private:
+  void discover_filesystems();
+
+  void discover_io_devices();
+}; // end Storage struct
+
+struct LuaFilters : public Filters {
+  bool enable_loopback = true;
+  bool enable_mapper = true;
+  bool enable_partitions = false;
+
+  std::string serialize(unsigned int indentation_level = 0) const;
+
+  void deserialize(sol::table filters);
+};
+struct LuaStorage : public Storage {
+  std::string serialize(unsigned indentation_level = 0) const;
+  void deserialize(sol::table storage);
+}; // end Storage struct
+
+}; // namespace telemetry
 #endif

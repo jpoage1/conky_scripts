@@ -5,14 +5,17 @@
 #include "pcn.hpp"
 #include "types.hpp"
 
+namespace telemetry {
+
 class SystemMetricsProxy;
 
 struct RunnerContext {
-  int& argc;
-  char** const argv;
-  const ControllerPtr& controller;
+  int &argc;
+  char **const argv;
+  const ControllerPtr &controller;
   std::shared_ptr<SystemMetricsProxy> proxy = nullptr;
-  RunnerContext(int argc, char** argv, const ControllerPtr& c);
+  RunnerContext(int argc, char **argv, const ControllerPtr &c);
 };
 
+}; // namespace telemetry
 #endif

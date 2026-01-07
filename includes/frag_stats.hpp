@@ -3,6 +3,8 @@
 #define FRAG_STATS_HPP
 #include "polling.hpp"
 
+namespace telemetry {
+
 class SystemMetrics;
 class DataStreamProvider;
 class MetricsContext;
@@ -25,4 +27,6 @@ public:
   void calculate() override;
   void commit() override;
 };
+
+}; // namespace telemetry
 #endif

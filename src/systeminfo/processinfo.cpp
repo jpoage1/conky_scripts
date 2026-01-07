@@ -9,8 +9,11 @@
 #include "data_ssh.hpp"
 #include "diskstat.hpp"
 #include "log.hpp"
+#include "lua_generator.hpp"
 #include "metrics.hpp"
 #include "polling.hpp"
+
+namespace telemetry {
 
 // namespace {
 
@@ -468,3 +471,43 @@ void ProcessPollingTask::audit_process_list(std::vector<ProcessInfo> &list) {
     }
   }
 }
+
+bool Processes ::enable_processinfo() const {
+  return enable_avg_cpu || enable_avg_mem || enable_realtime_cpu ||
+         enable_realtime_mem;
+}
+
+std::string
+LuaProcesses ::serialize(unsigned const int indentation_level) const {
+  LuaConfigGenerator processes("processes", indentation_level);
+  processes.lua_bool("enable_processinfo", enable_processinfo());
+  processes.lua_bool("enable_avg_cpu", enable_avg_cpu);
+  processes.lua_bool("enable_avg_mem", enable_avg_mem);
+  processes.lua_bool("enable_realtime_cpu", enable_realtime_cpu);
+  processes.lua_bool("enable_realtime_mem", enable_realtime_mem);
+  processes.lua_uint("count", count);
+  processes.lua_vector("ignore_list", ignore_list); // fixme
+  return processes.str();
+}
+
+void LuaProcesses::deserialize(sol::table procs) {
+  if (procs.valid()) {
+    enable_avg_cpu =
+        procs.get<sol::optional<bool>>("enable_avg_cpu").value_or(true);
+    enable_avg_mem =
+        procs.get<sol::optional<bool>>("enable_avg_mem").value_or(true);
+    enable_realtime_cpu =
+        procs.get<sol::optional<bool>>("enable_realtime_cpu").value_or(true);
+    enable_realtime_mem =
+        procs.get<sol::optional<bool>>("enable_realtime_mem").value_or(true);
+    only_user_processes =
+        procs.get<sol::optional<bool>>("only_user_processes").value_or(true);
+    count = procs.get<sol::optional<long unsigned int>>(std::string("count"))
+                .value_or(10);
+    ignore_list =
+        procs.get<sol::optional<std::vector<std::string>>>("ignore_list")
+            .value_or(std::vector<std::string>{});
+  }
+}
+
+}; // namespace telemetry

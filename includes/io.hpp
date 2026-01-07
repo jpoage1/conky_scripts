@@ -8,10 +8,12 @@
 
 #include "teebuf.hpp"
 
+namespace telemetry {
+
 class RotatingFileSink;
 
-void setup_io(std::streambuf* out_socket = nullptr,
-              std::streambuf* err_socket = nullptr);
+void setup_io(std::streambuf *out_socket = nullptr,
+              std::streambuf *err_socket = nullptr);
 
 #endif
 
@@ -24,3 +26,4 @@ extern std::ostream kerr;
 
 extern std::unique_ptr<RotatingFileSink> global_out_file;
 extern std::unique_ptr<RotatingFileSink> global_err_file;
+};

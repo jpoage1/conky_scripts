@@ -5,16 +5,18 @@
 #include "data_ssh.hpp"
 #include "polling.hpp"
 
-std::istream& LocalDataStreams::get_stat_stream() {
+namespace telemetry {
+
+std::istream &LocalDataStreams::get_stat_stream() {
   return create_stream_from_file(stat, "/proc/stat");
 }
 
-std::istream& ProcDataStreams::get_stat_stream() {
+std::istream &ProcDataStreams::get_stat_stream() {
   return create_stream_from_command(stat, "cat /proc/stat");
 }
 
-CpuPollingTask::CpuPollingTask(DataStreamProvider& provider,
-                               SystemMetrics& metrics, MetricsContext& context)
+CpuPollingTask::CpuPollingTask(DataStreamProvider &provider,
+                               SystemMetrics &metrics, MetricsContext &context)
     : IPollingTask(provider, metrics, context) {
   //   dump_fstream(provider.get_stat_stream());
 }
@@ -25,15 +27,16 @@ void CpuPollingTask::calculate() {
       std::min(prev_snapshots.size(), current_snapshots.size());
 
   for (size_t i = 0; i < num_cores_and_agg; ++i) {
-    const auto& prev = prev_snapshots[i];
-    const auto& curr = current_snapshots[i];
+    const auto &prev = prev_snapshots[i];
+    const auto &curr = current_snapshots[i];
 
     unsigned long long curr_total = curr.get_total_time();
     unsigned long long prev_total = prev.get_total_time();
 
-    // Handle counter wraps or resets: if total time or individual metrics regressed
-    if (curr_total < prev_total || curr.user < prev.user || 
-        curr.nice < prev.nice || curr.system < prev.system || 
+    // Handle counter wraps or resets: if total time or individual metrics
+    // regressed
+    if (curr_total < prev_total || curr.user < prev.user ||
+        curr.nice < prev.nice || curr.system < prev.system ||
         curr.idle < prev.idle || curr.iowait < prev.iowait) {
       all_core_stats.push_back({i, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f});
       continue;
@@ -53,7 +56,7 @@ void CpuPollingTask::calculate() {
     unsigned long long idle_delta = curr.idle - prev.idle;
 
     CoreStats core_stat;
-    core_stat.core_id = i;  // 0 = aggregate, 1 = Core 0, etc.
+    core_stat.core_id = i; // 0 = aggregate, 1 = Core 0, etc.
 
     core_stat.user_percent = 100.0f * user_delta / total_delta;
     core_stat.nice_percent = 100.0f * nice_delta / total_delta;
@@ -68,8 +71,8 @@ void CpuPollingTask::calculate() {
 
     all_core_stats.push_back(core_stat);
   }
-  std::sort(all_core_stats.begin(), all_core_stats.end(), 
-            [](const CoreStats& a, const CoreStats& b) {
+  std::sort(all_core_stats.begin(), all_core_stats.end(),
+            [](const CoreStats &a, const CoreStats &b) {
               return a.core_id < b.core_id;
             });
   metrics.cores = all_core_stats;
@@ -88,7 +91,7 @@ void CpuPollingTask::take_new_snapshot() {
 
 void CpuPollingTask::commit() { prev_snapshots = current_snapshots; }
 
-CpuSnapshotList CpuPollingTask::read_data(std::istream& input_stream) {
+CpuSnapshotList CpuPollingTask::read_data(std::istream &input_stream) {
   CpuSnapshotList snapshots;
   std::string line;
 
@@ -110,7 +113,7 @@ CpuSnapshotList CpuPollingTask::read_data(std::istream& input_stream) {
 }
 
 /* Deprecated, possibly dead code */
-std::vector<CPUCore> read_cpu_times(std::istream& input_stream) {
+std::vector<CPUCore> read_cpu_times(std::istream &input_stream) {
   std::vector<CPUCore> cores;
   std::string line;
   while (std::getline(input_stream, line)) {
@@ -130,7 +133,7 @@ std::vector<CPUCore> read_cpu_times(std::istream& input_stream) {
 }
 
 /* Deprecated, possibly dead code */
-std::string format_cpu_times(const CPUCore& core, size_t index) {
+std::string format_cpu_times(const CPUCore &core, size_t index) {
   double idlePercent = 100.0 * core.idle_time / core.total_time;
   double usagePercent = 100.0 - idlePercent;
   return "Core " + std::to_string(index) +
@@ -138,3 +141,4 @@ std::string format_cpu_times(const CPUCore& core, size_t index) {
          ", Total=" + std::to_string(core.total_time) +
          ", Usage=" + std::to_string(usagePercent) + "%";
 }
+}; // namespace telemetry

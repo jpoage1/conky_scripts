@@ -27,7 +27,7 @@ find_package(GTest REQUIRED)
 find_package(spdlog REQUIRED)
 
 # --- Compiler Flags ---
-add_compile_options(-Wall -Wextra -O3 -march=native)
+add_compile_options(-Wall -Wextra -O3 -lstdc++fs)
 
 # --- Includes ---
 include_directories(

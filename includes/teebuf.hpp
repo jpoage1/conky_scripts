@@ -10,10 +10,12 @@
 #include <string>
 #include <vector>
 
+namespace telemetry {
+
 enum AnsiState { TEXT, ESCAPED, BRACKET };
 
 class TeeBuf : public std::streambuf {
-  std::vector<std::streambuf*> sinks;
+  std::vector<std::streambuf *> sinks;
   std::mutex mtx;
 
   bool is_colored = false;
@@ -21,25 +23,27 @@ class TeeBuf : public std::streambuf {
 
   AnsiState state = TEXT;
 
- public:
+public:
   TeeBuf();
   ~TeeBuf();
 
-  void add_sink(std::streambuf* s);
+  void add_sink(std::streambuf *s);
 
   void clear_sinks();
 
- protected:
+protected:
   int_type overflow(int_type c) override;
 
   int sync() override;
 
-  std::streamsize xsputn(const char* s, std::streamsize n);
+  std::streamsize xsputn(const char *s, std::streamsize n);
 
- private:
+private:
   void update_color_state(char c);
 };
 
 void log_backtrace();
 
+}; // namespace telemetry
+   //
 #endif

@@ -10,6 +10,7 @@
 #include "provider.hpp"
 // struct MetricSettings;
 
+namespace telemetry {
 class SystemMetrics;
 
 using callback = std::function<int(DataStreamProviderPtr &, const std::string &,
@@ -43,4 +44,5 @@ struct MetricsContext {
   MetricsContext() = default;
 };
 
+}; // namespace telemetry
 #endif

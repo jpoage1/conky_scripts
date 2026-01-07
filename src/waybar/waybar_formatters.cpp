@@ -9,7 +9,7 @@
 #include "json_definitions.hpp"
 #include "pcn.hpp"
 #include "waybar_types.hpp"
-
+namespace telemetry {
 using json = nlohmann::json;
 
 FormattedSize format_size_rate(double bytes_per_sec) {
@@ -20,10 +20,10 @@ FormattedSize format_size_rate(double bytes_per_sec) {
   std::stringstream ss;
   ss << std::fixed << std::setprecision(1) << (bytes_per_sec / 1024.0 / 1024.0)
      << " MiB/s";
-  return {ss.str(), "00ff00"};  // Placeholder color
+  return {ss.str(), "00ff00"}; // Placeholder color
 }
 
-void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
+void generate_waybar_output(const std::vector<MetricsContext> &all_results) {
   json waybar_output;
   std::stringstream tooltip_ss;
   bool any_errors = false;
@@ -32,10 +32,10 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
 
   //   const TargetFormat target = TargetFormat::WAYBAR;
 
-  for (const auto& result : all_results) {
+  for (const auto &result : all_results) {
     if (result.success) {
-      const auto& system_metrics = result.metrics.system;
-      const auto& devices = result.metrics.disks;
+      const auto &system_metrics = result.metrics.system;
+      const auto &devices = result.metrics.disks;
       tooltip_ss
           << show_system_metrics(result, system_metrics, total_mem_percent,
                                  valid_mem_sources)
@@ -51,25 +51,25 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
       // --- This result was an ERROR, print the error message ---
       any_errors = true;
       tooltip_ss
-          << "<b><span foreground='#f38ba8'>⚠ Error: "  // Use a standard icon
+          << "<b><span foreground='#f38ba8'>⚠ Error: " // Use a standard icon
           << result.source_name << "</span></b>\n"
-          << "<tt>  " << result.error_message << "</tt>\n\n";  // Indent message
+          << "<tt>  " << result.error_message << "</tt>\n\n"; // Indent message
     }
-  }  // end for loop
+  } // end for loop
 
-  std::string main_text_label = " Unknown";  // Default
+  std::string main_text_label = " Unknown"; // Default
   if (!all_results.empty()) {
-    const auto& first_result =
-        all_results[0];  // Assume only one result due to toggle logic
+    const auto &first_result =
+        all_results[0]; // Assume only one result due to toggle logic
     main_text_label = " " + first_result.source_name;
     if (!first_result.success) {
       any_errors = true;
-      main_text_label += " ⚠";  // Append warning icon on error
+      main_text_label += " ⚠"; // Append warning icon on error
     }
   } else {
     // Handle case where all_results might be empty (though should not happen
     // with current main logic)
-    any_errors = true;  // Treat empty result as an error case for text/class
+    any_errors = true; // Treat empty result as an error case for text/class
     main_text_label = " Error";
   }
   waybar_output["text"] = main_text_label;
@@ -87,16 +87,16 @@ void generate_waybar_output(const std::vector<MetricsContext>& all_results) {
   std::cout << waybar_output.dump() << std::endl;
 }
 
-std::string show_top_mem_procs(const MetricsContext& result,
-                               const std::vector<ProcessInfo>& top_procs_mem) {
+std::string show_top_mem_procs(const MetricsContext &result,
+                               const std::vector<ProcessInfo> &top_procs_mem) {
   std::stringstream tooltip_ss;
   if (!top_procs_mem.empty()) {
     tooltip_ss << "<b>Top Processes (Mem) (" << result.source_name << ")</b>\n";
     tooltip_ss << "<tt>";
 
     const size_t pid_col_width = 7;
-    const size_t rss_col_width = 12;      // "VmRSS (MiB)"
-    const size_t mem_perc_col_width = 6;  // "%Mem"
+    const size_t rss_col_width = 12;     // "VmRSS (MiB)"
+    const size_t mem_perc_col_width = 6; // "%Mem"
     std::string pid_header = "PID";
     std::string rss_header = "VmRSS (MiB)";
     std::string mem_perc_header = "%Mem";
@@ -110,7 +110,7 @@ std::string show_top_mem_procs(const MetricsContext& result,
                << std::right << std::setw(mem_perc_col_width) << mem_perc_header
                << "  " << name_header << "\n";
 
-    for (const auto& proc : top_procs_mem) {
+    for (const auto &proc : top_procs_mem) {
       double vmRssMiB = static_cast<double>(proc.vmRssKb) / 1024.0;
       tooltip_ss << std::left << std::setw(pid_col_width) << proc.pid
                  << std::right << std::setw(rss_col_width)
@@ -125,16 +125,16 @@ std::string show_top_mem_procs(const MetricsContext& result,
   return tooltip_ss.str();
 }
 
-std::string show_top_cpu_procs(const MetricsContext& result,
-                               const std::vector<ProcessInfo>& top_procs_cpu) {
+std::string show_top_cpu_procs(const MetricsContext &result,
+                               const std::vector<ProcessInfo> &top_procs_cpu) {
   std::stringstream tooltip_ss;
   if (!top_procs_cpu.empty()) {
     tooltip_ss << "<b>Top Processes (CPU) (" << result.source_name << ")</b>\n";
     tooltip_ss << "<tt>";
 
     const size_t pid_col_width = 7;
-    const size_t cpu_col_width = 6;       // Width for "  %CPU"
-    const size_t mem_perc_col_width = 6;  // Width for "  %Mem"
+    const size_t cpu_col_width = 6;      // Width for "  %CPU"
+    const size_t mem_perc_col_width = 6; // Width for "  %Mem"
     std::string pid_header = "PID";
     std::string cpu_header = "%CPU";
     std::string mem_perc_header = "%Mem";
@@ -148,7 +148,7 @@ std::string show_top_cpu_procs(const MetricsContext& result,
                << std::right << std::setw(mem_perc_col_width) << mem_perc_header
                << "  " << name_header << "\n";
 
-    for (const auto& proc : top_procs_cpu) {
+    for (const auto &proc : top_procs_cpu) {
       tooltip_ss << std::left << std::setw(pid_col_width)
                  << proc.pid
                  // CPU % column
@@ -166,9 +166,9 @@ std::string show_top_cpu_procs(const MetricsContext& result,
 }
 
 std::string show_network_interfaces(
-    const MetricsContext& result,
-    const std::vector<NetworkInterfaceStats>& network_interfaces,
-    const std::set<std::string>& interfaces) {
+    const MetricsContext &result,
+    const std::vector<NetworkInterfaceStats> &network_interfaces,
+    const std::set<std::string> &interfaces) {
   std::stringstream tooltip_ss;
   if (!network_interfaces.empty()) {
     tooltip_ss << "<b>Network Usage (" << result.source_name << ")</b>\n";
@@ -177,7 +177,7 @@ std::string show_network_interfaces(
     // --- FILTERING STEP ---
     std::vector<NetworkInterfaceStats> filtered_interfaces;
     if (!interfaces.empty()) {
-      for (const auto& net_stat : network_interfaces) {
+      for (const auto &net_stat : network_interfaces) {
         if (interfaces.count(net_stat.interface_name)) {
           filtered_interfaces.push_back(net_stat);
         }
@@ -186,8 +186,8 @@ std::string show_network_interfaces(
     // --- END FILTERING ---
 
     if (!filtered_interfaces.empty()) {
-      size_t max_if_len = 6;  // "Device"
-      for (const auto& net_stat : filtered_interfaces) {
+      size_t max_if_len = 6; // "Device"
+      for (const auto &net_stat : filtered_interfaces) {
         if (net_stat.interface_name.length() > max_if_len) {
           max_if_len = net_stat.interface_name.length();
         }
@@ -200,7 +200,7 @@ std::string show_network_interfaces(
                  << std::setw(rate_col_width) << "Up" << "\n";
 
       // Rows - Iterate over the filtered list
-      for (const auto& net_stat : filtered_interfaces) {
+      for (const auto &net_stat : filtered_interfaces) {
         // Get the formatted size objects (containing text and color)
         auto down_formatted_obj = format_size_rate(net_stat.rx_bytes_per_sec);
         auto up_formatted_obj = format_size_rate(net_stat.tx_bytes_per_sec);
@@ -208,12 +208,12 @@ std::string show_network_interfaces(
         // Create stringstreams and pad the RAW text
         std::stringstream down_text_ss;
         down_text_ss << std::left
-                     << std::setw(rate_col_width - 1)  // Leave 1 space padding
+                     << std::setw(rate_col_width - 1) // Leave 1 space padding
                      << down_formatted_obj.text;
 
         std::stringstream up_text_ss;
         up_text_ss << std::left
-                   << std::setw(rate_col_width - 1)  // Leave 1 space padding
+                   << std::setw(rate_col_width - 1) // Leave 1 space padding
                    << up_formatted_obj.text;
 
         // Construct the table row with manual Pango spans
@@ -222,11 +222,11 @@ std::string show_network_interfaces(
                    // Down rate: wrap padded text in span
                    << "<span foreground='#" << down_formatted_obj.color << "'>"
                    << down_text_ss.str()
-                   << "</span> "  // Add manual space
+                   << "</span> " // Add manual space
                    // Up rate: wrap padded text in span
                    << "<span foreground='#" << up_formatted_obj.color << "'>"
                    << up_text_ss.str()
-                   << "</span>"  // No trailing space before newline
+                   << "</span>" // No trailing space before newline
                    << "\n";
       }
     }
@@ -235,15 +235,15 @@ std::string show_network_interfaces(
   return tooltip_ss.str();
 }
 
-std::string show_devices(const MetricsContext& result,
-                         const std::vector<DeviceInfo>& devices) {
+std::string show_devices(const MetricsContext &result,
+                         const std::vector<DeviceInfo> &devices) {
   std::stringstream tooltip_ss;
   if (!devices.empty()) {
     tooltip_ss << "<b>Filesystem Usage (" << result.source_name << ")</b>\n";
     tooltip_ss << "<tt>";
 
     size_t max_mount_len = 5;
-    for (const auto& dev : devices) {
+    for (const auto &dev : devices) {
       if (dev.mount_point.length() > max_mount_len) {
         max_mount_len = dev.mount_point.length();
       }
@@ -257,8 +257,9 @@ std::string show_devices(const MetricsContext& result,
                << std::setw(data_col_width + 1) << used_header
                << std::setw(data_col_width + 1) << total_header << " Used%\n";
 
-    for (const auto& dev : devices) {
-      if (dev.mount_point.empty()) continue;
+    for (const auto &dev : devices) {
+      if (dev.mount_point.empty())
+        continue;
       uint64_t used_percent =
           (dev.size_bytes == 0) ? 0 : (dev.used_bytes * 100) / dev.size_bytes;
       auto fs_used = format_size(dev.used_bytes);
@@ -280,19 +281,19 @@ std::string show_devices(const MetricsContext& result,
   return tooltip_ss.str();
 }
 
-std::string show_system_metrics(const MetricsContext& result,
-                                const SystemMetrics& system_metrics,
-                                int& total_mem_percent,
-                                int& valid_mem_sources) {
+std::string show_system_metrics(const MetricsContext &result,
+                                const SystemMetrics &system_metrics,
+                                int &total_mem_percent,
+                                int &valid_mem_sources) {
   const TargetFormat target = TargetFormat::WAYBAR;
   std::stringstream tooltip_ss;
   if (system_metrics.meminfo.total_kb > 0) {
     tooltip_ss
         << "<b>System Information (" << result.source_name << ")</b>\n"
-        << "<tt>"  // Use tt for consistent spacing if needed
+        << "<tt>" // Use tt for consistent spacing if needed
         << system_metrics.sys_name << " " << system_metrics.node_name << " "
         << system_metrics.kernel_release << " " << system_metrics.machine_type
-        << "</tt>\n"  // End tt tag
+        << "</tt>\n" // End tt tag
         << "Uptime: " << system_metrics.uptime.to_str() << "\n"
         << "Load (1m/5m/15m): " << std::fixed << std::setprecision(2)
         << system_metrics.load_avg_1m << " / " << system_metrics.load_avg_5m
@@ -320,7 +321,7 @@ std::string show_system_metrics(const MetricsContext& result,
     tooltip_ss << std::fixed << std::setprecision(1);
     tooltip_ss << "  Core   Total   User    Sys   IOWait\n";
 
-    for (const auto& core : system_metrics.cores) {
+    for (const auto &core : system_metrics.cores) {
       std::string label;
       if (core.core_id == 0) {
         label = "Avg";
@@ -342,3 +343,4 @@ std::string show_system_metrics(const MetricsContext& result,
   }
   return tooltip_ss.str();
 }
+}; // namespace telemetry

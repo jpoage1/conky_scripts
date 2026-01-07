@@ -6,7 +6,9 @@
 #include <cmath> // For std::round
 
 #include "pcn.hpp"
+namespace telemetry {
 
+class LuaConfigGenerator;
 // Data structure to hold information about a single process
 struct ProcessInfo {
   int pid = 0;
@@ -26,4 +28,23 @@ struct CpuState {
 };
 enum class SortMode { MEM, CPU_REAL, CPU_AVG };
 
+struct Processes {
+  bool enable_avg_cpu = true;
+  bool enable_avg_mem = true;
+  bool enable_realtime_cpu = true;
+  bool enable_realtime_mem = true;
+  long unsigned int count = true;
+  std::vector<std::string> ignore_list;
+  bool only_user_processes = false;
+  bool enable_processinfo() const;
+}; // End Processes struct
+
+// Processes
+struct LuaProcesses : public Processes {
+  std::string serialize(unsigned const int indentation_level = 0) const;
+
+  void deserialize(sol::table processes);
+}; // End Processes struct
+
+}; // namespace telemetry
 #endif

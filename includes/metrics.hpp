@@ -13,6 +13,8 @@
 #include "system_stability.hpp"
 #include "uptime.hpp"
 
+namespace telemetry {
+
 struct DeviceInfo;
 struct ProcessInfo;
 struct DiskUsage;
@@ -90,4 +92,5 @@ int get_server_metrics(DataStreamProviderPtr &, const std::string &config_file,
 int get_server_metrics(DataStreamProviderPtr &, const std::string &config_file,
                        SystemMetrics &metrics, const std::string &host,
                        const std::string &user);
+}; // namespace telemetry
 #endif

@@ -4,13 +4,15 @@
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 
-std::istream& LocalDataStreams::get_uptime_stream() {
+namespace telemetry {
+
+std::istream &LocalDataStreams::get_uptime_stream() {
   return create_stream_from_file(uptime, "/proc/uptime");
 }
-std::istream& ProcDataStreams::get_uptime_stream() {
+std::istream &ProcDataStreams::get_uptime_stream() {
   return create_stream_from_command(uptime, "cat /proc/uptime");
 }
-Time get_uptime(std::istream& input_stream) {
+Time get_uptime(std::istream &input_stream) {
   double uptime_seconds;
   if (input_stream >> uptime_seconds) {
     int days = uptime_seconds / 86400;
@@ -41,3 +43,4 @@ std::string Time::to_clock_str() const {
   std::sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds);
   return std::string(buffer);
 }
+}; // namespace telemetry

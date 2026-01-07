@@ -1,6 +1,8 @@
 // configuration_builder.hpp
 #ifndef CONFIGURATION_BUILDER_HPP
 #define CONFIGURATION_BUILDER_HPP
+
+namespace telemetry {
 struct ProgramOptions;
 struct Command;
 struct MetricsContext;
@@ -13,11 +15,11 @@ class ParsedConfig;
  * Encapsulates the logic of converting CLI options into a runnable
  * configuration.
  */
-ParsedConfig build_config_from_options(const ProgramOptions& options);
+ParsedConfig build_config_from_options(const ProgramOptions &options);
 /**
  * Helper to isolate specific command mapping.
  * This is now individually testable.
  */
-MetricsContext create_context_from_command(const CommandRequest& cmd);
-
+MetricsContext create_context_from_command(const CommandRequest &cmd);
+} // namespace telemetry
 #endif

@@ -2,6 +2,8 @@
 
 #include "polling.hpp"
 
+namespace telemetry {
+
 double parse_avg10(const std::string &line) {
   // Look for "avg10="
   size_t pos = line.find("avg10=");
@@ -70,3 +72,4 @@ void SystemStabilityPollingTask::take_new_snapshot() {
 void SystemStabilityPollingTask::calculate() {
 } // Direct read is sufficient here
 void SystemStabilityPollingTask::commit() {}
+}; // namespace telemetry

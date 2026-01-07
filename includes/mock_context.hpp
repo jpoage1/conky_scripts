@@ -10,8 +10,10 @@
 #include "data_ssh.hpp"
 #include "metrics.hpp"
 
+namespace telemetry {
+
 class MockLocalContext : public ::testing::Test {
- protected:
+protected:
   MetricsContext context;
   SystemMetrics metrics;
   LocalDataStreams provider;
@@ -19,10 +21,11 @@ class MockLocalContext : public ::testing::Test {
 };
 
 class MockProcContext : public ::testing::Test {
- protected:
+protected:
   MetricsContext context;
   SystemMetrics metrics;
   ProcDataStreams provider;
   MockProcContext() : context(), metrics(context) {}
 };
+}; // namespace telemetry
 #endif

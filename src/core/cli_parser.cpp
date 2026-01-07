@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "cli_parser.hpp"
-#include "parsed_config.hpp"
 #include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
@@ -16,17 +15,21 @@
 #include "log.hpp"
 #include "lua_parser.hpp"
 #include "metrics.hpp"
+#include "parsed_config.hpp"
 #include "pcn.hpp"
 #include "polling.hpp"
 #include "types.hpp"
 
+namespace telemetry {
+
 // Helper: Parse "eth0,wlan0" into a set
-std::set<std::string> parse_interface_list(const std::string& list_str) {
+std::set<std::string> parse_interface_list(const std::string &list_str) {
   std::set<std::string> interfaces;
   std::stringstream ss(list_str);
   std::string item;
   while (std::getline(ss, item, ',')) {
-    if (!item.empty()) interfaces.insert(item);
+    if (!item.empty())
+      interfaces.insert(item);
   }
   return interfaces;
 }
@@ -34,7 +37,7 @@ std::set<std::string> parse_interface_list(const std::string& list_str) {
 // ---------------------------------------------------------
 // PHASE 1: PARSING (Text -> Options)
 // ---------------------------------------------------------
-ProgramOptions parse_cli(int argc, char* argv[]) {
+ProgramOptions parse_cli(int argc, char *argv[]) {
   ProgramOptions options;
 
   if (argc < 2) {
@@ -46,13 +49,13 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
   std::vector<std::string> args(argv + 1, argv + argc);
 
   for (size_t i = 0; i < args.size(); ++i) {
-    const std::string& arg = args[i];
+    const std::string &arg = args[i];
 
     // --- 1. Global Flags ---
     if (arg == "--config") {
       if (i + 1 < args.size()) {
         options.global_config_file = args[++i];
-        return options;  // Exclusive Mode: Stop parsing immediately
+        return options; // Exclusive Mode: Stop parsing immediately
       } else {
         kerr << "Error: --config requires a filename.\n";
       }
@@ -71,7 +74,7 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
       if (i + 1 < args.size()) {
         CommandRequest req;
         req.type = CommandType::SSH;
-        req.config_path = args[++i];  // Consume config file
+        req.config_path = args[++i]; // Consume config file
 
         // Check for optional Host/User arguments
         // We peek ahead 1 and 2 spots. If they exist and don't start with '-',
@@ -83,7 +86,7 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
           if (potential_host[0] != '-' && potential_user[0] != '-') {
             req.host = potential_host;
             req.user = potential_user;
-            i += 2;  // Consume host and user
+            i += 2; // Consume host and user
           }
         }
 
@@ -107,7 +110,8 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
     else if (arg == "--interfaces") {
       if (options.commands.empty()) {
         kerr << "Warning: --interfaces ignored (no preceding command).\n";
-        if (i + 1 < args.size()) i++;  // Consume value anyway to stay in sync
+        if (i + 1 < args.size())
+          i++; // Consume value anyway to stay in sync
       } else if (i + 1 < args.size()) {
         std::string list_str = args[++i];
         options.commands.back().interfaces = parse_interface_list(list_str);
@@ -133,7 +137,7 @@ ProgramOptions parse_cli(int argc, char* argv[]) {
 // ---------------------------------------------------------
 // PHASE 2: BUILDING (Options -> Runtime Config)
 // ---------------------------------------------------------
-ParsedConfig parse_arguments(int argc, char* argv[]) {
+ParsedConfig parse_arguments(int argc, char *argv[]) {
   // 1. Get Clean Options
   ProgramOptions options = parse_cli(argc, argv);
 
@@ -155,7 +159,7 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
 
   // 4. Instantiate Commands
   // 4. Instantiate Commands
-  for (const auto& cmd : options.commands) {
+  for (const auto &cmd : options.commands) {
     MetricsContext context;
 
     // --- STEP 1: Load Base Configuration (The "Defaults") ---
@@ -187,10 +191,11 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
       context.source_name = "Local";
       // Ensure device_file is set if load_lua_settings didn't set it/wasn't
       // used
-      if (context.device_file.empty()) context.device_file = cmd.config_path;
+      if (context.device_file.empty())
+        context.device_file = cmd.config_path;
     } else if (cmd.type == CommandType::SSH) {
       context.provider = DataStreamProviders::ProcDataStream;
-      context.source_name = "Default SSH";  // Default, overridden below
+      context.source_name = "Default SSH"; // Default, overridden below
     }
 
     // --- STEP 3: Merge CLI Arguments (The "Overrides") ---
@@ -220,7 +225,7 @@ ParsedConfig parse_arguments(int argc, char* argv[]) {
   return config;
 }
 
-void print_usage(const char* prog_name) {
+void print_usage(const char *prog_name) {
   kerr << "Usage: " << prog_name << " [options...]\n\n"
        << "Generates metrics based on one or more commands.\n"
        << "If the first argument is a file path, it defaults to --local.\n\n"
@@ -236,3 +241,4 @@ void print_usage(const char* prog_name) {
        << "  " << prog_name
        << " /path/local.conf --ssh /path/ssh.conf my-server conky\n";
 }
+}; // namespace telemetry

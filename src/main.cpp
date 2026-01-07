@@ -20,6 +20,8 @@
 #include "output_mode_conky.hpp"
 #endif
 
+using namespace telemetry;
+
 int main(int argc, char *argv[]) {
   int pipeline_count = 0;
 #define REGISTER_OUTPUT_MODE(OUTPUT_MODE_NAME, OUTPUT_MODE_PIPELINE)           \

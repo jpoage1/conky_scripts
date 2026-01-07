@@ -11,19 +11,21 @@
 #include <string>
 #include <vector>
 
+namespace telemetry {
+
 namespace fs = std::filesystem;
 
 class RotatingFileSink : public std::streambuf {
- public:
+public:
   explicit RotatingFileSink(fs::path path, bool rotate, unsigned int max_files,
                             std::string ts_fmt, std::string entry_fmt);
   ~RotatingFileSink() override;
 
- protected:
+protected:
   int_type overflow(int_type c) override;
   int sync() override;
 
- private:
+private:
   void rotate_logs();
   std::string get_formatted_prefix();
 
@@ -37,4 +39,5 @@ class RotatingFileSink : public std::streambuf {
   std::mutex mtx;
 };
 
+}; // namespace telemetry
 #endif

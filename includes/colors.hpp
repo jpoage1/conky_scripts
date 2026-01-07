@@ -2,6 +2,7 @@
 #ifndef COLORS_HPP
 #define COLORS_HPP
 
+namespace telemetry {
 #include <string>
 namespace colors {
 const std::string paleblue = "00ccff";
@@ -13,6 +14,6 @@ const std::string green = "33cc33";
 const std::string reset = "";
 const std::string gray = "999999";
 const std::string blue = "3399ff";
-}  // namespace colors
-
+} // namespace colors
+}; // namespace telemetry
 #endif

@@ -19,6 +19,8 @@
 #include "stream_provider.hpp"
 #include "uptime.hpp"
 
+namespace telemetry {
+
 // Constructor builds the pipeline ONCE based on settings
 JsonSerializer::JsonSerializer(const MetricSettings &settings) {
   // 1. Static Metadata
@@ -115,3 +117,5 @@ nlohmann::json JsonSerializer::serialize(const SystemMetrics &metrics) const {
   }
   return j;
 }
+
+}; // namespace telemetry

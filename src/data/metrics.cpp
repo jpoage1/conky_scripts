@@ -20,7 +20,7 @@
 #include "sysinfo.hpp"
 #include "uptime.hpp"
 #include <stdexcept>
-
+namespace telemetry {
 // Satisfies the linker, prevents accidental usage
 SystemMetrics::SystemMetrics() {
   throw std::runtime_error("SystemMetrics default constructor called: This "
@@ -129,3 +129,4 @@ void SystemMetrics::configure_polling_pipeline(MetricsContext &context) {
                       settings.enable_processinfo());
   (void)new_task;
 }
+}; // namespace telemetry

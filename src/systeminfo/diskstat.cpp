@@ -1,25 +1,30 @@
 
 #include "diskstat.hpp"
-
 #include "context.hpp"
 #include "data_local.hpp"
 #include "data_ssh.hpp"
 #include "filesystems.hpp"
 #include "json_definitions.hpp"
 #include "log.hpp"
+#include "lua_generator.hpp"
 #include "polling.hpp"
 #include "ssh.hpp"
 #include "stream_provider.hpp"
+#include <filesystem>
+#include <fstream>
 
-std::istream& LocalDataStreams::get_diskstats_stream() {
+namespace telemetry {
+namespace fs = std::filesystem;
+
+std::istream &LocalDataStreams::get_diskstats_stream() {
   return create_stream_from_file(diskstats, "/proc/diskstats");
 }
 
-std::istream& ProcDataStreams::get_diskstats_stream() {
+std::istream &ProcDataStreams::get_diskstats_stream() {
   return create_stream_from_command(diskstats, "cat /proc/diskstats");
 }
 
-DevicePaths DiskPollingTask::load_device_paths(const std::string& config_file) {
+DevicePaths DiskPollingTask::load_device_paths(const std::string &config_file) {
   DevicePaths device_paths;
 
   namespace fs = std::filesystem;
@@ -27,7 +32,7 @@ DevicePaths DiskPollingTask::load_device_paths(const std::string& config_file) {
   // Check if the file exists, is a regular file, and is readable
   if (!fs::exists(config_file) || !fs::is_regular_file(config_file)) {
     std::cerr << "Unable to load device path file: " + config_file << std::endl;
-    return device_paths;  // Return false on failure
+    return device_paths; // Return false on failure
   }
 
   std::ifstream file(config_file);
@@ -42,18 +47,18 @@ DevicePaths DiskPollingTask::load_device_paths(const std::string& config_file) {
       device_paths.push_back(line);
     }
   }
-  return device_paths;  // Return true on success
+  return device_paths; // Return true on success
 }
 void DiskPollingTask::configure() {}
-DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
-                                 SystemMetrics& metrics,
-                                 MetricsContext& context)
+DiskPollingTask::DiskPollingTask(DataStreamProvider &provider,
+                                 SystemMetrics &metrics,
+                                 MetricsContext &context)
     : IPollingTask(provider, metrics, context) {
   // 1. Copy the Config
   this->config = context.disk_stat_config;
 
   // 2. Load the Allowlist
-  for (const auto& dev : context.io_devices) {
+  for (const auto &dev : context.io_devices) {
     // Strip "/dev/" prefix if the user included it in Lua
     std::string clean_name = dev;
     size_t pos = clean_name.rfind("/dev/");
@@ -73,7 +78,7 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
 
   metrics.disks.reserve(metrics.disks.size() + device_paths.size());
   // 2. Iterate the paths we JUST loaded
-  for (const std::string& logical_path : device_paths) {
+  for (const std::string &logical_path : device_paths) {
     try {
       std::filesystem::path real_path =
           std::filesystem::canonical(logical_path);
@@ -93,10 +98,10 @@ DiskPollingTask::DiskPollingTask(DataStreamProvider& provider,
       metrics.disks.push_back(std::move(info));
 
       // Store a pointer to the object we just created
-      DeviceInfo* device_ptr = &metrics.disks.back();
+      DeviceInfo *device_ptr = &metrics.disks.back();
       kernel_to_device_map[kernel_name] = device_ptr;
 
-    } catch (const std::filesystem::filesystem_error& e) {
+    } catch (const std::filesystem::filesystem_error &e) {
       std::cerr << "Warning (DiskPollingTask): Could not resolve device path: "
                 << logical_path << ": " << e.what() << std::endl;
     }
@@ -121,23 +126,24 @@ void DiskPollingTask::calculate() {
 
   metrics.disk_io.clear();
 
-  if (time_delta_seconds <= 0) return;
+  if (time_delta_seconds <= 0)
+    return;
 
   // 1. Reset I/O stats for config-file devices
-  for (const auto& [kernel_name, info_ptr] : kernel_to_device_map) {
+  for (const auto &[kernel_name, info_ptr] : kernel_to_device_map) {
     info_ptr->io.read_bytes_per_sec = 0;
     info_ptr->io.write_bytes_per_sec = 0;
   }
   SPDLOG_TRACE("Disk Calculate: Curr Size = {}", current_snapshots.size());
 
   // 3. Calculate stats for all devices
-  for (auto const& [dev_name, curr_snap] : current_snapshots) {
+  for (auto const &[dev_name, curr_snap] : current_snapshots) {
     auto prev_it = prev_snapshots.find(dev_name);
     if (prev_it == prev_snapshots.end()) {
-      continue;  // No prev data, skip
+      continue; // No prev data, skip
     }
 
-    const auto& prev_snap = prev_it->second;
+    const auto &prev_snap = prev_it->second;
     uint64_t read_delta = (curr_snap.bytes_read >= prev_snap.bytes_read)
                               ? (curr_snap.bytes_read - prev_snap.bytes_read)
                               : 0;
@@ -153,18 +159,18 @@ void DiskPollingTask::calculate() {
     auto info_it = kernel_to_device_map.find(dev_name);
     if (info_it != kernel_to_device_map.end()) {
       // It is. Update the DeviceInfo struct directly.
-      DeviceInfo* info_ptr = info_it->second;
+      DeviceInfo *info_ptr = info_it->second;
       info_ptr->io.read_bytes_per_sec = read_bps;
       info_ptr->io.write_bytes_per_sec = write_bps;
-    } else {  // Inside the loop
-              // Ensure we aren't writing infinite entries
+    } else { // Inside the loop
+             // Ensure we aren't writing infinite entries
       if (metrics.disk_io.size() > 100) {
         std::cerr << "CRITICAL: DiskIO map growing too large! Aborting."
                   << std::endl;
         return;
       }
       // It's not from the config. Add it to the generic HdIoStats map.
-      HdIoStats& io = metrics.disk_io[dev_name];
+      HdIoStats &io = metrics.disk_io[dev_name];
       io.device_name = dev_name;
       io.read_bytes_per_sec = read_bps;
       io.write_bytes_per_sec = write_bps;
@@ -183,7 +189,7 @@ void DiskPollingTask::calculate() {
   //               << " write=" << stats.write_bytes_per_sec << std::endl;
   //   }
 }
-DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
+DiskIoSnapshotMap DiskPollingTask::read_data(std::istream &diskstats_stream) {
   DiskIoSnapshotMap snapshots;
 
   diskstats_stream.clear();
@@ -222,7 +228,7 @@ DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
     }
     // RULE 4: Auto-Discovery Filters (Only runs if strict mode is OFF)
     else {
-      keep = true;  // Assume true, then try to disqualify
+      keep = true; // Assume true, then try to disqualify
 
       // Filter: Loopback
       if (major == 7 && config.count(DiskStatSettings::Loopback) == 0)
@@ -250,15 +256,15 @@ DiskIoSnapshotMap DiskPollingTask::read_data(std::istream& diskstats_stream) {
   return snapshots;
 }
 
-std::string get_mount_point(std::istream& mounts_stream,
-                            const std::string& device_path) {
+std::string get_mount_point(std::istream &mounts_stream,
+                            const std::string &device_path) {
   std::string device, mount_point, rest;
 
   // 1. Calculate the canonical path for the device we are looking for once.
   std::filesystem::path target_path_canonical;
   try {
     target_path_canonical = std::filesystem::canonical(device_path);
-  } catch (const std::filesystem::filesystem_error& e) {
+  } catch (const std::filesystem::filesystem_error &e) {
     // If the target device_path doesn't exist, we can't find it.
     return "";
   }
@@ -275,7 +281,7 @@ std::string get_mount_point(std::istream& mounts_stream,
       if (current_dev_canonical == target_path_canonical) {
         return mount_point;
       }
-    } catch (const std::filesystem::filesystem_error& e) {
+    } catch (const std::filesystem::filesystem_error &e) {
       // Ignore errors for devices like "proc" or "sysfs" that may not resolve.
       continue;
     }
@@ -283,15 +289,15 @@ std::string get_mount_point(std::istream& mounts_stream,
   return "";
 }
 
-std::istream& LocalDataStreams::get_mounts_stream() {
+std::istream &LocalDataStreams::get_mounts_stream() {
   return create_stream_from_file(mounts, "/proc/mounts");
 }
 
-std::istream& ProcDataStreams::get_mounts_stream() {
+std::istream &ProcDataStreams::get_mounts_stream() {
   return create_stream_from_command(mounts, "cat /proc/mounts");
 }
 
-DiskUsage LocalDataStreams::get_disk_usage(const std::string& mount_point) {
+DiskUsage LocalDataStreams::get_disk_usage(const std::string &mount_point) {
   struct statvfs stat;
   DiskUsage usage;
   if (!mount_point.empty() && statvfs(mount_point.c_str(), &stat) == 0) {
@@ -301,7 +307,7 @@ DiskUsage LocalDataStreams::get_disk_usage(const std::string& mount_point) {
   return usage;
 }
 
-DiskUsage ProcDataStreams::get_disk_usage(const std::string& mount_point) {
+DiskUsage ProcDataStreams::get_disk_usage(const std::string &mount_point) {
   DiskUsage usage;
   // Execute df command and get the output as a single string.
   std::string df_output = execute_ssh_command("df -B1 " + mount_point);
@@ -316,9 +322,9 @@ DiskUsage ProcDataStreams::get_disk_usage(const std::string& mount_point) {
 
   std::stringstream df_stream(df_output);
   std::string line;
-  std::getline(df_stream, line);  // Read and discard the header line.
+  std::getline(df_stream, line); // Read and discard the header line.
 
-  std::getline(df_stream, line);  // Read the data line.
+  std::getline(df_stream, line); // Read the data line.
 
   std::stringstream data_stream(line);
   std::string filesystem, blocks, used, available, capacity, mounted_on;
@@ -331,7 +337,7 @@ DiskUsage ProcDataStreams::get_disk_usage(const std::string& mount_point) {
     try {
       usage.used_bytes = std::stoull(used);
       usage.size_bytes = std::stoull(blocks);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       std::cerr << "Error parsing numbers from df output: " << e.what()
                 << std::endl;
       return usage;
@@ -342,3 +348,93 @@ DiskUsage ProcDataStreams::get_disk_usage(const std::string& mount_point) {
             << mount_point << std::endl;
   return usage;
 }
+
+std::string LuaFilters::serialize(unsigned int indentation_level) const {
+  LuaConfigGenerator gen("filters", indentation_level);
+  gen.lua_bool("enable_loopback", enable_loopback);
+  gen.lua_bool("enable_mapper", enable_mapper);
+  gen.lua_bool("enable_partitions", enable_partitions);
+  return gen.str();
+}
+
+void LuaFilters::deserialize(sol::table filters) {
+  if (!filters.valid())
+    return;
+  enable_loopback = filters.get_or("enable_loopback", true);
+  enable_mapper = filters.get_or("enable_mapper", true);
+  enable_partitions = filters.get_or("enable_partitions", false);
+}
+}; // namespace telemetry
+
+Storage::Storage() {
+  discover_filesystems();
+  discover_io_devices();
+}
+
+void Storage::discover_filesystems() {
+  std::ifstream mounts("/proc/mounts");
+  std::string line;
+  while (std::getline(mounts, line)) {
+    std::istringstream iss(line);
+    std::string device, mount_point, type;
+    if (!(iss >> device >> mount_point >> type))
+      continue;
+
+    if (device.find("/dev/") == 0) {
+      if (!filters.enable_loopback && device.find("/dev/loop") == 0)
+        continue;
+      if (!filters.enable_mapper && device.find("/dev/mapper") == 0)
+        continue;
+
+      filesystems.push_back(mount_point);
+    }
+  }
+}
+
+void Storage::discover_io_devices() {
+  const std::string block_dir = "/sys/block";
+  if (!fs::exists(block_dir))
+    return;
+
+  for (const auto &entry : fs::directory_iterator(block_dir)) {
+    std::string dev_name = entry.path().filename().string();
+
+    // Filter virtual devices
+    if (!filters.enable_loopback && dev_name.find("loop") == 0)
+      continue;
+
+    // Physical disks contain a 'device' symlink in sysfs
+    // Partitions (sda1) do not; they are subdirectories of the disk (sda)
+    if (fs::exists(entry.path() / "device")) {
+      io_devices.push_back(dev_name);
+    }
+  }
+}
+
+std::string LuaStorage::serialize(unsigned indentation_level = 0) const {
+  LuaConfigGenerator gen("storage", indentation_level);
+
+  gen.lua_vector("filesystems", filesystems);
+  gen.lua_vector("io_devices", io_devices);
+
+  // Manual insertion of nested filter string to maintain indentation
+  // (Assuming LuaConfigGenerator::lua_string/lua_raw can be used)
+  // For this pattern, we append the serialized filter result:
+  // gen.append_raw(filters.serialize(indentation_level + 1));
+
+  return gen.str();
+} // End Storage::serialize()
+
+void LuaStorage::deserialize(sol::table storage) {
+  if (!storage.valid())
+    return;
+
+  filesystems = storage.get_or("filesystems", std::vector<std::string>{});
+  io_devices = storage.get_or("io_devices", std::vector<std::string>{});
+
+  if (storage["filters"].valid()) {
+    LuaFilters lf;
+    lf.deserialize(storage["filters"]);
+    filters = static_cast<Filters>(lf);
+  }
+}; // namespace telemetry

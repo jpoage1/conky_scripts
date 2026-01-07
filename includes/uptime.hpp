@@ -4,6 +4,8 @@
 
 #include "pcn.hpp"
 
+namespace telemetry {
+
 struct Time {
   int days, hours, minutes, seconds;
   double raw;
@@ -21,6 +23,8 @@ struct Time {
   std::string to_clock_str() const;
 };
 
-Time get_uptime(std::istream&);
+Time get_uptime(std::istream &);
+
+}; // namespace telemetry
 
 #endif

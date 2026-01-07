@@ -1,8 +1,11 @@
 #include "data_ssh.hpp"
 
+#include "lua_generator.hpp"
 #include "provider.hpp"
 #include "ssh.hpp"
 #include "stream_provider.hpp"
+
+namespace telemetry {
 
 ProcDataStreams::ProcDataStreams() {
   if (setup_ssh_session() != 0) {
@@ -14,8 +17,8 @@ ProcDataStreams::ProcDataStreams() {
 /**
  * @brief Overloaded function to get metrics from a specific SSH server.
  */
-ProcDataStreams::ProcDataStreams(const std::string& host,
-                                 const std::string& user) {
+ProcDataStreams::ProcDataStreams(const std::string &host,
+                                 const std::string &user) {
   if (setup_ssh_session(host, user) != 0) {
     std::cerr << "Failed to set up SSH session to " << user << "@" << host
               << ". Exiting." << std::endl;
@@ -23,15 +26,16 @@ ProcDataStreams::ProcDataStreams(const std::string& host,
   }
 }
 
-std::stringstream& ProcDataStreams::create_stream_from_command(
-    std::stringstream& stream, const char* cmd) {
+std::stringstream &
+ProcDataStreams::create_stream_from_command(std::stringstream &stream,
+                                            const char *cmd) {
   std::string data = execute_ssh_command(cmd);
   stream.str(data);
   rewind(stream, "uptime");
   return stream;
 }
 // Helper function to trim leading and trailing whitespace.
-std::string trim(const std::string& str) {
+std::string trim(const std::string &str) {
   const auto str_begin = str.find_first_not_of(" \t\n\r\f\v");
   if (std::string::npos == str_begin) {
     return "";
@@ -97,3 +101,29 @@ void ProcDataStreams::cleanup() { cleanup_ssh_session(); }
 // {
 //   return get_df_data_bytes(mount_point, false);
 // }
+
+std::string LuaSSH::serialize(unsigned indentation_level) const {
+  LuaConfigGenerator gen("ssh", indentation_level);
+
+  gen.lua_bool("enabled", enabled);
+  gen.lua_string("host", host);
+  gen.lua_string("user", user);
+  gen.lua_string("key_path", key_path);
+  gen.lua_int("timeout_sec", timeout_sec);
+  gen.lua_bool("keepalive", keepalive);
+
+  return gen.str();
+} // End SSH::serialize
+
+void LuaSSH::deserialize(sol::table ssh) {
+  if (!ssh.valid())
+    return;
+  enabled = ssh.get_or("enabled", false);
+  host = ssh.get_or("host", std::string(""));
+  user = ssh.get_or("user", std::string(""));
+  key_path = ssh.get_or("key_path", std::string("~/.ssh/id_rsa"));
+  timeout_sec = ssh.get_or("timeout_sec", 5);
+  keepalive = ssh.get_or("keepalive", true);
+}
+
+}; // namespace telemetry

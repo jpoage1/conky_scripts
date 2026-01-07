@@ -3,8 +3,10 @@
 #define WAYBAR_TYPES_HPP
 
 #include "format.hpp"
+namespace telemetry {
 
 struct FormattedSize {
+
   std::string text;
   std::string color;
 
@@ -16,4 +18,7 @@ struct FormattedSize {
     return text;
   }
 };
+
+}; // namespace telemetry
+
 #endif

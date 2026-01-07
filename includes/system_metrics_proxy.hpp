@@ -4,6 +4,8 @@
 
 #include "metrics.hpp"
 
+namespace telemetry {
+
 class SystemMetricsProxy {
 public:
   SystemMetricsProxy() = default;
@@ -12,4 +14,6 @@ public:
   // Virtual sink for pipeline data
   virtual void updateData(const nlohmann::json &data) = 0;
 };
+
+}; // namespace telemetry
 #endif

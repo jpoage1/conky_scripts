@@ -6,7 +6,7 @@
 
 #include "rotate_file_sync.hpp"
 #include "teebuf.hpp"
-
+namespace telemetry {
 TeeBuf _kout_buf;
 TeeBuf _kerr_buf;
 
@@ -20,13 +20,13 @@ std::ofstream err_file("logs/error.log", std::ios::app);
 std::unique_ptr<RotatingFileSink> global_out_file;
 std::unique_ptr<RotatingFileSink> global_err_file;
 
-void setup_io(std::streambuf* out_socket, std::streambuf* err_socket) {
+void setup_io(std::streambuf *out_socket, std::streambuf *err_socket) {
   _kout_buf.clear_sinks();
   _kerr_buf.clear_sinks();
 
   // LLM-Optimized Config
   bool rotate = true;
-  unsigned int max_logs = 10;  // You requested only one iteration of testing
+  unsigned int max_logs = 10; // You requested only one iteration of testing
 
   // ISO-8601 Compact: 20251220T0137Z
   // std::string ts_fmt = "%Y-%m-%d %H:%M:%S";
@@ -50,9 +50,12 @@ void setup_io(std::streambuf* out_socket, std::streambuf* err_socket) {
   // Attach custom sinks to the TeeBuf
   _kout_buf.add_sink(std::cout.rdbuf());
   _kout_buf.add_sink(global_out_file.get());
-  if (out_socket) _kout_buf.add_sink(out_socket);
+  if (out_socket)
+    _kout_buf.add_sink(out_socket);
 
   _kerr_buf.add_sink(std::cerr.rdbuf());
   _kerr_buf.add_sink(global_err_file.get());
-  if (err_socket) _kerr_buf.add_sink(err_socket);
+  if (err_socket)
+    _kerr_buf.add_sink(err_socket);
 }
+}; // namespace telemetry

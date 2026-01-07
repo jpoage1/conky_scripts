@@ -4,9 +4,13 @@
 #include "log.hpp"
 #include "provider.hpp"
 
+namespace telemetry {
+
 void LocalDataStreams::cleanup() {}
-std::ifstream& LocalDataStreams::create_stream_from_file(
-    std::ifstream& stream, const std::string& path) {
+
+std::ifstream &
+LocalDataStreams::create_stream_from_file(std::ifstream &stream,
+                                          const std::string &path) {
   if (stream.is_open()) {
     SPDLOG_TRACE("Stream is already open");
     stream.close();
@@ -21,12 +25,14 @@ std::ifstream& LocalDataStreams::create_stream_from_file(
   return stream;
 }
 
-std::stringstream& LocalDataStreams::create_stream_from_command(
-    std::stringstream& stream, const char* cmd) {
+std::stringstream &
+LocalDataStreams::create_stream_from_command(std::stringstream &stream,
+                                             const char *cmd) {
   return create_stream_from_command(stream, cmd, static_cast<std::string>(cmd));
 }
-std::stringstream& LocalDataStreams::create_stream_from_command(
-    std::stringstream& stream, const char* cmd, std::string stream_name) {
+
+std::stringstream &LocalDataStreams::create_stream_from_command(
+    std::stringstream &stream, const char *cmd, std::string stream_name) {
   std::string cmd_output = exec_local_cmd(cmd);
 
   stream.str(std::move(cmd_output));
@@ -34,7 +40,7 @@ std::stringstream& LocalDataStreams::create_stream_from_command(
   return stream;
 }
 
-std::string LocalDataStreams::exec_local_cmd(const char* cmd) {
+std::string LocalDataStreams::exec_local_cmd(const char *cmd) {
   std::array<char, 128> buffer;
   std::string result;
   // Use unique_ptr with the custom deleter struct
@@ -51,8 +57,8 @@ std::string LocalDataStreams::exec_local_cmd(const char* cmd) {
   return result;
 }
 
-std::optional<std::string> LocalDataStreams::read_sysfs_file(
-    const std::filesystem::path& path) {
+std::optional<std::string>
+LocalDataStreams::read_sysfs_file(const std::filesystem::path &path) {
   if (!std::filesystem::exists(path)) {
     return std::nullopt;
   }
@@ -66,3 +72,5 @@ std::optional<std::string> LocalDataStreams::read_sysfs_file(
   }
   return std::nullopt;
 }
+
+}; // namespace telemetry

@@ -1,33 +1,67 @@
-#include <QObject>
-#include <QtQml>
+#ifndef WINDOW_SETTINGS_HPP
+#define WINDOW_SETTINGS_HPP
 
-struct WindowSettings {
-    Q_GADGET
+#include "pcn.hpp"
+#include <string>
+
+namespace telemetry {
+class ScrollState {
+  enum Value { ON, OFF, AUTO };
 
 public:
-    enum class WindowType {
-        DESKTOP,
-        DOCK,
-        NORMAL
-    };
-    Q_ENUM(WindowType)
+  ScrollState(Value v = OFF);
+  operator Value() const;
+  bool on() const;
+  bool off() const;
+  bool is_auto() const;
+  static std::string get_str(const Value &v);
+  const std::string get_str() const;
+  void set(std::string val);
 
-    enum class WindowStacking {
-        FG,      // Always on top
-        BOTTOM   // Desktop level / Always at bottom
-    };
-    Q_ENUM(WindowStacking)
+private:
+  Value m_val;
+}; // End ScrollState class
 
-    WindowType type = WindowType::DESKTOP;
-    WindowStacking stacking = WindowStacking::BOTTOM;
-    bool wmIgnore = true;
-    
-    // Position and size mirroring EWW geometry
-    int x = 20;
-    int y = 30;
-    int width = 800;
-    int height = 950;
-};
+struct ScrollDirections {
+public:
+  ScrollState horizontal;
+  ScrollState vertical;
+}; // End ScrollDirections
 
-// Register the type so QML understands the enums
-// qmlRegisterUncreatableType<WindowSettings>("Telemetry.Types", 1, 0, "WindowSettings", "Enums only");
+// Window Config
+struct WindowConfig {
+  enum WindowTypes { DESKTOP, DOCK, NORMAL };
+  enum StackingTypes { FOREGROUND, BACKGROUND, FLOATING };
+
+  ScrollDirections scroll;
+  std::string type = "normal";
+  std::string stacking = "bottom";
+  bool wmIgnore = true;
+  int x = 0, y = 0, width = 800, height = 600;
+  bool visible = true;
+  bool resizable = true;
+}; // End WindowConfig struct
+
+class LuaScrollState : public ScrollState {
+public:
+  std::string serialize(std::string name, unsigned int indentation_level = 0);
+
+  void deserialize(sol::object lua_val);
+}; // End ScrollState class
+// ScrollDirection
+
+struct LuaScrollDirections : public ScrollDirections {
+  std::string serialize(unsigned int indentation_level = 0) const;
+
+  void deserialize(sol::table lua_table);
+}; // End ScrollDirections
+// Window Config
+
+struct LuaWindowConfig : public WindowConfig {
+  std::string serialize(unsigned int indentation_level = 0) const;
+  void deserialize(sol::table window);
+}; // End WindowConfig struct
+
+}; // namespace telemetry
+
+#endif

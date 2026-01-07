@@ -4,7 +4,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <string>
-
+namespace libwebsockets {
 void SystemMetricsLwsProxy::updateData(const nlohmann::json &data) {
   std::unique_lock lock(mutex);
   current_json_str = data.dump();
@@ -21,3 +21,4 @@ bool SystemMetricsLwsProxy::ready() const {
   std::shared_lock lock(mutex);
   return has_new_data;
 }
+}; // namespace libwebsockets

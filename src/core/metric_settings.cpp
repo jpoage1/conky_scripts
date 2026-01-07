@@ -3,8 +3,9 @@
 #define METRIC_SETTINGS_HPP
 
 #include "batteryinfo.hpp"
-
+namespace telemetry {
 struct MetricSettings {
+
   bool enable_sysinfo = true;
   bool enable_load_and_process_stats = true;
   bool enable_uptime = true;
@@ -23,7 +24,7 @@ struct MetricSettings {
   bool enable_realtime_processinfo_mem = true;
   long unsigned int process_count = true;
   bool only_user_processes = false;
-  std::vector<BatteryConfig> batteries;
+  std::vector<Battery> batteries;
 
   std::vector<std::string> ignore_list;
 
@@ -32,4 +33,7 @@ struct MetricSettings {
            enable_realtime_processinfo_cpu || enable_realtime_processinfo_mem;
   }
 };
+
+}; // namespace telemetry
+
 #endif

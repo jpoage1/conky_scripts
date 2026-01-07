@@ -3,6 +3,8 @@
 #define JSON_DEFINITIONS_HPP
 #include <nlohmann/json_fwd.hpp>
 
+namespace telemetry {
+
 struct DeviceInfo;
 struct BatteryStatus;
 struct Time;
@@ -70,4 +72,5 @@ void from_json(const json &j, SystemStability &s);
 // Stability & PSI Metrics
 void to_json(json &j, const SystemStability &s);
 void from_json(const json &j, SystemStability &s);
+}; // namespace telemetry
 #endif

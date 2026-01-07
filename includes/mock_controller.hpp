@@ -4,6 +4,8 @@
 #include "controller.hpp"
 #include <gmock/gmock.h>
 
+namespace telemetry {
+
 class MockController : public Controller {
 public:
   MockController() = default;
@@ -19,5 +21,5 @@ public:
   MOCK_METHOD(int, main, (const RunnerContext &context), (override));
   MOCK_METHOD(SystemMetricsProxyPtr, get_proxy, (), (override));
 };
-
+}; // namespace telemetry
 #endif

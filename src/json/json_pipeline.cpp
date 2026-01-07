@@ -17,6 +17,8 @@
 // Last:
 #include "json_serializer.hpp"
 
+namespace telemetry {
+
 void register_json_pipeline() {
   PipelineEntry pipeline{"json", configure_json_pipeline, json_main, nullptr};
   ParsedConfig::register_pipeline(pipeline);
@@ -41,3 +43,5 @@ OutputPipeline configure_json_pipeline(const MetricSettings &settings) {
     std::cout << output_json.dump() << std::endl;
   };
 }
+
+}; // namespace telemetry

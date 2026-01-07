@@ -1,6 +1,8 @@
 // src/systemdata/frag_stats.cpp
 #include "frag_stats.hpp"
 
+namespace telemetry {
+
 double calculate_fragmentation_index(const std::vector<int> &chunks) {
   double total_free_pages = 0;
   double weighted_free_pages = 0;
@@ -89,3 +91,4 @@ void MemoryFragmentationTask::calculate() {
   }
 }
 void MemoryFragmentationTask::commit() {}
+}; // namespace telemetry

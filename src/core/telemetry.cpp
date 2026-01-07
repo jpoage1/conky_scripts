@@ -14,10 +14,14 @@
 #include "stream_provider.hpp"
 #include "types.hpp"
 
-ControllerPtr initialize(int argc, char* argv[]) {
+namespace telemetry {
+
+ControllerPtr initialize(int argc, char *argv[]) {
   ProgramOptions options = parse_cli(argc, argv);
   ParsedConfig config = build_config_from_options(options);
   ControllerPtr controller = std::make_unique<Controller>();
   controller->initialize(config);
   return controller;
 }
+
+}; // namespace telemetry
