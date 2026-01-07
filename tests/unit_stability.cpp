@@ -3,6 +3,8 @@
 #include "system_stability.hpp"
 #include <gtest/gtest.h>
 
+namespace telemetry {
+
 class StabilityValidation : public MockLocalContext {};
 
 // Validate that PSI metrics are within the 0.0 - 100.0 range
@@ -47,3 +49,5 @@ TEST_F(StabilityValidation, ProcessIOPopulated) {
   // Check that open_fds is now > 0 (it was 0 in your JSON output)
   EXPECT_GT(metrics.top_processes_real_cpu[0].open_fds, 0);
 }
+
+}; // namespace telemetry

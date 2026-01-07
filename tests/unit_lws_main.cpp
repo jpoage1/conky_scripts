@@ -5,9 +5,14 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+namespace libwebsockets {
+
+using RunnerContext = telemetry::RunnerContext;
+using MockController = telemetry::MockController;
+using ControllerPtr = telemetry::ControllerPtr;
+
 // Use unique_ptr to match the ControllerPtr alias
 typedef std::unique_ptr<MockController> MockControllerPtr;
-using namespace libwebsockets;
 
 TEST(LwsMainTest, LoopExecutesTickThenExits) {
   // 1. Prepare dummy argc/argv
@@ -42,3 +47,5 @@ TEST(LwsMainTest, LoopExecutesTickThenExits) {
   // Assert
   ASSERT_EQ(result, 0);
 }
+
+}; // namespace libwebsockets

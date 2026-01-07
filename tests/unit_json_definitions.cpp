@@ -7,6 +7,8 @@
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 
+namespace telemetry {
+
 class StabilityValidation : public MockLocalContext {};
 TEST_F(StabilityValidation, JsonRoundTrip) {
   metrics.stability.memory_fragmentation_index = 0.45;
@@ -28,4 +30,6 @@ TEST_F(StabilityValidation, JsonRoundTrip) {
   EXPECT_NEAR(restored.stability.memory_fragmentation_index, 0.45, 0.001);
   EXPECT_EQ(restored.stability.file_descriptors_allocated, 5000);
 }
+
+}; // namespace telemetry
 #endif

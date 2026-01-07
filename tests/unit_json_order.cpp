@@ -7,6 +7,8 @@
 #include "processinfo.hpp"
 #include <gtest/gtest.h>
 
+namespace telemetry {
+
 class JsonOrderTest : public MockLocalContext {};
 
 TEST_F(JsonOrderTest, FeatureGatingMismatchFix) {
@@ -23,4 +25,7 @@ TEST_F(JsonOrderTest, FeatureGatingMismatchFix) {
   EXPECT_TRUE(result.contains(
       "cores")); // Verification: cores now gated by enable_cpuinfo
 }
+
+} // namespace telemetry
+
 #endif

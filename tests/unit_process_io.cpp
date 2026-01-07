@@ -4,6 +4,8 @@
 #include "processinfo.hpp"
 #include <gtest/gtest.h>
 
+namespace telemetry {
+
 class ProcessIOTest : public MockLocalContext {};
 
 TEST_F(ProcessIOTest, AuditSelfProcess) {
@@ -20,3 +22,5 @@ TEST_F(ProcessIOTest, AuditSelfProcess) {
   // This process likely has read some bytes during init
   EXPECT_GE(list[0].io_read_bytes, 0);
 }
+
+}; // namespace telemetry

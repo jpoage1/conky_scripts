@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 #include <spdlog/spdlog.h>
 
-int main(int argc, char** argv) {
+namespace telemetry {
+
+int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // Set level to TRACE to enable greppable anchors
@@ -13,3 +15,5 @@ int main(int argc, char** argv) {
 
   return RUN_ALL_TESTS();
 }
+
+}; // namespace telemetry
