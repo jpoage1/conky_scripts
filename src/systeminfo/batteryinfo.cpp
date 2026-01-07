@@ -1,10 +1,12 @@
 // batteryinfo.cpp
 #include "batteryinfo.hpp"
 #include "context.hpp"
+#include "lua_generator.hpp"
 #include "polling.hpp"
 
 #include "data_local.hpp"
 #include "data_ssh.hpp"
+#include <string>
 
 namespace telemetry {
 
@@ -58,24 +60,22 @@ void BatteryPollingTask::take_new_snapshot() {
 void BatteryPollingTask::calculate() { metrics.battery_info = current_status; }
 void BatteryPollingTask::commit() {}
 
-BatteryStatus::BatteryStatus(Value v = UNKNOWN) : m_val(v) {}
+BatteryStatus::BatteryStatus(BatteryStatus::Value v) : m_val(v) {}
 
-operator BatteryStatus::Value() const { return m_val; }
-
-static BatteryStatus::std::string get_str(Value v) {
+std::string BatteryStatus::get_str(BatteryStatus::Value v) {
   switch (v) {
-  case CHARGING:
+  case BatteryStatus::CHARGING:
     return "Charging";
-  case DISCHARGING:
+  case BatteryStatus::DISCHARGING:
     return "Discharging";
-  case FULL:
+  case BatteryStatus::FULL:
     return "Full";
   default:
     return "Unknown";
   }
 }
 
-const BatteryStatus::std::string get_str() const {
+const std::string BatteryStatus::get_str() const {
   return BatteryStatus::get_str(m_val);
 }
 
@@ -109,75 +109,72 @@ Batteries::Batteries() {
   }
 }
 
-iterator Batteries::begin() { return m_list.begin(); }
-iterator Batteries::end() { return m_list.end(); }
-const_iterator Batteries::begin() const { return m_list.begin(); }
-const_iterator Batteries::end() const { return m_list.end(); }
 size_t Batteries::size() const { return m_list.size(); }
 bool Batteries::empty() const { return m_list.empty(); }
-const Battery Batteries::&operator[](size_t i) const { return m_list[i]; }
 
-std::string LuaBatteryStatus ::serialize(unsigned indentation_level = 0) const {
-  LuaConfigLuaConfigGenerator gen(indentation_level);
+std::string LuaBatteryStatus::serialize(unsigned int indentation_level) const {
+  LuaConfigGenerator gen(indentation_level);
   gen.lua_string("status", get_str());
   return gen.str();
 } // end BatteryStatus::serialize()
 
-std::string LuaBattery::serialize(unsigned indentation_level = 0) const {
-  LuaConfigLuaConfigGenerator gen(indentation_level);
-  gen.lua_string("name", name);
-  gen.lua_string("path", path);
-  gen.lua_int("critical_threshold", critical_threshold);
-  gen.lua_string("icon", icon);
-  gen.lua_string("status", status.get_str());
+/* static */
+std::string LuaBattery::serialize(const Battery &self,
+                                  unsigned int indentation_level) {
+  LuaConfigGenerator gen(indentation_level);
+  gen.lua_string("name", self.name);
+  gen.lua_string("path", self.path);
+  gen.lua_int("critical_threshold", self.critical_threshold);
+  gen.lua_string("icon", self.icon);
+  gen.lua_string("status", self.status.get_str());
 
   return gen.str();
 } // End Battery::serialize
 
-void LuaBattery::deserialize(const sol::table &bat_item) {
-  name = bat_item.get_or("name", std::string("Battery"));
-  path = bat_item.get_or("path", std::string(""));
-  critical_threshold = bat_item.get_or("critical_threshold", 15);
-  icon = bat_item.get_or("icon", std::string("⚡"));
-
-  if (bat_item["status"].valid()) {
-    status.set(bat_item.get<std::string>("status"));
-  }
+std::string LuaBattery::serialize(unsigned indent) const {
+  return LuaBattery::serialize(*this, indent);
 }
 
-std::string LuaBatteries::serialize(unsigned indentation_level = 0) const {
-  LuaConfigLuaConfigGenerator gen("batteries", indentation_level);
-  for (const Battery &batt : m_list) {
-    gen.lua_list_raw_entry(batt.serialize());
+void LuaBattery::deserialize(Battery &self, const sol::table &bat_item) {
+  self.name = bat_item.get_or("name", std::string("Battery"));
+  self.path = bat_item.get_or("path", std::string(""));
+  self.critical_threshold = bat_item.get_or("critical_threshold", 15);
+  self.icon = bat_item.get_or("icon", std::string("⚡"));
+
+  if (bat_item["status"].valid()) {
+    self.status.set(bat_item.get<std::string>("status"));
   }
-  return gen.str();
-} // End Batteries::serialize()
+}
 
 void LuaBatteries::deserialize(sol::table batteries_table) {
   if (!batteries_table.valid())
     return;
 
-  // 1. Clear existing list if this is a reload
   this->m_list.clear();
 
-  // 2. Iterate over the array part of the table
-  for (const auto &kv : batteries_table) {
-    sol::object value = kv.second;
+  for (auto &kv : batteries_table) {
+    if (kv.second.is<sol::table>()) {
+      sol::table item = kv.second.as<sol::table>();
+      std::string path = item.get_or("path", std::string(""));
 
-    if (value.is<sol::table>()) {
-      // 3. Use the Lua wrapper to handle the individual battery logic
-      // This uses the LuaBattery::deserialize you already implemented
-      LuaBattery lb("");
-      lb.deserialize(value.as<sol::table>());
-
-      // 4. Validate and store the base POD struct
-      if (!lb.path.empty()) {
-        // We cast to the base 'Battery' struct to strip away the wrapper
-        // logic
-        this->m_list.push_back(static_cast<Battery>(lb));
+      if (!path.empty()) {
+        // 1. Construct the base object with the required path
+        Battery b(path);
+        // 2. Use your new static method to fill the rest
+        LuaBattery::deserialize(b, item);
+        // 3. Push the valid POD into the list
+        this->m_list.push_back(b);
       }
     }
   }
+}
+std::string LuaBatteries::serialize(unsigned int indent) const {
+  LuaConfigGenerator gen("batteries", indent);
+  for (const auto &batt : m_list) {
+    // Call the static method directly on the base Battery object
+    gen.lua_list_raw_entry(LuaBattery::serialize(batt));
+  }
+  return gen.str();
 }
 
 }; // namespace telemetry

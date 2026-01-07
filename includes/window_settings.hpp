@@ -5,12 +5,12 @@
 #include <string>
 
 namespace telemetry {
-class ScrollState {
-  enum Value { ON, OFF, AUTO };
 
+class ScrollState {
 public:
+  enum Value { ON, OFF, AUTO };
   ScrollState(Value v = OFF);
-  operator Value() const;
+  operator Value() const { return m_val; }
   bool on() const;
   bool off() const;
   bool is_auto() const;
@@ -18,7 +18,7 @@ public:
   const std::string get_str() const;
   void set(std::string val);
 
-private:
+protected:
   Value m_val;
 }; // End ScrollState class
 

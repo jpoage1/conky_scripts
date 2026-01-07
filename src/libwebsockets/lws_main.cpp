@@ -10,8 +10,7 @@
 #include <unistd.h>
 
 namespace libwebsockets {
-
-int lws_main(const RunnerContext &ctx) {
+int lws_main(const telemetry::RunnerContext &ctx) {
   LwsServer server(8080);
 
   // Cast the base proxy back to our LWS-specific version

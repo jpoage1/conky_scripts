@@ -364,7 +364,6 @@ void LuaFilters::deserialize(sol::table filters) {
   enable_mapper = filters.get_or("enable_mapper", true);
   enable_partitions = filters.get_or("enable_partitions", false);
 }
-}; // namespace telemetry
 
 Storage::Storage() {
   discover_filesystems();
@@ -411,7 +410,7 @@ void Storage::discover_io_devices() {
   }
 }
 
-std::string LuaStorage::serialize(unsigned indentation_level = 0) const {
+std::string LuaStorage::serialize(unsigned indentation_level) const {
   LuaConfigGenerator gen("storage", indentation_level);
 
   gen.lua_vector("filesystems", filesystems);
@@ -437,4 +436,5 @@ void LuaStorage::deserialize(sol::table storage) {
     lf.deserialize(storage["filters"]);
     filters = static_cast<Filters>(lf);
   }
+}
 }; // namespace telemetry

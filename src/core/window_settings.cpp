@@ -1,46 +1,49 @@
-#ifndef WINDOW_SETTINGS_HPP
-#define WINDOW_SETTINGS_HPP
+// src/core/window_settings.cpp
 
 #include "window_settings.hpp"
+#include "lua_generator.hpp"
+#include <sol/sol.hpp>
 #include <string>
+
 namespace telemetry {
 
+// using Value = ScrollState::Value;
+
 // Window Config
-ScrollState::ScrollState(Value v = OFF) : m_val(v) {}
-operator ScrollState::Value() const { return m_val; }
-bool ScrollState::on() const { return m_val != OFF; }
-bool ScrollState::off() const { return m_val != ON; }
-bool ScrollState::is_auto() const { return m_val == AUTO; }
-static std::string ScrollState::get_str(const Value &v) {
+ScrollState::ScrollState(ScrollState::Value v) : m_val(v) {}
+bool ScrollState::on() const { return m_val != Value::OFF; }
+bool ScrollState::off() const { return m_val != Value::ON; }
+bool ScrollState::is_auto() const { return m_val == Value::AUTO; }
+std::string ScrollState::get_str(const Value &v) {
   switch (v) {
-  case ON:
+  case ScrollState::Value::ON:
     return "on";
-  case OFF:
+  case ScrollState::Value::OFF:
     return "off";
-  case AUTO:
+  case ScrollState::Value::AUTO:
     return "auto";
   default:
     return "unknown";
   }
 } // End get_str()
-const ScrollState::std::string get_str() const {
+const std::string ScrollState::get_str() const {
   const std::string state = ScrollState::get_str(m_val);
   return state;
 }
 void ScrollState::set(std::string val) {
   if (val == "on") {
-    m_val = ON;
+    m_val = ScrollState::Value::ON;
   } else if (val == "off") {
-    m_val = OFF;
+    m_val = ScrollState::Value::OFF;
   } else if (val == "auto") {
-    m_val = AUTO;
+    m_val = ScrollState::Value::AUTO;
   } else {
-    m_val = OFF; // Fallback for unknown input
+    m_val = ScrollState::Value::OFF; // Fallback for unknown input
   }
 } // End set()
 
 std::string LuaScrollState::serialize(std::string name,
-                                      unsigned int indentation_level = 0) {
+                                      unsigned int indentation_level) {
   LuaConfigGenerator gen(indentation_level);
   gen.lua_string(name, get_str());
   return gen.raw_str();
@@ -53,7 +56,7 @@ void LuaScrollState::deserialize(sol::object lua_val) {
 }
 
 std::string
-LuaScrollDirections::serialize(unsigned int indentation_level = 0) const {
+LuaScrollDirections::serialize(unsigned int indentation_level) const {
   LuaConfigGenerator gen("scroll", indentation_level);
   gen.lua_string("horizontal", horizontal.get_str());
   gen.lua_string("vertical", vertical.get_str());
@@ -72,8 +75,7 @@ void LuaScrollDirections::deserialize(sol::table lua_table) {
   vertical = static_cast<ScrollState>(v);
 }
 
-std::string
-LuaWindowConfig::serialize(unsigned int indentation_level = 0) const {
+std::string LuaWindowConfig::serialize(unsigned int indentation_level) const {
   LuaConfigGenerator gen("window", indentation_level);
 
   // Primitive types
@@ -115,5 +117,3 @@ void LuaWindowConfig::deserialize(sol::table window) {
 }
 
 }; // namespace telemetry
-
-#endif

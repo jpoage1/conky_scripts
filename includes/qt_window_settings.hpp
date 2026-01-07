@@ -4,8 +4,11 @@
 #include <QObject>
 #include <QtQml>
 
+#include "window_settings.hpp"
+
 namespace telemetry {
-struct QtWindowSettings : public WindowSettings {
+
+struct QtWindowSettings : public WindowConfig {
   Q_GADGET
 
 public:
@@ -29,7 +32,7 @@ public:
   int height = 950;
 };
 
-}; // namespace telemetry
+} // namespace telemetry
 // Register the type so QML understands the enums
 //
 // qmlRegisterUncreatableType<WindowSettings>("Telemetry.Types", 1, 0,

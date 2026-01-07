@@ -6,11 +6,11 @@
 #include <shared_mutex>
 #include <string>
 
-namespace telemetry {
+namespace libwebsockets {
 
-class SystemMetricsLwsProxy : public SystemMetricsProxy {
+class SystemMetricsLwsProxy : public telemetry::SystemMetricsProxy {
 public:
-  void updateData(const nlohmann::json &data) override;
+  void updateData(const nlohmann::json &data);
 
   std::string consume();
 
@@ -22,5 +22,5 @@ private:
   bool has_new_data = false;
 };
 
-}; // namespace telemetry
+}; // namespace libwebsockets
 #endif

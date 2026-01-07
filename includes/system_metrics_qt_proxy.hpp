@@ -7,7 +7,7 @@
 #include <QVariant>
 #include <nlohmann/json.hpp>
 
-namespace telemetery {
+namespace telemetry {
 
 class SystemMetricsQtProxy : public QObject, public SystemMetricsProxy {
   Q_OBJECT
@@ -98,5 +98,5 @@ private:
     return QVariant();
   }
 };
-}; // namespace telemetery
+}; // namespace telemetry
 #endif

@@ -17,8 +17,8 @@
 #include <QQmlContext>
 #include <QTimer>
 
+inline void init_my_resources() { Q_INIT_RESOURCE(resources); }
 namespace telemetry {
-
 int qt_main(const RunnerContext &ctx) {
   // std::cerr << "Starting qt main" << std::endl;
   /*
@@ -41,7 +41,7 @@ int qt_main(const RunnerContext &ctx) {
   freopen("/tmp/telemetry_child.log", "a", stdout);
   freopen("/tmp/telemetry_child.log", "a", stderr);
 */
-  Q_INIT_RESOURCE(resources);
+  init_my_resources();
   QApplication app(ctx.argc, ctx.argv);
 
   // Verify Display Environment
@@ -60,7 +60,9 @@ int qt_main(const RunnerContext &ctx) {
     qDebug() << it.next();
 #endif
 
-    SystemMetricsProxyPtr proxy_shared = ctx.controller->get_proxy();
+    SystemMetricsQtProxyPtr proxy_shared =
+        std::dynamic_pointer_cast<SystemMetricsQtProxy>(
+            ctx.controller->get_proxy());
     // Set context property before loading QML
     if (!proxy_shared) {
       SPDLOG_WARN(
@@ -101,4 +103,4 @@ int qt_main(const RunnerContext &ctx) {
   }
 }
 
-}; // namespace telemetry
+// namespace telemetry

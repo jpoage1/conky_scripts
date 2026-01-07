@@ -4,7 +4,7 @@
 #include "context.hpp"
 #include "log.hpp"
 #include "lua_metrics.hpp"
-// #include "metric_settings.hpp"
+#include "metric_settings.hpp"
 #include "parsed_config.hpp"
 
 namespace telemetry {

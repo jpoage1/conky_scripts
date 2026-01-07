@@ -8,7 +8,7 @@ option(ENABLE_JSON "Enable JSON output mode" ON)
 option(ENABLE_CONKY "Enable Conky output mode" OFF)
 option(ENABLE_GTK "Enable GTK output mode" OFF)
 option(ENABLE_GTK_SOCKETS "Enable GTK sockets" OFF)
-option(ENABLE_LIBWEBSOCKETS "Enable web socket support using libwebsockets" ON)
+option(ENABLE_LIBWEBSOCKETS "Enable web socket support using libwebsockets" OFF)
 option(ENABLE_TESTS "Build unit tests" ON)
 
 # --- Configuration ---
@@ -79,9 +79,12 @@ add_library(telemetry_core STATIC
     src/core/parsed_config.cpp
     src/core/telemetry.cpp
     src/core/lua_parser.cpp
+    src/core/lua_metrics.cpp
     src/core/cli_parser.cpp
+    src/core/lua_generator.cpp
     src/core/runner.cpp
     src/core/runner_context.cpp
+    src/core/window_settings.cpp
 )
 
 
@@ -160,6 +163,7 @@ if(ENABLE_QT)
         includes/window_settings.hpp
         includes/system_metrics_proxy.hpp
         includes/system_metrics_qt_proxy.hpp
+        includes/qt_window_settings.hpp
         ${QT_RESOURCES}
     )
     target_link_libraries(telemetry_qt PUBLIC

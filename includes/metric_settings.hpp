@@ -3,7 +3,9 @@
 
 #include "batteryinfo.hpp"
 #include "data_ssh.hpp"
+#include "diskstat.hpp"
 #include "processinfo.hpp"
+#include "provider.hpp"
 #include "window_settings.hpp"
 
 #include <algorithm>
@@ -73,7 +75,7 @@ struct MetricSettings {
   bool enable_battery_info = true;
 
   std::vector<std::string> ignore_list;
-  std::vector<std::string> interfaces;
+  std::set<std::string> interfaces;
   std::vector<std::string> filesystems;
 
   bool enable_processinfo() const {

@@ -6,11 +6,10 @@
 
 struct RunnerContext;
 namespace libwebsockets {
-
 void register_libwebsockets_pipeline();
-PipelineFactory libwebsockets_stream();
+telemetry::PipelineFactory libwebsockets_stream();
 
-int lws_main(const RunnerContext &ctx);
+int lws_main(const telemetry::RunnerContext &ctx);
 
 }; // namespace libwebsockets
 #endif
