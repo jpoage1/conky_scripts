@@ -13,8 +13,8 @@ class JsonOrderTest : public MockLocalContext {};
 
 TEST_F(JsonOrderTest, FeatureGatingMismatchFix) {
   MetricSettings settings;
-  settings.enable_sysinfo = false;
-  settings.enable_cpuinfo = true; // CPU ON, SYS OFF
+  settings.features.enable_sysinfo = false;
+  settings.features.enable_cpuinfo = true; // CPU ON, SYS OFF
 
   metrics.cores.push_back({0, 50.0f, 0.0f, 0.0f, 0.0f, 50.0f, 50.0f});
 

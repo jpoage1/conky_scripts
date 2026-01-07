@@ -24,7 +24,7 @@ namespace telemetry {
 // Constructor builds the pipeline ONCE based on settings
 JsonSerializer::JsonSerializer(const MetricSettings &settings) {
   // 1. Static Metadata
-  if (settings.enable_sysinfo) {
+  if (settings.features.enable_sysinfo) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["sys_name"] = s.sys_name;
       j["node_name"] = s.node_name;
@@ -34,14 +34,14 @@ JsonSerializer::JsonSerializer(const MetricSettings &settings) {
   }
 
   // 2. Conditional Fields
-  if (settings.enable_uptime) {
+  if (settings.features.enable_uptime) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["uptime"] = s.uptime;
       j["cpu_frequency_ghz"] = s.cpu_frequency_ghz;
     });
   }
 
-  if (settings.enable_load_and_process_stats) {
+  if (settings.features.enable_load_and_process_stats) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["load_avg_1m"] = s.load_avg_1m;
       j["load_avg_5m"] = s.load_avg_5m;
@@ -51,32 +51,32 @@ JsonSerializer::JsonSerializer(const MetricSettings &settings) {
     });
   }
 
-  if (settings.enable_network_stats) {
+  if (settings.features.enable_network_stats) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["network_interfaces"] = s.network_interfaces;
     });
   }
 
-  if (settings.enable_memory) {
+  if (settings.features.enable_memory) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["meminfo"] = s.meminfo;
       j["swapinfo"] = s.swapinfo;
     });
   }
 
-  if (settings.enable_cpu_temp) {
+  if (settings.features.enable_cpu_temp) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["cpu_temp_c"] = s.cpu_temp_c;
     });
   }
 
-  if (settings.enable_cpuinfo) {
+  if (settings.features.enable_cpuinfo) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["cores"] = s.cores;
     });
   }
 
-  if (settings.enable_diskstat) {
+  if (settings.features.enable_diskstat) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["disks"] = s.disks;
       j["disk_io"] = nlohmann::json::array();
@@ -87,22 +87,22 @@ JsonSerializer::JsonSerializer(const MetricSettings &settings) {
   }
 
   // 3. Process Lists
-  if (settings.enable_avg_processinfo_cpu) {
+  if (settings.features.processes.enable_avg_cpu) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["top_processes_avg_cpu"] = s.top_processes_avg_cpu;
     });
   }
-  if (settings.enable_realtime_processinfo_cpu) {
+  if (settings.features.processes.enable_realtime_cpu) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["top_processes_real_cpu"] = s.top_processes_real_cpu;
     });
   }
-  if (settings.enable_avg_processinfo_mem) {
+  if (settings.features.processes.enable_avg_mem) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["top_processes_avg_mem"] = s.top_processes_avg_mem;
     });
   }
-  if (settings.enable_realtime_processinfo_mem) {
+  if (settings.features.processes.enable_realtime_mem) {
     pipeline.emplace_back([](nlohmann::json &j, const SystemMetrics &s) {
       j["top_processes_real_mem"] = s.top_processes_real_mem;
     });

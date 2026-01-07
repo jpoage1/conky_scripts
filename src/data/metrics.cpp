@@ -55,8 +55,8 @@ SystemMetrics::SystemMetrics(MetricsContext &context) {
 void SystemMetrics::create_pipeline(MetricsContext &context) {
   auto settings = context.settings;
 
-  // Task: Battery Info
-  if (settings.enable_battery_info) {
+  // Task: Battery Info // fixme
+  if (settings.features.enable_battery_info) {
     task_pipeline.emplace_back([this, &context]() {
       this->battery_info =
           provider->get_battery_status(context.settings.batteries);
@@ -64,20 +64,20 @@ void SystemMetrics::create_pipeline(MetricsContext &context) {
   }
 
   // Task: CPU Temp
-  if (settings.enable_cpu_temp) {
+  if (settings.features.enable_cpu_temp) {
     task_pipeline.emplace_back(
         [this]() { cpu_temp_c = provider->get_cpu_temperature(); });
   }
 
   // Task: Memory
-  if (settings.enable_memory) {
+  if (settings.features.enable_memory) {
     task_pipeline.emplace_back([this]() {
       get_mem_usage(provider->get_meminfo_stream(), meminfo, swapinfo);
     });
   }
 
   // Task: Uptime & Freq
-  if (settings.enable_uptime) {
+  if (settings.features.enable_uptime) {
     task_pipeline.emplace_back([this]() {
       uptime = get_uptime(provider->get_uptime_stream());
       cpu_frequency_ghz = get_cpu_freq_ghz(provider->get_cpuinfo_stream());
@@ -85,14 +85,14 @@ void SystemMetrics::create_pipeline(MetricsContext &context) {
   }
 
   // Task: Load Avg & Processes
-  if (settings.enable_load_and_process_stats) {
+  if (settings.features.enable_load_and_process_stats) {
     task_pipeline.emplace_back([this]() {
       get_load_and_process_stats(provider->get_loadavg_stream(), *this);
     });
   }
 
   // Task: System Info
-  if (settings.enable_sysinfo) {
+  if (settings.features.enable_sysinfo) {
     task_pipeline.emplace_back([this]() { get_system_info(*this); });
   }
 }
@@ -117,16 +117,18 @@ void SystemMetrics::configure_polling_pipeline(MetricsContext &context) {
     }                                                                          \
   } while (0);
 
-  CREATE_POLLING_TASK("cpuinfo", CpuPollingTask, settings.enable_cpuinfo);
+  CREATE_POLLING_TASK("cpuinfo", CpuPollingTask,
+                      settings.features.enable_cpuinfo);
   CREATE_POLLING_TASK("stability", SystemStabilityPollingTask,
-                      settings.enable_stability_info);
+                      settings.features.enable_stability_info);
   CREATE_POLLING_TASK("networkstats", NetworkPollingTask,
-                      settings.enable_network_stats);
-  CREATE_POLLING_TASK("diskstat", DiskPollingTask, settings.enable_diskstat);
+                      settings.features.enable_network_stats);
+  CREATE_POLLING_TASK("diskstat", DiskPollingTask,
+                      settings.features.enable_diskstat);
   CREATE_POLLING_TASK("processinfo", ProcessPollingTask,
-                      settings.enable_processinfo());
+                      settings.features.processes.enable_processinfo());
   CREATE_POLLING_TASK("fragmentation", MemoryFragmentationTask,
-                      settings.enable_processinfo());
+                      settings.features.processes.enable_processinfo());
   (void)new_task;
 }
 }; // namespace telemetry

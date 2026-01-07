@@ -29,6 +29,8 @@ struct Features {
   bool enable_load_and_process_stats = true;
   bool enable_diskstat = true;
   bool enable_network_stats = true;
+  bool enable_stability_info = true;
+  bool enable_battery_info = true;
   Processes processes;
 
 }; // End Features struct
@@ -46,42 +48,8 @@ struct MetricSettings {
 
   WindowConfig window;
 
-  /* LEGACY LOGIC */
-  // Core Features
-  bool enable_uptime = true;
-  bool enable_sysinfo = true;
-  bool enable_memory = true;
-
-  // Stats
-  bool enable_load_and_process_stats = true;
-  bool enable_cpu_temp = true;
-
-  // Stability
-  bool enable_stability_info = true;
-
-  bool enable_cpuinfo = true;
-  bool enable_network_stats = true;
-  bool enable_diskstat = true;
-
-  // ProcessInfo
-  bool enable_avg_processinfo_cpu = true;
-  bool enable_avg_processinfo_mem = true;
-  bool enable_realtime_processinfo_cpu = true;
-  bool enable_realtime_processinfo_mem = true;
-  long unsigned int process_count = true;
-  bool only_user_processes = false;
-
-  // Batteries
-  bool enable_battery_info = true;
-
-  std::vector<std::string> ignore_list;
   std::set<std::string> interfaces;
   std::vector<std::string> filesystems;
-
-  bool enable_processinfo() const {
-    return enable_avg_processinfo_cpu || enable_avg_processinfo_mem ||
-           enable_realtime_processinfo_cpu || enable_realtime_processinfo_mem;
-  }
 }; // End MetricSettings struct
 
 struct MetricsConfig {

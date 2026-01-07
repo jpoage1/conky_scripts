@@ -226,15 +226,15 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider &p, SystemMetrics &m,
     : IPollingTask(p, m, context) {
   auto settings = context.settings;
 
-  process_count = settings.process_count;
-  ignore_list = settings.ignore_list;
-  only_user_processes = settings.only_user_processes;
+  process_count = settings.features.processes.count;
+  ignore_list = settings.features.processes.ignore_list;
+  only_user_processes = settings.features.processes.only_user_processes;
 
   // 1. CPU Configuration
-  if (settings.enable_realtime_processinfo_cpu ||
-      settings.enable_avg_processinfo_cpu) {
-    bool need_real = settings.enable_realtime_processinfo_cpu;
-    bool need_avg = settings.enable_avg_processinfo_cpu;
+  if (settings.features.processes.enable_realtime_cpu ||
+      settings.features.processes.enable_avg_cpu) {
+    bool need_real = settings.features.processes.enable_realtime_cpu;
+    bool need_avg = settings.features.processes.enable_avg_cpu;
     DEBUG_PTR("Pipeline vector", output_pipeline);
 
     output_pipeline.emplace_back(
@@ -262,10 +262,10 @@ ProcessPollingTask::ProcessPollingTask(DataStreamProvider &p, SystemMetrics &m,
   }
 
   // 2. Memory Configuration
-  if (settings.enable_realtime_processinfo_mem ||
-      settings.enable_avg_processinfo_mem) {
-    bool need_real = settings.enable_realtime_processinfo_mem;
-    bool need_avg = settings.enable_avg_processinfo_mem;
+  if (settings.features.processes.enable_realtime_mem ||
+      settings.features.processes.enable_avg_mem) {
+    bool need_real = settings.features.processes.enable_realtime_mem;
+    bool need_avg = settings.features.processes.enable_avg_mem;
 
     output_pipeline.emplace_back(
         [this, need_real, need_avg](std::vector<ProcessInfo> &data) {
