@@ -73,6 +73,7 @@ add_library(telemetry_core STATIC
     src/logging/log.cpp
 
     # Core
+    src/core/lua_generator.cpp
     src/core/controller.cpp
     src/core/configuration_builder.cpp
     src/core/parsed_config.cpp
@@ -110,6 +111,7 @@ if(ENABLE_TESTS)
         tests/unit_process_io.cpp
         tests/unit_lws_main.cpp
         tests/unit_lws_proxy.cpp
+        tests/unit_lua_generator.cpp
         tests/main.cpp
     )
     target_link_libraries(telemetry_tests PRIVATE
